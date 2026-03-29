@@ -1,0 +1,16 @@
+import { signIn } from 'next-auth/react'
+
+export default function SignIn() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="card max-w-sm w-full text-center">
+        <h1 className="text-2xl font-bold mb-2">PolyFarm</h1>
+        <p className="text-neutral text-sm mb-6">Automated Sports Prediction Market Bot</p>
+        <button onClick={() => signIn('google', { callbackUrl: '/' })}
+          className="w-full bg-white text-black font-semibold py-3 px-4 rounded hover:bg-gray-100 transition min-h-[44px]">
+          Sign in with Google
+        </button>
+      </div>
+    </div>
+  )
+}
