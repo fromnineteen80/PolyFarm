@@ -1,0 +1,17 @@
+[Unit]
+Description=PolyFarm Trading Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/polyfarm/bot
+ExecStart=/opt/polyfarm/bot/venv/bin/python main.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/polyfarm/bot.log
+StandardError=append:/var/log/polyfarm/error.log
+EnvironmentFile=/opt/polyfarm/bot/.env
+
+[Install]
+WantedBy=multi-user.target
