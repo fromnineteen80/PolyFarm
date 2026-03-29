@@ -73,19 +73,25 @@ class WalletManager:
         Called once at startup. Establishes floor.
         Floor is fixed for the entire session.
         """
-        balance = await self.client.account.balances()
-        positions = await self.client.portfolio.positions()
+        from core.market_loader import parse_bbo
 
-        cash = float(balance.get("buying_power", 0))
+        result = await self.client.account.balances()
+        balances = result.get("balances", [])
+        cash = float(
+            balances[0].get("buyingPower", 0) or 0
+        ) if balances else 0.0
+
+        pos_result = await self.client.portfolio.positions()
+        positions_map = pos_result.get("positions", {})
         pos_value = 0.0
 
-        for pos in positions:
+        for slug, pos in positions_map.items():
             try:
-                slug = pos.get("market_slug")
-                shares = float(pos.get("size", 0))
+                shares = float(pos.get("longShares", 0) or 0)
+                if shares <= 0:
+                    continue
                 bbo = await self.client.markets.bbo(slug)
-                bid = float(bbo.get("bid", {}).get(
-                    "price", 0))
+                bid, ask, cur = parse_bbo(bbo)
                 pos_value += bid * shares
                 self._position_values[slug] = {
                     "value": bid * shares,
@@ -94,7 +100,7 @@ class WalletManager:
                 }
             except Exception as e:
                 logger.warning(
-                    f"Could not value position {pos}: {e}"
+                    f"Could not value position {slug}: {e}"
                 )
 
         total = cash + pos_value
@@ -120,8 +126,11 @@ class WalletManager:
         all profit and loss tier thresholds.
         """
         try:
-            balance = await self.client.account.balances()
-            cash = float(balance.get("buying_power", 0))
+            result = await self.client.account.balances()
+            balances = result.get("balances", [])
+            cash = float(
+                balances[0].get("buyingPower", 0) or 0
+            ) if balances else 0.0
 
             # Update position values from WebSocket
             # state (_position_values updated by
@@ -167,6 +176,14 @@ class WalletManager:
     def remove_position(self, slug: str):
         """Called when a position closes."""
         self._position_values.pop(slug, None)
+
+    async def on_balance_update(self, buying_power, current_balance):
+        """Called by private WebSocket on balance change."""
+        self.state.cash_balance = buying_power
+
+    async def on_position_change(self, net_position, cost, trade_id):
+        """Called by private WebSocket on position change."""
+        pass
 
     async def _check_floor(self, total: float):
         if self.state.session_locked:

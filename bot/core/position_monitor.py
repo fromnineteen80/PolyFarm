@@ -117,16 +117,16 @@ class PositionMonitor:
         of any positions open from before restart.
         """
         try:
-            positions = await (
+            result = await (
                 self.client.portfolio.positions()
             )
-            for pos in positions:
-                slug = pos.get("market_slug")
-                if not slug:
-                    continue
+            positions_map = result.get("positions", {})
+            for slug, pos in positions_map.items():
                 if slug in self._positions:
                     continue
-                shares = float(pos.get("size", 0))
+                shares = float(pos.get("longShares", 0) or 0)
+                if shares <= 0:
+                    continue
                 # Try to find matching open trade
                 from data.database import get_open_trades
                 from config import PAPER_MODE
@@ -194,14 +194,13 @@ class PositionMonitor:
         positions = list(self._positions.values())
         for position in positions:
             try:
+                from core.market_loader import parse_bbo
                 bbo = await self.client.markets.bbo(
                     position.slug
                 )
-                current_bid = float(
-                    bbo.get("bid", {}).get(
-                        "price", position.entry_price
-                    )
-                )
+                current_bid, _ask, _cur = parse_bbo(bbo)
+                if current_bid == 0:
+                    current_bid = position.entry_price
                 self.wallet.update_position_value(
                     position.slug,
                     current_bid,

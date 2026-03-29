@@ -276,15 +276,11 @@ class FadeMonitor:
                 continue
 
             try:
+                from core.market_loader import parse_bbo
                 bbo = await self.client.markets.bbo(
                     market.slug
                 )
-                bid = float(
-                    bbo.get("bid", {}).get("price", 0)
-                )
-                ask = float(
-                    bbo.get("ask", {}).get("price", 1)
-                )
+                bid, ask, _cur = parse_bbo(bbo)
                 spread = ask - bid
                 if spread > FADE_MAX_BID_ASK_SPREAD:
                     continue

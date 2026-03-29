@@ -185,14 +185,13 @@ class OvernightMonitor:
             if current_edge < \
                OVERNIGHT_EXIT_EDGE_THRESHOLD:
                 try:
+                    from core.market_loader import parse_bbo
                     bbo = await self.client.markets.bbo(
                         position.slug
                     )
-                    bid = float(
-                        bbo.get("bid", {}).get(
-                            "price", position.entry_price
-                        )
-                    )
+                    bid, _ask, _cur = parse_bbo(bbo)
+                    if bid == 0:
+                        bid = position.entry_price
                     await self.om._ioc_exit(
                         position, bid,
                         "overnight_reeval"

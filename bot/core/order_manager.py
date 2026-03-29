@@ -86,19 +86,15 @@ class OrderManager:
     async def _paper_entry(self, signal, strategy,
                             position_type, fade_team):
         try:
+            from core.market_loader import parse_bbo
             bbo = await self.client.markets.bbo(
                 signal.slug
             )
-            bid = float(
-                bbo.get("bid", {}).get(
-                    "price", signal.poly_price
-                )
-            )
-            ask = float(
-                bbo.get("ask", {}).get(
-                    "price", signal.poly_price
-                )
-            )
+            bid, ask, cur = parse_bbo(bbo)
+            if bid == 0:
+                bid = signal.poly_price
+            if ask == 0:
+                ask = signal.poly_price
             mid = (bid + ask) / 2
             fill_price = mid
 
@@ -532,14 +528,13 @@ class OrderManager:
         # Attempt edge recalculation
         # Simplified: check if still above 2% of original
         try:
+            from core.market_loader import parse_bbo
             bbo = await self.client.markets.bbo(
                 position.slug
             )
-            current_ask = float(
-                bbo.get("ask", {}).get(
-                    "price", current_bid
-                )
-            )
+            bid_v, current_ask, cur_v = parse_bbo(bbo)
+            if current_ask == 0:
+                current_ask = current_bid
             # Rough current edge estimate
             current_edge = (
                 current_ask - position.entry_price
@@ -844,14 +839,13 @@ class OrderManager:
         )
         for position in positions:
             try:
+                from core.market_loader import parse_bbo
                 bbo = await self.client.markets.bbo(
                     position.slug
                 )
-                bid = float(
-                    bbo.get("bid", {}).get(
-                        "price", position.entry_price
-                    )
-                )
+                bid, _ask, _cur = parse_bbo(bbo)
+                if bid == 0:
+                    bid = position.entry_price
                 drain_price = round(bid + 0.01, 4)
 
                 if position.sell_order_id:
@@ -888,14 +882,13 @@ class OrderManager:
         )
         for position in remaining:
             try:
+                from core.market_loader import parse_bbo
                 bbo = await self.client.markets.bbo(
                     position.slug
                 )
-                bid = float(
-                    bbo.get("bid", {}).get(
-                        "price", position.entry_price
-                    )
-                )
+                bid, _ask, _cur = parse_bbo(bbo)
+                if bid == 0:
+                    bid = position.entry_price
                 await self._ioc_exit(
                     position, bid, f"drain_{reason}"
                 )

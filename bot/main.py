@@ -22,8 +22,8 @@ from core.exception_monitor import ExceptionMonitor
 from core.fade_monitor import FadeMonitor
 from core.overnight_monitor import OvernightMonitor
 from core.alerts import AlertManager
-from core.ws_markets import WSMarkets
-from core.ws_private import WSPrivate
+from core.ws_markets import MarketsWebSocket
+from core.ws_private import PrivateWebSocket
 from dashboard.terminal import TerminalDashboard
 
 
@@ -35,7 +35,6 @@ async def main():
     required_vars = [
         "POLYMARKET_KEY_ID",
         "POLYMARKET_SECRET_KEY",
-        "ODDS_API_KEY",
         "TELEGRAM_BOT_TOKEN",
         "TELEGRAM_CHAT_ID",
         "SUPABASE_URL",
@@ -53,191 +52,199 @@ async def main():
     init_database()
     await seed_bot_config()
 
-    # ── STEP 3: Initialize Polymarket client ──────
-    async with AsyncPolymarketUS(
+    # ── STEP 3: Initialize Polymarket SDK client ──
+    client = AsyncPolymarketUS(
         key_id=os.environ["POLYMARKET_KEY_ID"],
         secret_key=os.environ["POLYMARKET_SECRET_KEY"],
-    ) as client:
+    )
+    logger.info("Polymarket SDK client initialized")
 
-        # ── STEP 4: Initialize components ─────────
-        alerts = AlertManager()
-        await alerts.initialize()
+    # ── STEP 4: Verify connectivity ───────────────
+    try:
+        result = await client.account.balances()
+        balances = result.get("balances", [])
+        if balances:
+            bp = balances[0].get("buyingPower", 0)
+            logger.info(f"Connected. Buying power: ${bp:.2f}")
+        else:
+            logger.warning("Balance check returned empty")
+    except Exception as e:
+        logger.critical(f"Cannot connect to Polymarket: {e}")
+        raise SystemExit(1)
 
-        registry = MarketRegistry()
-        wallet = WalletManager(client, PAPER_MODE)
-        market_loader = MarketLoader(client, registry)
-        mapper = MarketMapper(registry, market_loader)
+    # ── STEP 5: Initialize components ─────────────
+    alerts = AlertManager()
+    await alerts.initialize()
 
-        position_monitor = PositionMonitor(
-            client, wallet, None, registry
+    registry = MarketRegistry()
+    wallet = WalletManager(client, PAPER_MODE)
+    mapper = MarketMapper(registry, None)
+
+    position_monitor = PositionMonitor(
+        client, wallet, None, registry
+    )
+    order_manager = OrderManager(
+        client, wallet, alerts, position_monitor
+    )
+    position_monitor.om = order_manager
+
+    wallet.set_alerts(alerts)
+    wallet.set_order_manager(order_manager)
+
+    exception_monitor = ExceptionMonitor(
+        client, wallet, registry, mapper,
+        order_manager, position_monitor
+    )
+    fade_monitor = FadeMonitor(
+        client, wallet, registry, mapper,
+        order_manager, position_monitor
+    )
+    overnight_monitor = OvernightMonitor(
+        client, wallet, registry, mapper,
+        order_manager, position_monitor
+    )
+
+    # ── STEP 6: Set up shared queues ──────────────
+    price_queue = asyncio.Queue(maxsize=500)
+    trade_queue = asyncio.Queue(maxsize=500)
+
+    # ── STEP 7: Initialize WebSocket handlers ─────
+    private_ws = PrivateWebSocket(
+        client=client,
+        position_monitor=position_monitor,
+        wallet=wallet,
+    )
+    markets_ws = MarketsWebSocket(
+        client=client,
+        price_queue=price_queue,
+        trade_queue=trade_queue,
+    )
+
+    # ── STEP 8: Initialize market loader ──────────
+    market_loader = MarketLoader(
+        client=client,
+        registry=registry,
+        ws_manager=markets_ws,
+    )
+    mapper.loader = market_loader
+
+    edge_detector = EdgeDetector(
+        registry, mapper, wallet, position_monitor
+    )
+    edge_detector.price_queue = price_queue
+
+    terminal = TerminalDashboard(
+        wallet, position_monitor,
+        market_loader, registry
+    )
+
+    # ── STEP 9: Reconcile orphaned orders ─────────
+    try:
+        result = await client.orders.list()
+        open_orders = result.get("orders", [])
+        if open_orders:
+            logger.warning(
+                f"Found {len(open_orders)} orphaned orders. Cancelling."
+            )
+            await client.orders.cancel_all()
+    except Exception as e:
+        logger.error(f"Order reconciliation error: {e}")
+
+    # ── STEP 10: Session initialization ───────────
+    await wallet.session_init()
+    await position_monitor.load_existing_positions()
+
+    # ── STEP 11: Load markets ─────────────────────
+    await market_loader.load_all_markets()
+
+    # ── STEP 12: Send session start alert ─────────
+    stats = await get_bot_config("paper_trades_completed")
+    paper_progress = int(stats or 0)
+    await alerts.send_session_start(
+        wallet=wallet.state.live_portfolio_value,
+        floor=wallet.state.floor_value,
+        capital=(
+            wallet.state.live_portfolio_value
+            - wallet.state.floor_value
+        ),
+        market_count=await registry.count(),
+        paper_mode=PAPER_MODE,
+        paper_progress=paper_progress,
+    )
+
+    # ── STEP 13: Start terminal in thread ─────────
+    terminal_thread = threading.Thread(
+        target=terminal.run,
+        daemon=True
+    )
+    terminal_thread.start()
+
+    # ── STEP 14: Run all async tasks ──────────────
+    tasks = [
+        asyncio.create_task(private_ws.start(), name="ws_private"),
+        asyncio.create_task(markets_ws.start(), name="ws_markets"),
+        asyncio.create_task(market_loader.refresh_loop(), name="market_refresh"),
+        asyncio.create_task(edge_detector.detection_loop(), name="edge_detection"),
+        asyncio.create_task(position_monitor.monitor_loop(), name="position_monitor"),
+        asyncio.create_task(wallet.monitor_loop(), name="wallet_recalculate"),
+        asyncio.create_task(exception_monitor.monitor_loop(), name="exception_monitor"),
+        asyncio.create_task(fade_monitor.monitor_loop(), name="fade_monitor"),
+        asyncio.create_task(overnight_monitor.monitor_loop(), name="overnight_monitor"),
+        asyncio.create_task(midnight_scheduler(wallet, alerts, market_loader), name="midnight"),
+        asyncio.create_task(pre_game_scanner(registry, mapper, alerts), name="pre_game"),
+        asyncio.create_task(game_complete_scanner(registry, position_monitor, alerts), name="game_complete"),
+        asyncio.create_task(heartbeat_loop(), name="heartbeat"),
+    ]
+
+    if PHASE2_ENABLED:
+        from phase2.binance_feed import BinanceFeed
+        from phase2.crypto_edge_detector import CryptoEdgeDetector
+        from phase2.crypto_order_manager import CryptoOrderManager
+        await set_bot_config("phase2_enabled", "true")
+        existing = await get_bot_config("phase2_activation_date")
+        if not existing:
+            await set_bot_config(
+                "phase2_activation_date",
+                datetime.now(timezone.utc).date().isoformat()
+            )
+        binance = BinanceFeed()
+        crypto_detector = CryptoEdgeDetector(
+            registry, wallet, position_monitor, binance.price_queue
         )
-        order_manager = OrderManager(
+        crypto_om = CryptoOrderManager(
             client, wallet, alerts, position_monitor
         )
-        position_monitor.om = order_manager
+        tasks.extend([
+            asyncio.create_task(binance.stream_loop()),
+            asyncio.create_task(crypto_detector.detection_loop()),
+        ])
 
-        wallet.set_alerts(alerts)
-        wallet.set_order_manager(order_manager)
+    # Handle shutdown signals
+    shutdown_event = asyncio.Event()
+    loop = asyncio.get_event_loop()
 
-        exception_monitor = ExceptionMonitor(
-            client, wallet, registry, mapper,
-            order_manager, position_monitor
-        )
-        fade_monitor = FadeMonitor(
-            client, wallet, registry, mapper,
-            order_manager, position_monitor
-        )
-        overnight_monitor = OvernightMonitor(
-            client, wallet, registry, mapper,
-            order_manager, position_monitor
-        )
+    def handle_shutdown(sig):
+        logger.info(f"Shutdown signal: {sig}")
+        shutdown_event.set()
 
-        ws_markets = WSMarkets(
-            registry, market_loader
-        )
-        market_loader.ws_manager = ws_markets
-
-        ws_private = WSPrivate(
-            position_monitor, wallet
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(
+            sig, lambda s=sig: handle_shutdown(s)
         )
 
-        edge_detector = EdgeDetector(
-            registry, mapper, wallet, position_monitor
+    try:
+        done, pending = await asyncio.wait(
+            tasks, return_when=asyncio.FIRST_EXCEPTION
         )
-        ws_markets.set_edge_detector(edge_detector)
-
-        terminal = TerminalDashboard(
-            wallet, position_monitor,
-            market_loader, registry
-        )
-
-        # ── STEP 5: Session initialization ────────
-        await wallet.session_init()
-        await position_monitor.load_existing_positions()
-
-        # ── STEP 6: Cancel orphaned orders ────────
-        if not PAPER_MODE:
-            try:
-                await client.orders\
-                    .cancel_all_open_orders()
-                logger.info("Cancelled orphaned orders")
-            except Exception as e:
-                logger.warning(
-                    f"Cancel orphaned orders: {e}"
-                )
-
-        # ── STEP 7: Send session start alert ──────
-        stats = await get_bot_config(
-            "paper_trades_completed"
-        )
-        paper_progress = int(stats or 0)
-        await alerts.send_session_start(
-            wallet=wallet.state.live_portfolio_value,
-            floor=wallet.state.floor_value,
-            capital=(
-                wallet.state.live_portfolio_value
-                - wallet.state.floor_value
-            ),
-            market_count=await registry.count(),
-            paper_mode=PAPER_MODE,
-            paper_progress=paper_progress,
-        )
-
-        # ── STEP 8: Start terminal in thread ──────
-        terminal_thread = threading.Thread(
-            target=terminal.run,
-            daemon=True
-        )
-        terminal_thread.start()
-
-        # ── STEP 9: Run all async tasks ───────────
-        tasks = [
-            market_loader.refresh_loop(),
-            market_loader.poll_loop(),
-            ws_markets.connect_and_listen(),
-            ws_private.connect_and_listen(),
-            position_monitor.monitor_loop(),
-            edge_detector.detection_loop(),
-            wallet.monitor_loop(),
-            exception_monitor.monitor_loop(),
-            fade_monitor.monitor_loop(),
-            overnight_monitor.monitor_loop(),
-            midnight_scheduler(
-                wallet, alerts, market_loader
-            ),
-            pre_game_scanner(
-                registry, mapper, alerts
-            ),
-            game_complete_scanner(
-                registry, position_monitor, alerts
-            ),
-            heartbeat_loop(),
-        ]
-
-        if PHASE2_ENABLED:
-            from phase2.binance_feed import BinanceFeed
-            from phase2.crypto_edge_detector import (
-                CryptoEdgeDetector
-            )
-            from phase2.crypto_order_manager import (
-                CryptoOrderManager
-            )
-            await set_bot_config(
-                "phase2_enabled", "true"
-            )
-            existing = await get_bot_config(
-                "phase2_activation_date"
-            )
-            if not existing:
-                await set_bot_config(
-                    "phase2_activation_date",
-                    datetime.now(
-                        timezone.utc
-                    ).date().isoformat()
-                )
-            binance = BinanceFeed()
-            crypto_detector = CryptoEdgeDetector(
-                registry, wallet, position_monitor,
-                binance.price_queue
-            )
-            crypto_om = CryptoOrderManager(
-                client, wallet, alerts,
-                position_monitor
-            )
-            tasks.extend([
-                binance.stream_loop(),
-                crypto_detector.detection_loop(),
-            ])
-
-        # Handle shutdown signals
-        shutdown_event = asyncio.Event()
-        loop = asyncio.get_event_loop()
-
-        def handle_shutdown(sig):
-            logger.info(f"Shutdown signal: {sig}")
-            shutdown_event.set()
-
-        for sig in (signal.SIGTERM, signal.SIGINT):
-            loop.add_signal_handler(
-                sig,
-                lambda s=sig: handle_shutdown(s)
-            )
-
-        try:
-            done, pending = await asyncio.wait(
-                [asyncio.create_task(t)
-                 for t in tasks],
-                return_when=asyncio.FIRST_EXCEPTION
-            )
-            for task in done:
-                if task.exception():
-                    raise task.exception()
-        except (KeyboardInterrupt, SystemExit):
-            pass
-        finally:
-            await shutdown(
-                wallet, alerts, order_manager
-            )
+        for task in done:
+            if task.exception():
+                raise task.exception()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    finally:
+        await shutdown(wallet, alerts, order_manager)
+        await private_ws.stop()
+        await markets_ws.stop()
 
 
 async def heartbeat_loop():
@@ -254,11 +261,7 @@ async def heartbeat_loop():
 
 
 async def pre_game_scanner(registry, mapper, alerts):
-    """
-    Scan for upcoming games 90 min before start.
-    Fire pre-game intel alert if any qualifying
-    signal or team matchup found. Once per game.
-    """
+    """Scan for upcoming games 90 min before start."""
     from config import (
         DOMINANT_TEAMS, FADE_TEAMS,
         BAND_A_MIN_PRICE, BAND_A_MIN_EDGE,
@@ -282,37 +285,23 @@ async def pre_game_scanner(registry, mapper, alerts):
                     continue
                 try:
                     start = datetime.fromisoformat(
-                        market.start_time.replace(
-                            "Z", "+00:00"
-                        )
+                        market.game_start_time.replace("Z", "+00:00")
                     )
-                    if not (window_start <= start
-                            <= window_end):
+                    if not (window_start <= start <= window_end):
                         continue
                 except Exception:
                     continue
 
                 signals = {}
-
-                # Check oracle arb
-                sharp = mapper.get_sharp_probability(
-                    market.slug, max_age_seconds=120
-                )
-                if sharp and market.yes_price >= \
-                   FAVORITES_FLOOR:
+                sharp = mapper.get_sharp_probability(market.slug, max_age_seconds=120)
+                if sharp and market.yes_price >= FAVORITES_FLOOR:
                     gap = sharp - market.yes_price
                     band = None
-                    if market.yes_price >= \
-                       BAND_A_MIN_PRICE and \
-                       gap >= BAND_A_MIN_EDGE:
+                    if market.yes_price >= BAND_A_MIN_PRICE and gap >= BAND_A_MIN_EDGE:
                         band = "A"
-                    elif market.yes_price >= \
-                         BAND_B_MIN_PRICE and \
-                         gap >= BAND_B_MIN_EDGE:
+                    elif market.yes_price >= BAND_B_MIN_PRICE and gap >= BAND_B_MIN_EDGE:
                         band = "B"
-                    elif market.yes_price >= \
-                         BAND_C_MIN_PRICE and \
-                         gap >= BAND_C_MIN_EDGE:
+                    elif market.yes_price >= BAND_C_MIN_PRICE and gap >= BAND_C_MIN_EDGE:
                         band = "C"
                     if band:
                         signals["oracle_arb"] = {
@@ -323,51 +312,29 @@ async def pre_game_scanner(registry, mapper, alerts):
                             "line_movement": None,
                         }
 
-                # Check dominant team
                 home_l = market.home_team.lower()
                 away_l = market.away_team.lower()
                 for tn, tc in DOMINANT_TEAMS.items():
-                    if tc["sport"] != market.sport:
-                        continue
-                    if tn.lower() in home_l or \
-                       tn.lower() in away_l:
-                        signals["dominant"] = {
-                            "team": tn
-                        }
+                    if tn.lower() in home_l or tn.lower() in away_l:
+                        signals["dominant"] = {"team": tn}
                         break
-
-                # Check fade team
                 for tn, tc in FADE_TEAMS.items():
-                    if tc["sport"] != market.sport:
-                        continue
-                    if tn.lower() in home_l or \
-                       tn.lower() in away_l:
-                        signals["fade"] = {
-                            "team": tn
-                        }
+                    if tn.lower() in home_l or tn.lower() in away_l:
+                        signals["fade"] = {"team": tn}
                         break
 
                 if signals:
-                    await alerts.send_pre_game_intel(
-                        market, signals
-                    )
+                    await alerts.send_pre_game_intel(market, signals)
                     alerted_slugs.add(market.slug)
 
         except Exception as e:
-            logger.error(
-                f"Pre-game scanner error: {e}"
-            )
+            logger.error(f"Pre-game scanner error: {e}")
 
         await asyncio.sleep(60)
 
 
-async def game_complete_scanner(registry,
-                                 position_monitor,
-                                 alerts):
-    """
-    Check for finished games and fire game
-    complete summary if trades occurred.
-    """
+async def game_complete_scanner(registry, position_monitor, alerts):
+    """Check for finished games and fire summary."""
     from data.database import get_closed_trades_by_game
     alerted_games = set()
 
@@ -379,63 +346,42 @@ async def game_complete_scanner(registry,
                     continue
                 if market.slug in alerted_games:
                     continue
-
-                # Check if we had any trades
-                trades = await get_closed_trades_by_game(
-                    market.slug
-                )
+                trades = await get_closed_trades_by_game(market.slug)
                 if trades:
                     await alerts.send_game_summary(
                         game_slug=market.slug,
                         trades=trades,
                         final_score=market.current_score,
-                        teams=(
-                            f"{market.home_team} vs "
-                            f"{market.away_team}"
-                        ),
+                        teams=f"{market.home_team} vs {market.away_team}",
                         sport=market.sport,
                     )
                 alerted_games.add(market.slug)
-
         except Exception as e:
-            logger.error(
-                f"Game complete scanner error: {e}"
-            )
-
+            logger.error(f"Game complete scanner error: {e}")
         await asyncio.sleep(30)
 
 
-async def midnight_scheduler(wallet, alerts,
-                              market_loader):
-    """Pure async midnight scheduler."""
+async def midnight_scheduler(wallet, alerts, market_loader):
     while True:
         now = datetime.now()
-        target = now.replace(
-            hour=23, minute=59, second=0,
-            microsecond=0
-        )
+        target = now.replace(hour=23, minute=59, second=0, microsecond=0)
         if now >= target:
             target += timedelta(days=1)
         seconds_until = (target - now).total_seconds()
         await asyncio.sleep(seconds_until)
         await write_end_of_day(wallet, alerts)
         await wallet.reset_daily()
-        await asyncio.sleep(70)  # Avoid double-fire
+        await asyncio.sleep(70)
 
 
 async def write_end_of_day(wallet, alerts):
-    """Write daily snapshot and stats at midnight."""
     from datetime import date
+    from data.database import get_today_closed_trades, get_paper_trade_stats
     today = date.today().isoformat()
     wallet_value = wallet.state.live_portfolio_value
 
-    # Calculate projection values
-    first_date = await get_bot_config(
-        "first_live_trade_date"
-    )
-    first_value = await get_bot_config(
-        "first_live_wallet_value"
-    )
+    first_date = await get_bot_config("first_live_trade_date")
+    first_value = await get_bot_config("first_live_wallet_value")
     proj_1pct = None
     proj_15pct = None
     proj_2pct = None
@@ -443,9 +389,7 @@ async def write_end_of_day(wallet, alerts):
         try:
             start = datetime.fromisoformat(first_date)
             start_val = float(first_value)
-            days = (
-                datetime.now() - start
-            ).days
+            days = (datetime.now() - start).days
             proj_1pct = start_val * (1.01 ** days)
             proj_15pct = start_val * (1.015 ** days)
             proj_2pct = start_val * (1.02 ** days)
@@ -456,17 +400,9 @@ async def write_end_of_day(wallet, alerts):
         "date": today,
         "wallet_value": wallet_value,
         "floor_value": wallet.state.floor_value,
-        "session_pnl": (
-            wallet_value
-            - wallet.state.session_start_value
-        ),
-        "cumulative_pnl": (
-            wallet_value
-            - float(
-                await get_bot_config(
-                    "first_live_wallet_value"
-                ) or wallet_value
-            )
+        "session_pnl": wallet_value - wallet.state.session_start_value,
+        "cumulative_pnl": wallet_value - float(
+            await get_bot_config("first_live_wallet_value") or wallet_value
         ),
         "cumulative_pnl_pct": 0,
         "trades_today": 0,
@@ -477,104 +413,50 @@ async def write_end_of_day(wallet, alerts):
         "paper_mode": PAPER_MODE,
     })
 
-    # Build enriched daily report
-    from data.database import (
-        get_today_closed_trades, get_paper_trade_stats
-    )
-    closed = await get_today_closed_trades(
-        today, PAPER_MODE
-    )
-
-    # Strategy breakdown
+    closed = await get_today_closed_trades(today, PAPER_MODE)
     strats = {}
-    for name in ("oracle_arb", "exception",
-                 "fade", "overnight"):
-        st = [t for t in closed
-              if t.get("position_type") == name
-              or (name == "oracle_arb"
-                  and t.get("position_type")
-                  in ("normal", "oracle_arb"))]
-        if not st:
-            strats[name] = {
-                "trades": 0, "win_rate": 0,
-                "pnl": 0
-            }
-            continue
-        wins = sum(
-            1 for t in st
-            if float(t.get("pnl", 0) or 0) > 0
-        )
-        total_pnl = sum(
-            float(t.get("pnl", 0) or 0)
-            for t in st
-        )
-        strats[name] = {
-            "trades": len(st),
-            "win_rate": wins / len(st) * 100
-            if st else 0,
-            "pnl": total_pnl,
-        }
+    for name in ("oracle_arb", "exception", "fade", "overnight"):
+        st = [t for t in closed if t.get("position_type") == name or (name == "oracle_arb" and t.get("position_type") in ("normal", "oracle_arb"))]
+        wins = sum(1 for t in st if float(t.get("pnl", 0) or 0) > 0)
+        total_pnl = sum(float(t.get("pnl", 0) or 0) for t in st)
+        strats[name] = {"trades": len(st), "win_rate": wins / len(st) * 100 if st else 0, "pnl": total_pnl}
 
-    # Sport breakdown
     sports = {}
     for t in closed:
         sport = t.get("sport", "unknown")
         if sport not in sports:
             sports[sport] = {"trades": 0, "pnl": 0}
         sports[sport]["trades"] += 1
-        sports[sport]["pnl"] += float(
-            t.get("pnl", 0) or 0
-        )
+        sports[sport]["pnl"] += float(t.get("pnl", 0) or 0)
 
-    # Fee totals
-    total_fees = sum(
-        float(t.get("taker_fee_paid", 0) or 0)
-        for t in closed
-    )
-    total_rebates = sum(
-        float(t.get("maker_rebate_earned", 0) or 0)
-        for t in closed
-    )
+    total_fees = sum(float(t.get("taker_fee_paid", 0) or 0) for t in closed)
+    total_rebates = sum(float(t.get("maker_rebate_earned", 0) or 0) for t in closed)
 
-    # All-time
     alltime = None
     if first_date and first_value:
         try:
-            orig = float(first_value)
-            days_running = (
-                datetime.now()
-                - datetime.fromisoformat(first_date)
-            ).days
             alltime = {
-                "original_capital": orig,
+                "original_capital": float(first_value),
                 "current_value": wallet_value,
-                "days_running": max(days_running, 1),
+                "days_running": max((datetime.now() - datetime.fromisoformat(first_date)).days, 1),
             }
         except Exception:
             pass
 
-    # Paper progress
     paper_progress = None
     if PAPER_MODE:
         ps = await get_paper_trade_stats()
-        trades_today = len([
-            t for t in closed
-            if t.get("paper_mode")
-        ])
         paper_progress = {
             "completed": ps["count"],
             "win_rate": ps["win_rate"],
-            "trades_per_day": max(trades_today, 1),
+            "trades_per_day": max(len([t for t in closed if t.get("paper_mode")]), 1),
         }
 
     await alerts.send_daily_report({
         "date": today,
         "wallet_start": wallet.state.session_start_value,
         "wallet_end": wallet_value,
-        "pnl": (
-            wallet_value
-            - wallet.state.session_start_value
-        ),
+        "pnl": wallet_value - wallet.state.session_start_value,
         "peak_gain": wallet.state.daily_peak_gain,
         "strategies": strats,
         "sports": sports,
@@ -586,25 +468,15 @@ async def write_end_of_day(wallet, alerts):
 
 
 async def shutdown(wallet, alerts, order_manager):
-    """Clean shutdown sequence."""
     logger.info("Shutting down PolyFarm...")
     try:
         if not PAPER_MODE:
-            await order_manager.drain_all_positions(
-                "SHUTDOWN"
-            )
+            await order_manager.drain_all_positions("SHUTDOWN")
         await alerts.send_daily_report({
             "date": datetime.now().date().isoformat(),
-            "wallet_start": (
-                wallet.state.session_start_value
-            ),
-            "wallet_end": (
-                wallet.state.live_portfolio_value
-            ),
-            "pnl": (
-                wallet.state.live_portfolio_value
-                - wallet.state.session_start_value
-            ),
+            "wallet_start": wallet.state.session_start_value,
+            "wallet_end": wallet.state.live_portfolio_value,
+            "pnl": wallet.state.live_portfolio_value - wallet.state.session_start_value,
             "peak_gain": wallet.state.daily_peak_gain,
         })
         await alerts.close()
