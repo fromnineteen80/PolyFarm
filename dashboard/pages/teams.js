@@ -151,9 +151,9 @@ export default function Teams({ trades }) {
     <Layout>
       <h1 className="text-2xl font-bold mb-4">Team Intelligence</h1>
       <div className="flex flex-wrap gap-2 mb-6">
-        <button onClick={() => setSportFilter('')} className={`px-3 py-2 rounded text-sm min-h-[44px] ${!sportFilter ? 'bg-info text-white' : 'border border-border text-neutral'}`}>All</button>
+        <button onClick={() => setSportFilter('')} className={`btn ${!sportFilter ? 'btn-toggle-active' : 'btn-toggle-inactive'}`}>All</button>
         {allSports.map(s => (
-          <button key={s} onClick={() => setSportFilter(s)} className={`px-3 py-2 rounded text-sm min-h-[44px] ${sportFilter === s ? 'bg-info text-white' : 'border border-border text-neutral'}`}>
+          <button key={s} onClick={() => setSportFilter(s)} className={`btn ${sportFilter === s ? 'btn-toggle-active' : 'btn-toggle-inactive'}`}>
             {SPORT_LABELS[s] || s}
           </button>
         ))}

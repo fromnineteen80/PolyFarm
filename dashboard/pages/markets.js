@@ -97,7 +97,7 @@ export default function Markets({ mappings: initial }) {
                     <td className="py-2 px-2">{m.polymarket_slug}</td>
                     <td className="py-2 px-2 text-neutral">{m.failure_reason || 'Unknown'}</td>
                     <td className="py-2 px-2">
-                      <button onClick={() => retryMapping(m.polymarket_slug)} className="text-info text-sm hover:underline min-h-[44px]">Retry</button>
+                      <button onClick={() => retryMapping(m.polymarket_slug)} className="btn btn-ghost text-sm">Retry</button>
                     </td>
                   </tr>
                 ))}

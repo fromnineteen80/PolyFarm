@@ -7,7 +7,7 @@ import StatCard from '../components/StatCard'
 import { formatCurrency } from '../lib/calculations'
 import supabase from '../lib/supabase'
 
-const STRATEGY_COLORS = { normal: '#00c853', oracle_arb: '#00c853', exception: '#ffd700', fade: '#ff6d00', overnight: '#2979ff' }
+const STRATEGY_CLASS = { normal: 'strategy-oracle', oracle_arb: 'strategy-oracle', exception: 'strategy-exception', fade: 'strategy-fade', overnight: 'strategy-overnight' }
 
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions)
@@ -50,11 +50,11 @@ function timeAgo(ts) {
 }
 
 function statusDot(ts, warnSec, critSec) {
-  if (!ts) return '#888888'
+  if (!ts) return 'dot-grey'
   const age = (Date.now() - new Date(ts).getTime()) / 1000
-  if (age > critSec) return '#ff1744'
-  if (age > warnSec) return '#ff9800'
-  return '#00c853'
+  if (age > critSec) return 'dot-red'
+  if (age > warnSec) return 'dot-yellow'
+  return 'dot-green'
 }
 
 export default function Overview({ snapshot, openTrades: initialOpen, recentTrades, config, todayTrades, latestSession }) {
@@ -137,8 +137,8 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
       {isPaper && (
         <div className="card mb-6 border-paper border">
           <p className="text-paper font-semibold mb-2">Paper Trading Active</p>
-          <div className="w-full bg-surface rounded-full h-3 mb-2">
-            <div className="bg-paper h-3 rounded-full" style={{ width: `${Math.min(paperCompleted / 50 * 100, 100)}%` }} />
+          <div className="progress-track mb-2">
+            <div className="progress-fill bg-paper" style={{ width: `${Math.min(paperCompleted / 50 * 100, 100)}%` }} />
           </div>
           <p className="text-sm text-neutral">{paperCompleted}/50 trades | {(paperWinRate * 100).toFixed(0)}% win rate</p>
           <p className="text-xs text-neutral mt-1">Live mode unlocks automatically at 50 trades with 70%+ win rate</p>
@@ -163,7 +163,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
               {openTrades.map((t, i) => (
                 <tr key={i} className="border-b border-border">
                   <td className="py-2 px-2 max-w-[150px] truncate">{t.market_slug}</td>
-                  <td className="py-2 px-2" style={{ color: STRATEGY_COLORS[t.position_type] || '#fff' }}>{t.position_type}</td>
+                  <td className={`py-2 px-2 ${STRATEGY_CLASS[t.position_type] || ''}`}>{t.position_type}</td>
                   <td className="py-2 px-2 text-right">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
                   <td className="py-2 px-2 hidden md:table-cell">{t.sport}</td>
                   <td className="py-2 px-2 hidden md:table-cell">{t.band}</td>
@@ -252,7 +252,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
           />
           <StatusRow
             label="Polymarket"
-            dot={sysConfig?.ws_markets_status === 'CONNECTED' && sysConfig?.ws_private_status === 'CONNECTED' ? '#00c853' : sysConfig?.ws_markets_status === 'CONNECTED' || sysConfig?.ws_private_status === 'CONNECTED' ? '#ff9800' : sysConfig?.ws_markets_status ? '#ff1744' : '#888888'}
+            dot={sysConfig?.ws_markets_status === 'CONNECTED' && sysConfig?.ws_private_status === 'CONNECTED' ? 'dot-green' : sysConfig?.ws_markets_status === 'CONNECTED' || sysConfig?.ws_private_status === 'CONNECTED' ? 'dot-yellow' : sysConfig?.ws_markets_status ? 'dot-red' : 'dot-grey'}
             value={`${sysConfig?.ws_markets_status || 'UNKNOWN'} · markets + private WebSocket`}
           />
           <StatusRow
@@ -267,7 +267,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
           />
           <StatusRow
             label="Telegram"
-            dot={sysConfig?.telegram_last_alert ? '#00c853' : '#888888'}
+            dot={sysConfig?.telegram_last_alert ? 'dot-green' : 'dot-grey'}
             value={`${sysConfig?.telegram_last_alert ? 'ACTIVE' : 'UNKNOWN'} · last alert ${timeAgo(sysConfig?.telegram_last_alert)}`}
           />
         </div>
@@ -279,7 +279,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
 function StatusRow({ label, dot, value }) {
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dot }} />
+      <span className={`dot ${dot}`} />
       <span className="text-neutral w-24 flex-shrink-0">{label}</span>
       <span className="font-semibold">{value}</span>
     </div>

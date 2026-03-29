@@ -18,6 +18,117 @@ body {
   font-family: 'Raleway', sans-serif;
 }
 
+/* ─── Icons ─── */
+
+.icon {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+}
+
+.icon-sm { font-size: 16px; }
+.icon-lg { font-size: 24px; }
+
+/* ─── Buttons ─── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Raleway', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, background-color 0.15s;
+  border: none;
+  outline: none;
+}
+
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary {
+  background-color: #2979ff;
+  color: #ffffff;
+}
+
+.btn-success {
+  background-color: #00c853;
+  color: #ffffff;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #888888;
+  border: 1px solid #2a2a2a;
+}
+
+.btn-outline:hover { color: #ffffff; }
+
+.btn-ghost {
+  background-color: transparent;
+  color: #2979ff;
+  padding: 8px 12px;
+}
+
+.btn-ghost:hover { text-decoration: underline; }
+
+.btn-export {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border: 1px solid #2a2a2a;
+}
+
+.btn-export:hover { background-color: #141414; }
+
+.btn-signin {
+  background-color: #ffffff;
+  color: #000000;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.btn-signin:hover { background-color: #e0e0e0; }
+
+.btn-submit {
+  background-color: #00c853;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 8px;
+  width: 100%;
+  min-height: 48px;
+}
+
+.btn-toggle-active {
+  background-color: #2979ff;
+  color: #ffffff;
+}
+
+.btn-toggle-inactive {
+  background-color: transparent;
+  color: #888888;
+  border: 1px solid #2a2a2a;
+}
+
+/* ─── Layout ─── */
+
 .table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -27,13 +138,92 @@ button, a, [role="button"] {
   min-height: 44px;
 }
 
+/* ─── Colors ─── */
+
 .text-profit { color: #00c853; }
 .text-loss { color: #ff1744; }
 .text-neutral { color: #888888; }
+
+/* ─── Cards ─── */
 
 .card {
   background: #1a1a1a;
   border: 1px solid #2a2a2a;
   border-radius: 8px;
   padding: 16px;
+}
+
+/* ─── Strategy row colors ─── */
+
+.strategy-oracle { color: #00c853; }
+.strategy-exception { color: #ffd700; }
+.strategy-fade { color: #ff6d00; }
+.strategy-overnight { color: #2979ff; }
+
+/* ─── Status dots ─── */
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-green { background-color: #00c853; }
+.dot-yellow { background-color: #ff9800; }
+.dot-red { background-color: #ff1744; }
+.dot-grey { background-color: #888888; }
+
+/* ─── Inputs ─── */
+
+.input {
+  width: 100%;
+  background-color: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #ffffff;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  min-height: 44px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #2979ff;
+}
+
+.input-readonly {
+  background-color: rgba(20, 20, 20, 0.5);
+  color: #888888;
+  cursor: not-allowed;
+}
+
+/* ─── Skeleton ─── */
+
+.skeleton {
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ─── Progress bar ─── */
+
+.progress-track {
+  width: 100%;
+  background-color: #141414;
+  border-radius: 9999px;
+  height: 12px;
+}
+
+.progress-fill {
+  height: 12px;
+  border-radius: 9999px;
+  transition: width 0.3s;
 }

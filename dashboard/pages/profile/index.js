@@ -141,14 +141,14 @@ export default function Profile({ session, profile, investor, events, totalUnits
             {editing ? (
               <div className="space-y-3 text-left">
                 <input value={editForm.first_name} onChange={e => setEditForm({ ...editForm, first_name: e.target.value })}
-                  className="w-full bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]" placeholder="First Name" />
+                  className="input" placeholder="First Name" />
                 <input value={editForm.last_name} onChange={e => setEditForm({ ...editForm, last_name: e.target.value })}
-                  className="w-full bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]" placeholder="Last Name" />
+                  className="input" placeholder="Last Name" />
                 <input value={editForm.display_name} onChange={e => setEditForm({ ...editForm, display_name: e.target.value })}
-                  className="w-full bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]" placeholder="Display Name" />
+                  className="input" placeholder="Display Name" />
                 <div className="flex gap-2">
-                  <button onClick={handleSaveProfile} disabled={saving} className="flex-1 bg-profit text-white py-2 rounded min-h-[44px]">{saving ? 'Saving...' : 'Save'}</button>
-                  <button onClick={() => setEditing(false)} className="flex-1 border border-border text-neutral py-2 rounded min-h-[44px]">Cancel</button>
+                  <button onClick={handleSaveProfile} disabled={saving} className="btn btn-success flex-1">{saving ? 'Saving...' : 'Save'}</button>
+                  <button onClick={() => setEditing(false)} className="btn btn-outline flex-1">Cancel</button>
                 </div>
               </div>
             ) : (
@@ -156,7 +156,7 @@ export default function Profile({ session, profile, investor, events, totalUnits
                 <h2 className="text-xl font-bold">{profile?.display_name || `${profile?.first_name} ${profile?.last_name}`}</h2>
                 <p className="text-sm text-neutral">{session.user.email}</p>
                 <p className="text-xs text-neutral mt-1">Member since {profile?.joined_date}</p>
-                <button onClick={() => setEditing(true)} className="mt-3 text-sm text-info hover:underline min-h-[44px]">Edit Profile</button>
+                <button onClick={() => setEditing(true)} className="btn btn-ghost mt-3 text-sm">Edit Profile</button>
               </>
             )}
           </div>
@@ -183,7 +183,7 @@ export default function Profile({ session, profile, investor, events, totalUnits
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-semibold">Capital History</h2>
             <div className="flex gap-2">
-              <button onClick={() => setAddCapitalOpen(!addCapitalOpen)} className="px-3 py-2 bg-info text-white rounded text-sm min-h-[44px]">Add Capital</button>
+              <button onClick={() => setAddCapitalOpen(!addCapitalOpen)} className="btn btn-primary">Add Capital</button>
               <ExportButton data={events} filename="my_capital_events" />
             </div>
           </div>
@@ -192,8 +192,8 @@ export default function Profile({ session, profile, investor, events, totalUnits
             <div className="card mb-4 flex flex-wrap gap-3 items-center">
               <input type="number" step="0.01" placeholder="Amount" value={capitalAmount}
                 onChange={e => setCapitalAmount(e.target.value)}
-                className="bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px] w-40" />
-              <button onClick={handleAddCapital} className="px-4 py-2 bg-profit text-white rounded min-h-[44px]">Submit</button>
+                className="input w-40" />
+              <button onClick={handleAddCapital} className="btn btn-success">Submit</button>
               {capitalMsg && <p className="text-sm text-neutral">{capitalMsg}</p>}
             </div>
           )}

@@ -6,8 +6,7 @@ export default function SignIn() {
       <div className="card max-w-sm w-full text-center">
         <h1 className="text-2xl font-bold mb-2">PolyFarm</h1>
         <p className="text-neutral text-sm mb-6">Automated Sports Prediction Market Bot</p>
-        <button onClick={() => signIn('google', { callbackUrl: '/' })}
-          className="w-full bg-white text-black font-semibold py-3 px-4 rounded hover:bg-gray-100 transition min-h-[44px]">
+        <button onClick={() => signIn('google', { callbackUrl: '/' })} className="btn btn-signin">
           Sign in with Google
         </button>
       </div>

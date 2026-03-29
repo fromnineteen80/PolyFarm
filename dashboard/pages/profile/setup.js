@@ -133,7 +133,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
               <input
                 type="text" required value={form.first_name}
                 onChange={e => setForm({ ...form, first_name: e.target.value })}
-                className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-white min-h-[44px]"
+                className="input"
               />
               {fieldErrors.first_name && <p className="text-loss text-xs mt-1">{fieldErrors.first_name}</p>}
             </div>
@@ -143,7 +143,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
               <input
                 type="text" required value={form.last_name}
                 onChange={e => setForm({ ...form, last_name: e.target.value })}
-                className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-white min-h-[44px]"
+                className="input"
               />
               {fieldErrors.last_name && <p className="text-loss text-xs mt-1">{fieldErrors.last_name}</p>}
             </div>
@@ -152,7 +152,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
               <label className="block text-sm text-neutral mb-1">Email</label>
               <input
                 type="email" readOnly value={session.user.email}
-                className="w-full bg-surface/50 border border-border rounded-lg px-4 py-3 text-neutral min-h-[44px] cursor-not-allowed"
+                className="input input-readonly"
               />
             </div>
 
@@ -169,7 +169,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
                   type="number" step="0.01" min="0" placeholder="0.00"
                   value={form.intended_capital}
                   onChange={e => setForm({ ...form, intended_capital: e.target.value })}
-                  className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-white min-h-[44px]"
+                  className="input"
                 />
                 <p className="text-xs text-neutral mt-1">Enter the amount you plan to invest when the bot goes live. Units will recalculate automatically at that time.</p>
               </div>
@@ -180,7 +180,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
                   type="number" step="0.01" min="0" required placeholder="0.00"
                   value={form.intended_capital}
                   onChange={e => setForm({ ...form, intended_capital: e.target.value })}
-                  className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-white min-h-[44px]"
+                  className="input"
                 />
                 <p className="text-xs text-neutral mt-1">This records your starting capital contribution to the fund.</p>
                 {fieldErrors.intended_capital && <p className="text-loss text-xs mt-1">{fieldErrors.intended_capital}</p>}
@@ -192,7 +192,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
 
           <button
             type="submit" disabled={loading || !isValid}
-            className="w-full mt-6 bg-profit text-white font-semibold py-3 rounded-lg min-h-[48px] disabled:opacity-40 transition hover:opacity-90"
+            className="btn btn-submit mt-6"
           >
             {loading ? 'Setting up...' : 'Complete Profile and Enter Dashboard'}
           </button>

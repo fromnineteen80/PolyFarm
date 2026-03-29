@@ -27,7 +27,7 @@ export default function ProjectionChart({ actual, proj1, proj15, proj2, phase2Da
   return (
     <div className="card min-h-[200px] max-h-[400px] lg:max-h-none">
       <div className="flex justify-end mb-2">
-        <button onClick={() => setLogScale(!logScale)} className="text-sm text-info px-3 py-1 border border-border rounded">
+        <button onClick={() => setLogScale(!logScale)} className="btn btn-outline text-sm">
           {logScale ? 'Linear' : 'Log'} Scale
         </button>
       </div>

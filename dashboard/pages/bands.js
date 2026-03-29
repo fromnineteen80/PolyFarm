@@ -47,7 +47,7 @@ export default function Bands({ trades }) {
       <div className="flex gap-2 mb-4">
         {['All', 'A', 'B', 'C'].map(b => (
           <button key={b} onClick={() => setBandFilter(b)}
-            className={`px-3 py-2 rounded text-sm min-h-[44px] ${bandFilter === b ? 'bg-info text-white' : 'border border-border text-neutral'}`}>{b === 'All' ? 'All Bands' : `Band ${b}`}</button>
+            className={`btn ${bandFilter === b ? 'btn-toggle-active' : 'btn-toggle-inactive'}`}>{b === 'All' ? 'All Bands' : `Band ${b}`}</button>
         ))}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">

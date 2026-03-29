@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import supabase from '../lib/supabase'
 import { formatCurrency, calcInvestorValue } from '../lib/calculations'
+import Icon from './Icon'
 
 const NAV_LINKS = [
   { href: '/', label: 'Overview' },
@@ -47,7 +48,6 @@ export default function NavBar() {
         const yesterdayValue = calcInvestorValue(units, totalUnits, yesterdayWallet)
         const dailyPnl = todayValue - yesterdayValue
 
-        // Total invested
         const { data: events } = await supabase
           .from('capital_events')
           .select('amount,event_type')
@@ -59,7 +59,7 @@ export default function NavBar() {
 
         setInvestorData({ units, totalUnits, todayValue, dailyPnl, totalInvested })
       } catch (err) {
-        // Gracefully handle — show $0.00
+        // Gracefully handle
       }
       setLoading(false)
     }
@@ -87,13 +87,12 @@ export default function NavBar() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Investor context strip — desktop only */}
           <div className="hidden md:flex items-center gap-3 text-sm">
             {loading ? (
               <div className="flex gap-3">
-                <span className="bg-border rounded h-4 w-16 animate-pulse" />
-                <span className="bg-border rounded h-4 w-16 animate-pulse" />
-                <span className="bg-border rounded h-4 w-16 animate-pulse" />
+                <span className="skeleton h-4 w-16" />
+                <span className="skeleton h-4 w-16" />
+                <span className="skeleton h-4 w-16" />
               </div>
             ) : investorData ? (
               <>
@@ -118,7 +117,6 @@ export default function NavBar() {
             ) : null}
           </div>
 
-          {/* Profile photo — always visible */}
           <Link href="/profile" className="flex items-center min-h-[44px] min-w-[44px] justify-center">
             <div className="w-10 h-10 rounded-full border-2 border-border hover:border-profit transition overflow-hidden flex items-center justify-center bg-surface">
               {profilePhoto ? (
@@ -129,11 +127,8 @@ export default function NavBar() {
             </div>
           </Link>
 
-          {/* Mobile hamburger */}
-          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 min-h-[44px]">
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={menuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
-            </svg>
+          <button onClick={() => setMenuOpen(!menuOpen)} className="btn md:hidden p-2">
+            <Icon name={menuOpen ? 'close' : 'menu'} />
           </button>
         </div>
       </div>

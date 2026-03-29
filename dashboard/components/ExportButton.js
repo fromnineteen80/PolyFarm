@@ -1,11 +1,13 @@
 import { exportToCSV } from '../lib/csv'
+import Icon from './Icon'
 
 export default function ExportButton({ data, filename, label }) {
   return (
     <button
       onClick={() => exportToCSV(data, filename || 'export')}
-      className="px-4 py-2 bg-card border border-border rounded text-white text-sm hover:bg-surface transition min-h-[44px]"
+      className="btn btn-export"
     >
+      <Icon name="download" size="sm" />
       {label || 'Export CSV'}
     </button>
   )

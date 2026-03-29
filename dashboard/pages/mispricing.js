@@ -71,7 +71,7 @@ export default function Mispricing({ mappings: initial, recentTrades, walletValu
     <Layout>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Live Mispricing Monitor</h1>
-        <button onClick={() => window.location.reload()} className="px-3 py-2 border border-border rounded text-sm text-neutral hover:text-white min-h-[44px]">Refresh</button>
+        <button onClick={() => window.location.reload()} className="btn btn-outline">Refresh</button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
@@ -84,12 +84,12 @@ export default function Mispricing({ mappings: initial, recentTrades, walletValu
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <select value={filters.sport} onChange={e => setFilters({ ...filters, sport: e.target.value })} className="bg-card border border-border rounded px-3 py-2 text-white text-sm min-h-[44px]">
+        <select value={filters.sport} onChange={e => setFilters({ ...filters, sport: e.target.value })} className="input w-auto">
           <option value="">All Sports</option>
           {sports.map(s => <option key={s} value={s}>{SPORT_CODES[s] || s}</option>)}
         </select>
-        <input type="number" placeholder="Min edge ¢" value={filters.minEdge || ''} onChange={e => setFilters({ ...filters, minEdge: e.target.value })} className="bg-card border border-border rounded px-3 py-2 text-white text-sm w-24 min-h-[44px]" />
-        <select value={filters.band} onChange={e => setFilters({ ...filters, band: e.target.value })} className="bg-card border border-border rounded px-3 py-2 text-white text-sm min-h-[44px]">
+        <input type="number" placeholder="Min edge ¢" value={filters.minEdge || ''} onChange={e => setFilters({ ...filters, minEdge: e.target.value })} className="input w-24" />
+        <select value={filters.band} onChange={e => setFilters({ ...filters, band: e.target.value })} className="input w-auto">
           <option value="">All Bands</option>
           <option value="A">A</option><option value="B">B</option><option value="C">C</option>
         </select>
@@ -148,7 +148,7 @@ export default function Mispricing({ mappings: initial, recentTrades, walletValu
 
       <p className="text-xs text-neutral mb-2">Net% = ((Edge x Shares) - Taker Fee + Maker Rebate) / Position Size. Calculated at Band position size for ${formatCurrency(walletValue)} portfolio.</p>
 
-      <button onClick={() => setShowFees(!showFees)} className="text-xs text-info hover:underline mb-4 min-h-[44px]">{showFees ? 'Hide' : 'Show'} fee explanation</button>
+      <button onClick={() => setShowFees(!showFees)} className="btn btn-ghost text-xs">{showFees ? 'Hide' : 'Show'} fee explanation</button>
       {showFees && (
         <div className="card text-xs text-neutral mb-4">
           <p>Taker fee: 0.30% of entry notional</p>

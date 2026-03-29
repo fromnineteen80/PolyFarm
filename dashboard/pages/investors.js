@@ -56,18 +56,18 @@ export default function Investors({ investors, events, config, walletValue }) {
 
       <h2 className="text-lg font-semibold mb-3">Add Capital Event</h2>
       <form onSubmit={handleSubmit} className="card mb-6 grid md:grid-cols-3 gap-3">
-        <input placeholder="First Name" required value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} className="bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]" />
-        <input placeholder="Last Name" required value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} className="bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]" />
-        <input placeholder="Email (optional)" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]" />
-        <select value={form.event_type} onChange={e => setForm({ ...form, event_type: e.target.value })} className="bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]">
+        <input placeholder="First Name" required value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} className="input" />
+        <input placeholder="Last Name" required value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} className="input" />
+        <input placeholder="Email (optional)" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="input" />
+        <select value={form.event_type} onChange={e => setForm({ ...form, event_type: e.target.value })} className="input">
           <option value="initial">Initial Deposit</option>
           <option value="additional">Additional Deposit</option>
           <option value="withdrawal">Withdrawal</option>
         </select>
-        <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]" />
-        <input type="number" step="0.01" placeholder="Amount" required value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} className="bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px]" />
-        <input placeholder="Notes" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="bg-surface border border-border rounded px-3 py-2 text-white min-h-[44px] md:col-span-2" />
-        <button type="submit" disabled={submitting} className="bg-info text-white rounded py-2 min-h-[44px]">{submitting ? 'Saving...' : 'Add Event'}</button>
+        <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="input" />
+        <input type="number" step="0.01" placeholder="Amount" required value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} className="input" />
+        <input placeholder="Notes" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="input md:col-span-2" />
+        <button type="submit" disabled={submitting} className="btn btn-primary">{submitting ? 'Saving...' : 'Add Event'}</button>
         {msg && <p className="text-sm text-neutral md:col-span-3">{msg}</p>}
       </form>
 

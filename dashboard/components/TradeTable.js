@@ -1,9 +1,15 @@
 import { useState } from 'react'
 import { formatCurrency } from '../lib/calculations'
+import Icon from './Icon'
 
-const STRATEGY_COLORS = { oracle_arb: 'text-profit', normal: 'text-profit', exception: 'text-bandA', fade: 'text-orange-500', overnight: 'text-info' }
+const STRATEGY_MAP = { oracle_arb: 'strategy-oracle', normal: 'strategy-oracle', exception: 'strategy-exception', fade: 'strategy-fade', overnight: 'strategy-overnight' }
 
-export default function TradeTable({ trades, showFilters, onExport }) {
+function SortIcon({ active, dir }) {
+  if (!active) return null
+  return <Icon name={dir === 1 ? 'arrow_upward' : 'arrow_downward'} size="sm" />
+}
+
+export default function TradeTable({ trades }) {
   const [page, setPage] = useState(0)
   const [sortKey, setSortKey] = useState('timestamp_entry')
   const [sortDir, setSortDir] = useState(-1)
@@ -28,60 +34,46 @@ export default function TradeTable({ trades, showFilters, onExport }) {
     else { setSortKey(key); setSortDir(-1) }
   }
 
+  const TH = ({ k, label, hide }) => (
+    <th onClick={() => toggleSort(k)} className={`text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap ${hide || ''}`}>
+      <span className="inline-flex items-center gap-1">{label} <SortIcon active={sortKey === k} dir={sortDir} /></span>
+    </th>
+  )
+
   return (
     <div>
       <div className="table-scroll">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th onClick={() => toggleSort('market_slug')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap">
-                Market {sortKey === 'market_slug' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('pnl')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap">
-                P&L {sortKey === 'pnl' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('exit_type')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap">
-                Exit {sortKey === 'exit_type' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('timestamp_entry')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap hidden md:table-cell">
-                Date {sortKey === 'timestamp_entry' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('sport')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap hidden md:table-cell">
-                Sport {sortKey === 'sport' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('position_type')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap hidden md:table-cell">
-                Strategy {sortKey === 'position_type' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('band')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap hidden md:table-cell">
-                Band {sortKey === 'band' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('entry_price')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap hidden lg:table-cell">
-                Entry {sortKey === 'entry_price' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('exit_price')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap hidden lg:table-cell">
-                Exit Price {sortKey === 'exit_price' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
-              <th onClick={() => toggleSort('hold_duration_seconds')} className="text-left text-neutral py-2 px-2 cursor-pointer hover:text-white whitespace-nowrap hidden lg:table-cell">
-                Hold {sortKey === 'hold_duration_seconds' ? (sortDir === 1 ? '▲' : '▼') : ''}
-              </th>
+              <TH k="market_slug" label="Market" />
+              <TH k="pnl" label="P&L" />
+              <TH k="exit_type" label="Exit" />
+              <TH k="timestamp_entry" label="Date" hide="hidden md:table-cell" />
+              <TH k="sport" label="Sport" hide="hidden md:table-cell" />
+              <TH k="position_type" label="Strategy" hide="hidden md:table-cell" />
+              <TH k="band" label="Band" hide="hidden md:table-cell" />
+              <TH k="entry_price" label="Entry" hide="hidden lg:table-cell" />
+              <TH k="exit_price" label="Exit Price" hide="hidden lg:table-cell" />
+              <TH k="hold_duration_seconds" label="Hold" hide="hidden lg:table-cell" />
             </tr>
           </thead>
           <tbody>
             {paged.map((t, i) => {
               const pnl = parseFloat(t.pnl || 0)
-              const stratColor = STRATEGY_COLORS[t.position_type] || ''
+              const stratClass = STRATEGY_MAP[t.position_type] || ''
               return (
                 <tr key={i} className="border-b border-border hover:bg-surface">
                   <td className="py-2 px-2 max-w-[150px] truncate">{t.market_slug}</td>
                   <td className={`py-2 px-2 ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
-                  <td className="py-2 px-2">{t.exit_type || '—'}</td>
+                  <td className="py-2 px-2">{t.exit_type || '-'}</td>
                   <td className="py-2 px-2 whitespace-nowrap hidden md:table-cell">{t.timestamp_entry?.split('T')[0]}</td>
                   <td className="py-2 px-2 hidden md:table-cell">{t.sport}</td>
-                  <td className={`py-2 px-2 hidden md:table-cell ${stratColor}`}>{t.position_type}</td>
+                  <td className={`py-2 px-2 hidden md:table-cell ${stratClass}`}>{t.position_type}</td>
                   <td className="py-2 px-2 hidden md:table-cell">{t.band}</td>
                   <td className="py-2 px-2 hidden lg:table-cell">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
-                  <td className="py-2 px-2 hidden lg:table-cell">{t.exit_price ? parseFloat(t.exit_price).toFixed(4) : '—'}</td>
-                  <td className="py-2 px-2 hidden lg:table-cell">{t.hold_duration_seconds ? Math.round(t.hold_duration_seconds / 60) + 'm' : '—'}</td>
+                  <td className="py-2 px-2 hidden lg:table-cell">{t.exit_price ? parseFloat(t.exit_price).toFixed(4) : '-'}</td>
+                  <td className="py-2 px-2 hidden lg:table-cell">{t.hold_duration_seconds ? Math.round(t.hold_duration_seconds / 60) + 'm' : '-'}</td>
                 </tr>
               )
             })}
@@ -91,9 +83,9 @@ export default function TradeTable({ trades, showFilters, onExport }) {
       <div className="flex justify-between items-center mt-3">
         <span className="text-sm text-neutral">{sorted.length} trades</span>
         <div className="flex gap-2">
-          <button disabled={page === 0} onClick={() => setPage(page - 1)} className="px-3 py-1 border border-border rounded text-sm disabled:opacity-30 min-h-[44px]">Prev</button>
+          <button disabled={page === 0} onClick={() => setPage(page - 1)} className="btn btn-outline"><Icon name="chevron_left" size="sm" /> Prev</button>
           <span className="text-sm text-neutral py-2">{page + 1}/{totalPages}</span>
-          <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} className="px-3 py-1 border border-border rounded text-sm disabled:opacity-30 min-h-[44px]">Next</button>
+          <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} className="btn btn-outline">Next <Icon name="chevron_right" size="sm" /></button>
         </div>
       </div>
     </div>
