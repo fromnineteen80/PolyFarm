@@ -82,6 +82,18 @@ class AlertManager:
                     url, json=payload, timeout=10
                 ) as resp:
                     if resp.status == 200:
+                        try:
+                            from data.database import (
+                                set_bot_config
+                            )
+                            await set_bot_config(
+                                "telegram_last_alert",
+                                datetime.now(
+                                    timezone.utc
+                                ).isoformat()
+                            )
+                        except Exception:
+                            pass
                         return
                     logger.debug(
                         f"Telegram {resp.status}"

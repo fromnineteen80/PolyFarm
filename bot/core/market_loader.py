@@ -287,6 +287,21 @@ class MarketLoader:
                         self.odds_last_updated[eid] = (
                             datetime.now(timezone.utc)
                         )
+                    try:
+                        from data.database import (
+                            set_bot_config
+                        )
+                        import asyncio
+                        asyncio.ensure_future(
+                            set_bot_config(
+                                "sharpapi_last_update",
+                                datetime.now(
+                                    timezone.utc
+                                ).isoformat()
+                            )
+                        )
+                    except Exception:
+                        pass
                 elif resp.status_code == 429:
                     logger.warning(
                         "Odds API rate limit hit"

@@ -4,6 +4,7 @@ import logging
 import websockets
 from config import WS_PRIVATE
 from core.ws_auth import generate_ws_headers
+from data.database import set_bot_config
 
 logger = logging.getLogger("polyfarm.ws_private")
 
@@ -35,6 +36,13 @@ class WSPrivate:
                     logger.info(
                         "WS Private connected"
                     )
+                    try:
+                        await set_bot_config(
+                            "ws_private_status",
+                            "CONNECTED"
+                        )
+                    except Exception:
+                        pass
 
                     # Subscribe to private channels
                     await ws.send(json.dumps({
@@ -67,6 +75,12 @@ class WSPrivate:
                 )
 
             self._ws = None
+            try:
+                await set_bot_config(
+                    "ws_private_status", "DISCONNECTED"
+                )
+            except Exception:
+                pass
             delay = BACKOFF[min(
                 attempt, len(BACKOFF) - 1
             )]

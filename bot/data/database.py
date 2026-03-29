@@ -9,6 +9,7 @@ from supabase import create_client, Client
 logger = logging.getLogger("polyfarm.database")
 
 _supabase: Client = None
+_last_write_ts: float = 0
 
 def init_database():
     """
@@ -34,7 +35,28 @@ async def db_execute(func):
         )
     """
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, func)
+    result = await loop.run_in_executor(None, func)
+    # Track last successful write (throttled to avoid recursion)
+    global _last_write_ts
+    import time
+    now = time.time()
+    if now - _last_write_ts > 30:
+        _last_write_ts = now
+        try:
+            ts = datetime.now(timezone.utc).isoformat()
+            await loop.run_in_executor(
+                None,
+                lambda: _supabase.table("bot_config")
+                    .upsert({
+                        "key": "supabase_last_write",
+                        "value": ts,
+                        "updated": ts
+                    })
+                    .execute()
+            )
+        except Exception:
+            pass
+    return result
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()

@@ -4,6 +4,7 @@ import logging
 import websockets
 from config import WS_MARKETS
 from core.ws_auth import generate_ws_headers
+from data.database import set_bot_config
 
 logger = logging.getLogger("polyfarm.ws_markets")
 
@@ -56,6 +57,13 @@ class WSMarkets:
                     logger.info(
                         "WS Markets connected"
                     )
+                    try:
+                        await set_bot_config(
+                            "ws_markets_status",
+                            "CONNECTED"
+                        )
+                    except Exception:
+                        pass
 
                     # Resubscribe on reconnect
                     if self._subscribed_slugs:
@@ -88,6 +96,12 @@ class WSMarkets:
                 )
 
             self._ws = None
+            try:
+                await set_bot_config(
+                    "ws_markets_status", "DISCONNECTED"
+                )
+            except Exception:
+                pass
             delay = BACKOFF[min(
                 attempt, len(BACKOFF) - 1
             )]

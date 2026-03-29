@@ -171,6 +171,7 @@ async def main():
             game_complete_scanner(
                 registry, position_monitor, alerts
             ),
+            heartbeat_loop(),
         ]
 
         if PHASE2_ENABLED:
@@ -237,6 +238,19 @@ async def main():
             await shutdown(
                 wallet, alerts, order_manager
             )
+
+
+async def heartbeat_loop():
+    """Write heartbeat timestamp every 60 seconds."""
+    while True:
+        try:
+            await set_bot_config(
+                "last_heartbeat",
+                datetime.now(timezone.utc).isoformat()
+            )
+        except Exception:
+            pass
+        await asyncio.sleep(60)
 
 
 async def pre_game_scanner(registry, mapper, alerts):

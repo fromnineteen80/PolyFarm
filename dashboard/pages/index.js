@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import StatCard from '../components/StatCard'
-import { formatCurrency, formatPct } from '../lib/calculations'
+import { formatCurrency } from '../lib/calculations'
 import supabase from '../lib/supabase'
 
 const STRATEGY_COLORS = { normal: '#00c853', oracle_arb: '#00c853', exception: '#ffd700', fade: '#ff6d00', overnight: '#2979ff' }
@@ -15,25 +15,65 @@ export async function getServerSideProps(context) {
   if (!session.user.hasProfile) return { redirect: { destination: '/profile/setup', permanent: false } }
 
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const [snapRes, openRes, closedRes, cfgRes] = await Promise.all([
+  const today = new Date().toISOString().split('T')[0]
+  const [snapRes, openRes, closedRes, cfgRes, todayTradesRes, sessionRes] = await Promise.all([
     sb.from('daily_snapshots').select('*').order('date', { ascending: false }).limit(1),
     sb.from('trades').select('*').is('timestamp_exit', null).limit(50),
     sb.from('trades').select('*').not('timestamp_exit', 'is', null).order('timestamp_exit', { ascending: false }).limit(10),
     sb.from('bot_config').select('*'),
+    sb.from('trades').select('*').gte('timestamp_entry', today + 'T00:00:00Z').not('timestamp_exit', 'is', null),
+    sb.from('sessions').select('*').order('start_time', { ascending: false }).limit(1),
   ])
   const cfg = {}
   cfgRes.data?.forEach(r => { cfg[r.key] = r.value })
 
-  return { props: { session, snapshot: snapRes.data?.[0] || null, openTrades: openRes.data || [], recentTrades: closedRes.data || [], config: cfg } }
+  return {
+    props: {
+      session,
+      snapshot: snapRes.data?.[0] || null,
+      openTrades: openRes.data || [],
+      recentTrades: closedRes.data || [],
+      config: cfg,
+      todayTrades: todayTradesRes.data || [],
+      latestSession: sessionRes.data?.[0] || null,
+    }
+  }
 }
 
-export default function Overview({ snapshot, openTrades: initialOpen, recentTrades, config }) {
+function timeAgo(ts) {
+  if (!ts) return 'unknown'
+  const diff = (Date.now() - new Date(ts).getTime()) / 1000
+  if (diff < 60) return `${Math.round(diff)}s ago`
+  if (diff < 3600) return `${Math.round(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.round(diff / 3600)}h ago`
+  return `${Math.round(diff / 86400)}d ago`
+}
+
+function statusDot(ts, warnSec, critSec) {
+  if (!ts) return '#888888'
+  const age = (Date.now() - new Date(ts).getTime()) / 1000
+  if (age > critSec) return '#ff1744'
+  if (age > warnSec) return '#ff9800'
+  return '#00c853'
+}
+
+export default function Overview({ snapshot, openTrades: initialOpen, recentTrades, config, todayTrades, latestSession }) {
   const [openTrades, setOpenTrades] = useState(initialOpen)
+  const [sysConfig, setSysConfig] = useState(config)
+  const [sysLoading, setSysLoading] = useState(false)
 
   useEffect(() => {
     const interval = setInterval(async () => {
-      const { data } = await supabase.from('trades').select('*').is('timestamp_exit', null).limit(50)
-      if (data) setOpenTrades(data)
+      const [tradesRes, cfgRes] = await Promise.all([
+        supabase.from('trades').select('*').is('timestamp_exit', null).limit(50),
+        supabase.from('bot_config').select('*'),
+      ])
+      if (tradesRes.data) setOpenTrades(tradesRes.data)
+      if (cfgRes.data) {
+        const c = {}
+        cfgRes.data.forEach(r => { c[r.key] = r.value })
+        setSysConfig(c)
+      }
     }, 30000)
     return () => clearInterval(interval)
   }, [])
@@ -46,7 +86,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
   const paperWinRate = parseFloat(config?.paper_win_rate || 0)
   const isPaper = config?.current_mode !== 'live'
 
-  // Streak calculation
+  // Streak
   const streakTrades = recentTrades || []
   let currentStreak = 0
   let streakType = null
@@ -56,6 +96,26 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
     else if (win === streakType) currentStreak++
     else break
   }
+
+  // Today summary
+  const tt = todayTrades || []
+  const todayWins = tt.filter(t => parseFloat(t.pnl || 0) > 0).length
+  const todayLosses = tt.length - todayWins
+  const todayWR = tt.length > 0 ? (todayWins / tt.length * 100).toFixed(0) : '0'
+  const todayPnl = tt.reduce((s, t) => s + parseFloat(t.pnl || 0), 0)
+  const todayPnlPct = walletValue > 0 ? (todayPnl / walletValue * 100).toFixed(2) : '0.00'
+  const oracleCount = tt.filter(t => t.position_type === 'normal' || t.position_type === 'oracle_arb').length
+  const fadeCount = tt.filter(t => t.position_type === 'fade').length
+  const exceptionCount = tt.filter(t => t.position_type === 'exception').length
+  const overnightCount = tt.filter(t => t.position_type === 'overnight').length
+  const profitMode = latestSession?.lock_reason || config?.profit_mode || 'NORMAL'
+  const peakGain = parseFloat(latestSession?.peak_daily_gain_pct || 0) * 100
+  const floorSafe = gap > 0
+
+  const bestTrade = tt.length > 0
+    ? tt.reduce((best, t) => parseFloat(t.pnl || 0) > parseFloat(best.pnl || 0) ? t : best, tt[0])
+    : null
+  const bestPnl = bestTrade ? parseFloat(bestTrade.pnl || 0) : 0
 
   return (
     <Layout>
@@ -144,10 +204,84 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
         </div>
       )}
 
-      <div className="mt-6 flex items-center gap-3 text-sm text-neutral">
-        <span className="w-2 h-2 rounded-full bg-profit inline-block" /> Supabase connected
-        <span className={`px-2 py-0.5 rounded text-xs font-bold ${isPaper ? 'bg-paper text-black' : 'bg-live text-black'}`}>{isPaper ? 'PAPER' : 'LIVE'}</span>
+      {/* TODAY SUMMARY */}
+      <div className="border-t border-border mt-8 pt-6">
+        <p className="text-xs font-bold tracking-widest text-neutral mb-4">TODAY</p>
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-neutral">Trades</span>
+            <span className="font-semibold">{tt.length} executed · {todayWins} won · {todayLosses} lost · {todayWR}% win rate</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-neutral">P&L</span>
+            <span className={`font-semibold ${todayPnl >= 0 ? 'text-profit' : 'text-loss'}`}>{todayPnl >= 0 ? '+' : ''}{formatCurrency(todayPnl)} · {todayPnl >= 0 ? '+' : ''}{todayPnlPct}% session</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-neutral">Strategies</span>
+            <span className="font-semibold">Oracle {oracleCount} · Fade {fadeCount} · Exception {exceptionCount} · Overnight {overnightCount}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-neutral">Mode</span>
+            <span className="font-semibold">{profitMode} · peaked +{peakGain.toFixed(1)}% · <span className={floorSafe ? 'text-profit' : 'text-loss'}>{floorSafe ? 'floor safe' : 'WARNING'}</span></span>
+          </div>
+          {isPaper && (
+            <div className="flex justify-between text-sm">
+              <span className="text-neutral">Paper</span>
+              <span className="font-semibold">{paperCompleted}/50 trades · {(paperWinRate * 100).toFixed(0)}% win rate</span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm">
+            <span className="text-neutral">Best trade</span>
+            <span className="font-semibold">{bestTrade ? `${bestTrade.teams || bestTrade.market_slug} ${bestPnl >= 0 ? '+' : ''}${formatCurrency(bestPnl)} (${bestTrade.position_type})` : '--'}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-neutral">Active now</span>
+            <span className="font-semibold">{openTrades.length} open positions</span>
+          </div>
+        </div>
+      </div>
+
+      {/* SYSTEM STATUS */}
+      <div className="border-t border-border mt-8 pt-6 mb-4">
+        <p className="text-xs font-bold tracking-widest text-neutral mb-4">SYSTEM</p>
+        <div className="space-y-3">
+          <StatusRow
+            label="Bot"
+            dot={statusDot(sysConfig?.last_heartbeat, 180, 600)}
+            value={`${isPaper ? 'PAPER' : 'LIVE'} · last heartbeat ${timeAgo(sysConfig?.last_heartbeat)}`}
+          />
+          <StatusRow
+            label="Polymarket"
+            dot={sysConfig?.ws_markets_status === 'CONNECTED' && sysConfig?.ws_private_status === 'CONNECTED' ? '#00c853' : sysConfig?.ws_markets_status === 'CONNECTED' || sysConfig?.ws_private_status === 'CONNECTED' ? '#ff9800' : sysConfig?.ws_markets_status ? '#ff1744' : '#888888'}
+            value={`${sysConfig?.ws_markets_status || 'UNKNOWN'} · markets + private WebSocket`}
+          />
+          <StatusRow
+            label="SharpAPI"
+            dot={statusDot(sysConfig?.sharpapi_last_update, 30, 120)}
+            value={`${sysConfig?.sharpapi_last_update ? 'CONNECTED' : 'UNKNOWN'} · last update ${timeAgo(sysConfig?.sharpapi_last_update)}`}
+          />
+          <StatusRow
+            label="Supabase"
+            dot={statusDot(sysConfig?.supabase_last_write, 60, 300)}
+            value={`${sysConfig?.supabase_last_write ? 'CONNECTED' : 'UNKNOWN'} · last write ${timeAgo(sysConfig?.supabase_last_write)}`}
+          />
+          <StatusRow
+            label="Telegram"
+            dot={sysConfig?.telegram_last_alert ? '#00c853' : '#888888'}
+            value={`${sysConfig?.telegram_last_alert ? 'ACTIVE' : 'UNKNOWN'} · last alert ${timeAgo(sysConfig?.telegram_last_alert)}`}
+          />
+        </div>
       </div>
     </Layout>
+  )
+}
+
+function StatusRow({ label, dot, value }) {
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dot }} />
+      <span className="text-neutral w-24 flex-shrink-0">{label}</span>
+      <span className="font-semibold">{value}</span>
+    </div>
   )
 }
