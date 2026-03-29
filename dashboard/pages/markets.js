@@ -9,6 +9,7 @@ import supabase from '../lib/supabase'
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions)
   if (!session) return { redirect: { destination: '/auth/signin', permanent: false } }
+  if (!session.user.hasProfile) return { redirect: { destination: '/profile/setup', permanent: false } }
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const { data } = await sb.from('market_mappings').select('*').order('mapping_confidence', { ascending: false })
   return { props: { session, mappings: data || [] } }

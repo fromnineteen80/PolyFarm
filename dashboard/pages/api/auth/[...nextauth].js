@@ -1,5 +1,11 @@
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export const authOptions = {
   providers: [
@@ -10,9 +16,21 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
-      return user.email === process.env.GOOGLE_AUTHORIZED_EMAIL
+      const allowed = (process.env.GOOGLE_AUTHORIZED_EMAILS || process.env.GOOGLE_AUTHORIZED_EMAIL || '')
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean)
+      return allowed.includes(user.email)
     },
     async session({ session }) {
+      if (!session?.user?.email) return session
+      const { data } = await supabase
+        .from('investor_profiles')
+        .select('id, first_name, last_name, profile_photo_url, display_name')
+        .eq('email', session.user.email)
+        .single()
+      session.user.hasProfile = !!data
+      session.user.profile = data || null
       return session
     }
   },

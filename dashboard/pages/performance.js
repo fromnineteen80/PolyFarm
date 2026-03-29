@@ -14,6 +14,7 @@ import { formatCurrency, calcSharpe, calcMaxDrawdown, calcRollingWinRate } from 
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions)
   if (!session) return { redirect: { destination: '/auth/signin', permanent: false } }
+  if (!session.user.hasProfile) return { redirect: { destination: '/profile/setup', permanent: false } }
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const [tradeRes, snapRes] = await Promise.all([
     sb.from('trades').select('*').not('timestamp_exit', 'is', null).order('timestamp_exit', { ascending: false }).limit(5000),

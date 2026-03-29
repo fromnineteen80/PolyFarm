@@ -68,6 +68,7 @@ const SPORT_LABELS = { basketball_nba: 'NBA', icehockey_nhl: 'NHL', baseball_mlb
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions)
   if (!session) return { redirect: { destination: '/auth/signin', permanent: false } }
+  if (!session.user.hasProfile) return { redirect: { destination: '/profile/setup', permanent: false } }
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const { data: trades } = await sb.from('trades').select('position_type,fade_team,exception_trigger_reason,pnl,sport,raw_edge_at_entry,hold_duration_seconds').not('timestamp_exit', 'is', null)
   return { props: { session, trades: trades || [] } }

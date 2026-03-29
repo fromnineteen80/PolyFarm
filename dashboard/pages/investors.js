@@ -12,6 +12,7 @@ import { formatCurrency, calcOwnershipPct, calcInvestorValue } from '../lib/calc
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions)
   if (!session) return { redirect: { destination: '/auth/signin', permanent: false } }
+  if (!session.user.hasProfile) return { redirect: { destination: '/profile/setup', permanent: false } }
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const [invRes, evtRes, cfgRes, snapRes] = await Promise.all([
     sb.from('investors').select('*').eq('is_active', true),

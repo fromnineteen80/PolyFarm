@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import supabase from '../lib/supabase'
-import { formatCurrency } from '../lib/calculations'
+import { formatCurrency, calcInvestorValue } from '../lib/calculations'
 
 const NAV_LINKS = [
   { href: '/', label: 'Overview' },
@@ -21,19 +22,54 @@ const NAV_LINKS = [
 
 export default function NavBar() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [wallet, setWallet] = useState(null)
-  const [mode, setMode] = useState('paper')
+  const [investorData, setInvestorData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
-      const { data: snap } = await supabase.from('daily_snapshots').select('wallet_value,session_pnl,paper_mode').order('date', { ascending: false }).limit(1)
-      if (snap?.[0]) { setWallet(snap[0]); setMode(snap[0].paper_mode ? 'paper' : 'live') }
-      const { data: cfg } = await supabase.from('bot_config').select('value').eq('key', 'current_mode')
-      if (cfg?.[0]?.value) setMode(cfg[0].value)
+      if (!session?.user?.email) { setLoading(false); return }
+      try {
+        const email = session.user.email
+        const [invRes, cfgRes, snapRes] = await Promise.all([
+          supabase.from('investors').select('units_held').eq('email', email).single(),
+          supabase.from('bot_config').select('value').eq('key', 'total_units_outstanding'),
+          supabase.from('daily_snapshots').select('wallet_value,date').order('date', { ascending: false }).limit(2),
+        ])
+
+        const units = parseFloat(invRes.data?.units_held || 0)
+        const totalUnits = parseFloat(cfgRes.data?.[0]?.value || 0)
+        const todayWallet = parseFloat(snapRes.data?.[0]?.wallet_value || 0)
+        const yesterdayWallet = parseFloat(snapRes.data?.[1]?.wallet_value || todayWallet)
+
+        const todayValue = calcInvestorValue(units, totalUnits, todayWallet)
+        const yesterdayValue = calcInvestorValue(units, totalUnits, yesterdayWallet)
+        const dailyPnl = todayValue - yesterdayValue
+
+        // Total invested
+        const { data: events } = await supabase
+          .from('capital_events')
+          .select('amount,event_type')
+          .eq('first_name', session.user.profile?.first_name || '')
+
+        const totalInvested = (events || [])
+          .filter(e => e.event_type !== 'withdrawal')
+          .reduce((s, e) => s + parseFloat(e.amount || 0), 0)
+
+        setInvestorData({ units, totalUnits, todayValue, dailyPnl, totalInvested })
+      } catch (err) {
+        // Gracefully handle — show $0.00
+      }
+      setLoading(false)
     }
     load()
-  }, [])
+    const interval = setInterval(load, 30000)
+    return () => clearInterval(interval)
+  }, [session])
+
+  const profilePhoto = session?.user?.profile?.profile_photo_url
+  const initial = (session?.user?.profile?.first_name || session?.user?.name || '?')[0]?.toUpperCase()
 
   return (
     <nav className="bg-surface border-b border-border sticky top-0 z-50">
@@ -49,21 +85,59 @@ export default function NavBar() {
             ))}
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-3 text-sm">
-          <span>Wallet: {formatCurrency(wallet?.wallet_value)}</span>
-          <span className={parseFloat(wallet?.session_pnl || 0) >= 0 ? 'text-profit' : 'text-loss'}>
-            Today: {parseFloat(wallet?.session_pnl || 0) >= 0 ? '+' : ''}{formatCurrency(wallet?.session_pnl)}
-          </span>
-          <span className={`px-2 py-0.5 rounded text-xs font-bold ${mode === 'live' ? 'bg-live text-black' : 'bg-paper text-black'}`}>
-            {mode?.toUpperCase()}
-          </span>
+
+        <div className="flex items-center gap-3">
+          {/* Investor context strip — desktop only */}
+          <div className="hidden md:flex items-center gap-3 text-sm">
+            {loading ? (
+              <div className="flex gap-3">
+                <span className="bg-border rounded h-4 w-16 animate-pulse" />
+                <span className="bg-border rounded h-4 w-16 animate-pulse" />
+                <span className="bg-border rounded h-4 w-16 animate-pulse" />
+              </div>
+            ) : investorData ? (
+              <>
+                <div className="text-center">
+                  <p className="text-xs text-neutral leading-none">Invested</p>
+                  <p className="font-semibold">{formatCurrency(investorData.totalInvested)}</p>
+                </div>
+                <span className="text-border">|</span>
+                <div className="text-center">
+                  <p className="text-xs text-neutral leading-none">Value</p>
+                  <p className="font-semibold">{formatCurrency(investorData.todayValue)}</p>
+                </div>
+                <span className="text-border">|</span>
+                <div className="text-center">
+                  <p className="text-xs text-neutral leading-none">Today</p>
+                  <p className={`font-bold ${investorData.dailyPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                    {investorData.dailyPnl >= 0 ? '+' : ''}{formatCurrency(investorData.dailyPnl)}
+                  </p>
+                </div>
+                <span className="text-border">|</span>
+              </>
+            ) : null}
+          </div>
+
+          {/* Profile photo — always visible */}
+          <Link href="/profile" className="flex items-center min-h-[44px] min-w-[44px] justify-center">
+            <div className="w-10 h-10 rounded-full border-2 border-border hover:border-profit transition overflow-hidden flex items-center justify-center bg-surface">
+              {profilePhoto ? (
+                <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold text-neutral">{initial}</span>
+              )}
+            </div>
+          </Link>
+
+          {/* Mobile hamburger */}
+          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 min-h-[44px]">
+            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={menuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
+            </svg>
+          </button>
         </div>
-        <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden p-2 min-h-[44px]">
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={menuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
-          </svg>
-        </button>
       </div>
+
       {menuOpen && (
         <div className="md:hidden border-t border-border px-4 py-2">
           {NAV_LINKS.map(l => (
@@ -72,10 +146,10 @@ export default function NavBar() {
               {l.label}
             </Link>
           ))}
-          <div className="mt-2 pt-2 border-t border-border text-sm">
-            <p>Wallet: {formatCurrency(wallet?.wallet_value)}</p>
-            <span className={`px-2 py-0.5 rounded text-xs font-bold inline-block mt-1 ${mode === 'live' ? 'bg-live text-black' : 'bg-paper text-black'}`}>{mode?.toUpperCase()}</span>
-          </div>
+          <Link href="/profile" onClick={() => setMenuOpen(false)}
+            className="block py-2 text-sm min-h-[44px] flex items-center text-neutral">
+            Profile
+          </Link>
         </div>
       )}
     </nav>
