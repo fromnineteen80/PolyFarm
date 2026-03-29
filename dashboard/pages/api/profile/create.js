@@ -11,13 +11,16 @@ export default async function handler(req, res) {
   if (!session) return res.status(401).json({ error: 'Unauthorized' })
 
   const email = session.user.email
-  const { first_name, last_name, display_name, profile_photo_url, initial_capital } = req.body
+  const { first_name, last_name, display_name, profile_photo_url, initial_capital, intended_capital, is_paper } = req.body
 
   if (!first_name || !last_name) {
     return res.status(400).json({ error: 'First name and last name are required' })
   }
 
+  // In paper mode: initial_capital = half of paper wallet (passed from client)
+  // intended_capital = what they plan to invest when going live
   const amount = parseFloat(initial_capital || 0)
+  const intendedAmount = parseFloat(intended_capital || 0)
   if (amount < 0) return res.status(400).json({ error: 'Invalid capital amount' })
 
   // Check if profile already exists
@@ -39,6 +42,7 @@ export default async function handler(req, res) {
       display_name: display_name || `${first_name} ${last_name}`,
       profile_photo_url: profile_photo_url || null,
       initial_capital: amount,
+      intended_capital: intendedAmount,
       joined_date: new Date().toISOString().split('T')[0],
     })
     .select()
@@ -66,7 +70,7 @@ export default async function handler(req, res) {
     })
   }
 
-  // Record initial capital event if amount > 0
+  // Record capital event with paper allocation amount
   if (amount > 0) {
     const { data: snapshots } = await supabase
       .from('daily_snapshots')
@@ -121,7 +125,9 @@ export default async function handler(req, res) {
       units_assigned: unitsAssigned,
       ownership_pct_after: ownershipAfter,
       wallet_value_at_event: walletValue,
-      notes: 'Initial deposit via profile setup',
+      notes: is_paper
+        ? `Paper mode allocation (intended real: $${intendedAmount.toFixed(2)})`
+        : 'Initial deposit via profile setup',
     })
   }
 

@@ -35,11 +35,12 @@ export async function getServerSideProps(context) {
       events: eventsRes.data || [],
       totalUnits: parseFloat(cfg.total_units_outstanding || 0),
       walletValue: parseFloat(snapRes.data?.[0]?.wallet_value || 0),
+      isPaper: cfg.current_mode !== 'live',
     }
   }
 }
 
-export default function Profile({ session, profile, investor, events, totalUnits, walletValue }) {
+export default function Profile({ session, profile, investor, events, totalUnits, walletValue, isPaper }) {
   const fileRef = useRef(null)
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -162,8 +163,18 @@ export default function Profile({ session, profile, investor, events, totalUnits
         </div>
 
         <div className="lg:col-span-2">
+          {isPaper && (
+            <div className="card mb-4 border-paper border text-sm">
+              <p className="text-paper font-semibold mb-1">Paper Mode Active</p>
+              <p className="text-neutral">Your current allocation is simulated at {formatCurrency(netInvested)} (half the paper wallet).</p>
+              {profile?.intended_capital > 0 && (
+                <p className="text-neutral mt-1">Intended real investment: <span className="text-white font-semibold">{formatCurrency(profile.intended_capital)}</span>. Units will recalculate automatically when the bot goes live.</p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-            <StatCard title="Total Invested" value={formatCurrency(netInvested)} />
+            <StatCard title={isPaper ? "Paper Allocation" : "Total Invested"} value={formatCurrency(netInvested)} />
             <StatCard title="Your Portfolio Value" value={formatCurrency(currentValue)} color={currentValue >= netInvested ? 'text-profit' : 'text-loss'} />
             <StatCard title="Total Return" value={`${totalReturn >= 0 ? '+' : ''}${formatCurrency(totalReturn)} (${returnPct >= 0 ? '+' : ''}${returnPct.toFixed(1)}%)`} color={totalReturn >= 0 ? 'text-profit' : 'text-loss'} />
             <StatCard title="Fund Ownership" value={`${ownershipPct.toFixed(1)}%`} />

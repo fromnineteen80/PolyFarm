@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS investor_profiles (
   display_name TEXT,
   profile_photo_url TEXT,
   initial_capital DECIMAL(10,2),
+  intended_capital DECIMAL(10,2),
   joined_date DATE NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
