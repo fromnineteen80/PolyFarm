@@ -49,7 +49,7 @@ export default function NavBar() {
             ))}
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-3 text-sm font-financial">
+        <div className="hidden md:flex items-center gap-3 text-sm">
           <span>Wallet: {formatCurrency(wallet?.wallet_value)}</span>
           <span className={parseFloat(wallet?.session_pnl || 0) >= 0 ? 'text-profit' : 'text-loss'}>
             Today: {parseFloat(wallet?.session_pnl || 0) >= 0 ? '+' : ''}{formatCurrency(wallet?.session_pnl)}
@@ -72,7 +72,7 @@ export default function NavBar() {
               {l.label}
             </Link>
           ))}
-          <div className="mt-2 pt-2 border-t border-border text-sm font-financial">
+          <div className="mt-2 pt-2 border-t border-border text-sm">
             <p>Wallet: {formatCurrency(wallet?.wallet_value)}</p>
             <span className={`px-2 py-0.5 rounded text-xs font-bold inline-block mt-1 ${mode === 'live' ? 'bg-live text-black' : 'bg-paper text-black'}`}>{mode?.toUpperCase()}</span>
           </div>

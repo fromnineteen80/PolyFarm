@@ -70,7 +70,7 @@ export default function Markets({ mappings: initial }) {
                     <td className="py-2 px-2">{m.sport}</td>
                     <td className="py-2 px-2">{m.market_type}</td>
                     <td className={`py-2 px-2 ${statusColor}`}>{m.mapping_status}</td>
-                    <td className="py-2 px-2 text-right font-financial">{(parseFloat(m.mapping_confidence || 0) * 100).toFixed(0)}%</td>
+                    <td className="py-2 px-2 text-right">{(parseFloat(m.mapping_confidence || 0) * 100).toFixed(0)}%</td>
                     <td className="py-2 px-2">{m.teams}</td>
                   </tr>
                 )

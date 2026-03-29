@@ -66,9 +66,9 @@ export default function TradeTable({ trades, showFilters, onExport }) {
                   <td className="py-2 px-2">{t.sport}</td>
                   <td className={`py-2 px-2 ${stratColor}`}>{t.position_type}</td>
                   <td className="py-2 px-2">{t.band}</td>
-                  <td className="py-2 px-2 font-financial">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
-                  <td className="py-2 px-2 font-financial">{t.exit_price ? parseFloat(t.exit_price).toFixed(4) : '—'}</td>
-                  <td className={`py-2 px-2 font-financial ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
+                  <td className="py-2 px-2">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
+                  <td className="py-2 px-2">{t.exit_price ? parseFloat(t.exit_price).toFixed(4) : '—'}</td>
+                  <td className={`py-2 px-2 ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
                   <td className="py-2 px-2">{t.exit_type || '—'}</td>
                   <td className="py-2 px-2">{t.hold_duration_seconds ? Math.round(t.hold_duration_seconds / 60) + 'm' : '—'}</td>
                 </tr>

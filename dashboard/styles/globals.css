@@ -15,12 +15,7 @@ html {
 body {
   background-color: #0a0a0a;
   color: #ffffff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-.font-financial {
-  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
-  font-variant-numeric: tabular-nums;
+  font-family: 'Raleway', sans-serif;
 }
 
 .table-scroll {

@@ -98,10 +98,10 @@ export default function Mispricing({ mappings: initial, recentTrades, walletValu
       </div>
 
       {rows.length === 0 ? (
-        <div className="card text-center text-neutral py-8 font-financial">No mispricing data available yet</div>
+        <div className="card text-center text-neutral py-8">No mispricing data available yet</div>
       ) : (
         <div className="table-scroll mb-4">
-          <table className="w-full text-xs font-financial">
+          <table className="w-full text-xs">
             <thead><tr className="border-b border-border">
               <th className="text-left py-1.5 px-1.5 text-neutral sticky left-0 bg-background">Market</th>
               <th className="text-left py-1.5 px-1.5 text-neutral">Sport</th>

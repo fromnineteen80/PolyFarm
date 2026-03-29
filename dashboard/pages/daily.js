@@ -70,9 +70,9 @@ export default function Daily({ snapshots }) {
               return (
                 <tr key={i} className="border-b border-border">
                   <td className="py-2 px-2">{d.date}</td>
-                  <td className="py-2 px-2 text-right font-financial">{formatCurrency(d.wallet_value)}</td>
-                  <td className={`py-2 px-2 text-right font-financial ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
-                  <td className="py-2 px-2 text-right font-financial">{formatCurrency(d.floor_value)}</td>
+                  <td className="py-2 px-2 text-right">{formatCurrency(d.wallet_value)}</td>
+                  <td className={`py-2 px-2 text-right ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
+                  <td className="py-2 px-2 text-right">{formatCurrency(d.floor_value)}</td>
                   <td className="py-2 px-2 text-right">{d.trades_today || 0}</td>
                 </tr>
               )

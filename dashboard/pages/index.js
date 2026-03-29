@@ -60,8 +60,8 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
     <Layout>
       <div className="mb-6">
         <p className="text-sm text-neutral">Portfolio Value</p>
-        <p className="text-4xl font-bold font-financial">{formatCurrency(walletValue)}</p>
-        <p className={`text-lg font-financial ${sessionPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+        <p className="text-4xl font-bold">{formatCurrency(walletValue)}</p>
+        <p className={`text-lg ${sessionPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
           Today: {sessionPnl >= 0 ? '+' : ''}{formatCurrency(sessionPnl)}
         </p>
       </div>
@@ -105,8 +105,8 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
                   <td className="py-2 px-2">{t.sport}</td>
                   <td className="py-2 px-2" style={{ color: STRATEGY_COLORS[t.position_type] || '#fff' }}>{t.position_type}</td>
                   <td className="py-2 px-2">{t.band}</td>
-                  <td className="py-2 px-2 text-right font-financial">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
-                  <td className="py-2 px-2 text-right font-financial">{parseFloat(t.exit_price || t.entry_price || 0).toFixed(4)}</td>
+                  <td className="py-2 px-2 text-right">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
+                  <td className="py-2 px-2 text-right">{parseFloat(t.exit_price || t.entry_price || 0).toFixed(4)}</td>
                 </tr>
               ))}
             </tbody>
@@ -133,7 +133,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
                   <tr key={i} className="border-b border-border">
                     <td className="py-2 px-2">{t.timestamp_exit?.split('T')[0]}</td>
                     <td className="py-2 px-2 max-w-[150px] truncate">{t.market_slug}</td>
-                    <td className={`py-2 px-2 text-right font-financial ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
+                    <td className={`py-2 px-2 text-right ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
                     <td className="py-2 px-2">{t.exit_type}</td>
                   </tr>
                 )

@@ -3,7 +3,7 @@ export default function StatCard({ title, value, subtitle, trend, color }) {
   return (
     <div className="card">
       <p className="text-sm text-neutral">{title}</p>
-      <p className={`text-2xl font-bold font-financial ${color || ''}`}>
+      <p className={`text-2xl font-bold ${color || ''}`}>
         {value ?? '$0.00'}
       </p>
       {subtitle && <p className="text-sm text-neutral mt-1">{subtitle}</p>}

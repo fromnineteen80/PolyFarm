@@ -104,7 +104,7 @@ export default function Performance({ trades, snapshots }) {
               <td className="py-2 px-2">{s}</td>
               <td className="py-2 px-2 text-right">{d.trades}</td>
               <td className="py-2 px-2 text-right">{d.winRate}%</td>
-              <td className={`py-2 px-2 text-right font-financial ${d.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{formatCurrency(d.pnl)}</td>
+              <td className={`py-2 px-2 text-right ${d.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{formatCurrency(d.pnl)}</td>
             </tr>
           ))}
         </tbody></table>
@@ -123,7 +123,7 @@ export default function Performance({ trades, snapshots }) {
               <td className="py-2 px-2">{sp}</td>
               <td className="py-2 px-2 text-right">{d.trades}</td>
               <td className="py-2 px-2 text-right">{d.trades > 0 ? (d.wins / d.trades * 100).toFixed(0) : 0}%</td>
-              <td className={`py-2 px-2 text-right font-financial ${d.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{formatCurrency(d.pnl)}</td>
+              <td className={`py-2 px-2 text-right ${d.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{formatCurrency(d.pnl)}</td>
             </tr>
           ))}
         </tbody></table>

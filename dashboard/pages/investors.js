@@ -88,9 +88,9 @@ export default function Investors({ investors, events, config, walletValue }) {
                 return (
                   <tr key={i} className="border-b border-border">
                     <td className="py-2 px-2">{inv.first_name} {inv.last_name}</td>
-                    <td className="py-2 px-2 text-right font-financial">{units.toFixed(2)}</td>
-                    <td className="py-2 px-2 text-right font-financial">{pct.toFixed(1)}%</td>
-                    <td className="py-2 px-2 text-right font-financial">{formatCurrency(val)}</td>
+                    <td className="py-2 px-2 text-right">{units.toFixed(2)}</td>
+                    <td className="py-2 px-2 text-right">{pct.toFixed(1)}%</td>
+                    <td className="py-2 px-2 text-right">{formatCurrency(val)}</td>
                   </tr>
                 )
               })}
@@ -119,9 +119,9 @@ export default function Investors({ investors, events, config, walletValue }) {
                 <td className="py-2 px-2">{e.date}</td>
                 <td className="py-2 px-2">{e.first_name} {e.last_name}</td>
                 <td className="py-2 px-2">{e.event_type}</td>
-                <td className="py-2 px-2 text-right font-financial">{formatCurrency(e.amount)}</td>
-                <td className="py-2 px-2 text-right font-financial">{parseFloat(e.units_assigned || 0).toFixed(2)}</td>
-                <td className="py-2 px-2 text-right font-financial">{parseFloat(e.ownership_pct_after || 0).toFixed(1)}%</td>
+                <td className="py-2 px-2 text-right">{formatCurrency(e.amount)}</td>
+                <td className="py-2 px-2 text-right">{parseFloat(e.units_assigned || 0).toFixed(2)}</td>
+                <td className="py-2 px-2 text-right">{parseFloat(e.ownership_pct_after || 0).toFixed(1)}%</td>
               </tr>
             ))}
           </tbody>

@@ -20,7 +20,8 @@ module.exports = {
         live: '#00c853',
       },
       fontFamily: {
-        mono: ['Menlo', 'Monaco', 'Consolas', 'monospace'],
+        sans: ['Raleway', 'sans-serif'],
+        serif: ['Georgia', 'serif'],
       }
     }
   },
