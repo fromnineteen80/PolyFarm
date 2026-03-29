@@ -159,12 +159,12 @@ export default function Teams({ trades }) {
         ))}
       </div>
 
-      <h2 className="text-xl font-semibold mb-3 text-profit">Dominant Teams (Exception Trades)</h2>
+      <h2 className="text-lg font-semibold mb-3 text-profit">Dominant Teams (Exception Trades)</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
         {Object.entries(DOMINANT_TEAMS).map(([name, cfg]) => renderTeamCard(name, cfg, 'dominant'))}
       </div>
 
-      <h2 className="text-xl font-semibold mb-3 text-loss">Fade Teams (Bet Against)</h2>
+      <h2 className="text-lg font-semibold mb-3 text-loss">Fade Teams (Bet Against)</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
         {Object.entries(FADE_TEAMS).map(([name, cfg]) => renderTeamCard(name, cfg, 'fade'))}
       </div>

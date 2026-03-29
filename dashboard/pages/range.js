@@ -45,7 +45,7 @@ export default function Range() {
       {loading && <p className="text-neutral mt-4">Loading...</p>}
       {trades.length > 0 && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 my-4">
             <StatCard title="Total P&L" value={formatCurrency(totalPnl)} color={totalPnl >= 0 ? 'text-profit' : 'text-loss'} />
             <StatCard title="Trades" value={trades.length} />
             <StatCard title="Win Rate" value={`${wr.toFixed(0)}%`} />

@@ -74,7 +74,7 @@ export default function Mispricing({ mappings: initial, recentTrades, walletValu
         <button onClick={() => window.location.reload()} className="px-3 py-2 border border-border rounded text-sm text-neutral hover:text-white min-h-[44px]">Refresh</button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
         <StatCard title="Monitored" value={mappings.length} />
         <StatCard title="Band A" value={qualA} color="text-bandA" />
         <StatCard title="Band B" value={qualB} color="text-bandB" />
@@ -104,17 +104,17 @@ export default function Mispricing({ mappings: initial, recentTrades, walletValu
         <div className="table-scroll mb-4">
           <table className="w-full text-xs">
             <thead><tr className="border-b border-border">
-              <th className="text-left py-1.5 px-1.5 text-neutral sticky left-0 bg-background">Market</th>
-              <th className="text-right py-1.5 px-1.5 text-neutral">Edge¢</th>
-              <th className="text-right py-1.5 px-1.5 text-neutral">Net%</th>
-              <th className="text-center py-1.5 px-1.5 text-neutral">Band</th>
-              <th className="text-left py-1.5 px-1.5 text-neutral hidden md:table-cell">Sport</th>
-              <th className="text-right py-1.5 px-1.5 text-neutral hidden md:table-cell">Poly¢</th>
-              <th className="text-right py-1.5 px-1.5 text-neutral hidden md:table-cell">Sharp¢</th>
-              <th className="text-right py-1.5 px-1.5 text-neutral hidden lg:table-cell">Taker$</th>
-              <th className="text-right py-1.5 px-1.5 text-neutral hidden lg:table-cell">Rebate$</th>
-              <th className="text-right py-1.5 px-1.5 text-neutral hidden lg:table-cell">Vol$k</th>
-              <th className="text-center py-1.5 px-1.5 text-neutral hidden lg:table-cell">Map</th>
+              <th className="text-left py-2 px-2 text-neutral sticky left-0 bg-background">Market</th>
+              <th className="text-right py-2 px-2 text-neutral">Edge¢</th>
+              <th className="text-right py-2 px-2 text-neutral">Net%</th>
+              <th className="text-center py-2 px-2 text-neutral">Band</th>
+              <th className="text-left py-2 px-2 text-neutral hidden md:table-cell">Sport</th>
+              <th className="text-right py-2 px-2 text-neutral hidden md:table-cell">Poly¢</th>
+              <th className="text-right py-2 px-2 text-neutral hidden md:table-cell">Sharp¢</th>
+              <th className="text-right py-2 px-2 text-neutral hidden lg:table-cell">Taker$</th>
+              <th className="text-right py-2 px-2 text-neutral hidden lg:table-cell">Rebate$</th>
+              <th className="text-right py-2 px-2 text-neutral hidden lg:table-cell">Vol$k</th>
+              <th className="text-center py-2 px-2 text-neutral hidden lg:table-cell">Map</th>
             </tr></thead>
             <tbody>
               {rows.map((r, i) => {
@@ -127,17 +127,17 @@ export default function Mispricing({ mappings: initial, recentTrades, walletValu
                 const bandColor = r.band === 'A' ? 'text-bandA' : r.band === 'B' ? 'text-bandB' : r.band === 'C' ? 'text-bandC' : 'text-neutral'
                 return (
                   <tr key={i} className={`border-b border-border ${rowBg}`}>
-                    <td className="py-1.5 px-1.5 max-w-[140px] truncate sticky left-0 bg-card">{r.teams || r.polymarket_slug}</td>
-                    <td className="py-1.5 px-1.5 text-right">{(r.edge * 100).toFixed(1)}</td>
-                    <td className={`py-1.5 px-1.5 text-right font-bold ${r.netPct >= 5 ? 'text-profit' : r.netPct >= 3 ? 'text-bandA' : 'text-neutral'}`}>{r.netPct.toFixed(1)}</td>
-                    <td className={`py-1.5 px-1.5 text-center font-bold ${bandColor}`}>{r.band}</td>
-                    <td className="py-1.5 px-1.5 hidden md:table-cell">{SPORT_CODES[r.sport] || r.sport}</td>
-                    <td className="py-1.5 px-1.5 text-right hidden md:table-cell">{(r.polyPrice * 100).toFixed(1)}</td>
-                    <td className="py-1.5 px-1.5 text-right hidden md:table-cell">{(r.sharpPrice * 100).toFixed(1)}</td>
-                    <td className="py-1.5 px-1.5 text-right hidden lg:table-cell">${r.takerFee.toFixed(3)}</td>
-                    <td className="py-1.5 px-1.5 text-right hidden lg:table-cell">${r.rebate.toFixed(3)}</td>
-                    <td className="py-1.5 px-1.5 text-right hidden lg:table-cell">{r.volume ? (parseFloat(r.volume) / 1000).toFixed(0) : '—'}</td>
-                    <td className={`py-1.5 px-1.5 text-center hidden lg:table-cell ${r.mapping_status === 'CONFIRMED' ? 'text-profit' : 'text-bandA'}`}>{r.mapping_status === 'CONFIRMED' ? 'CONF' : r.mapping_status === 'FUZZY' ? 'FUZZ' : '—'}</td>
+                    <td className="py-2 px-2 max-w-[140px] truncate sticky left-0 bg-card">{r.teams || r.polymarket_slug}</td>
+                    <td className="py-2 px-2 text-right">{(r.edge * 100).toFixed(1)}</td>
+                    <td className={`py-2 px-2 text-right font-bold ${r.netPct >= 5 ? 'text-profit' : r.netPct >= 3 ? 'text-bandA' : 'text-neutral'}`}>{r.netPct.toFixed(1)}</td>
+                    <td className={`py-2 px-2 text-center font-bold ${bandColor}`}>{r.band}</td>
+                    <td className="py-2 px-2 hidden md:table-cell">{SPORT_CODES[r.sport] || r.sport}</td>
+                    <td className="py-2 px-2 text-right hidden md:table-cell">{(r.polyPrice * 100).toFixed(1)}</td>
+                    <td className="py-2 px-2 text-right hidden md:table-cell">{(r.sharpPrice * 100).toFixed(1)}</td>
+                    <td className="py-2 px-2 text-right hidden lg:table-cell">${r.takerFee.toFixed(3)}</td>
+                    <td className="py-2 px-2 text-right hidden lg:table-cell">${r.rebate.toFixed(3)}</td>
+                    <td className="py-2 px-2 text-right hidden lg:table-cell">{r.volume ? (parseFloat(r.volume) / 1000).toFixed(0) : '—'}</td>
+                    <td className={`py-2 px-2 text-center hidden lg:table-cell ${r.mapping_status === 'CONFIRMED' ? 'text-profit' : 'text-bandA'}`}>{r.mapping_status === 'CONFIRMED' ? 'CONF' : r.mapping_status === 'FUZZY' ? 'FUZZ' : '—'}</td>
                   </tr>
                 )
               })}

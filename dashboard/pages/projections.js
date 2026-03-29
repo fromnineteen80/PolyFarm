@@ -56,7 +56,7 @@ export default function Projections({ snapshots, config }) {
       <h1 className="text-2xl font-bold mb-4">Growth vs Actual</h1>
       <div className={`text-sm font-semibold mb-4 ${trackingBadge.color}`}>{trackingBadge.text}</div>
       <ProjectionChart actual={actual} proj1={proj1} proj15={proj15} proj2={proj2} phase2Date={config?.phase2_activation_date} />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
         <StatCard title="Actual Today" value={formatCurrency(currentValue)} />
         <StatCard title="1.0% Target" value={formatCurrency(calcProjection(firstValue, firstDate, 0.01))} />
         <StatCard title="1.5% Target" value={formatCurrency(calcProjection(firstValue, firstDate, 0.015))} />

@@ -51,7 +51,8 @@ export default function History({ trades }) {
         <StatCard title="Win Rate" value={filtered.length > 0 ? `${(wins / filtered.length * 100).toFixed(0)}%` : '0%'} />
         <StatCard title="Avg P&L" value={formatCurrency(filtered.length > 0 ? totalPnl / filtered.length : 0)} />
       </div>
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="text-lg font-semibold">Trade History</h2>
         <ExportButton data={filtered} filename="trade_history" />
       </div>
       <TradeTable trades={filtered} />

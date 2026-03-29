@@ -48,7 +48,7 @@ export default function Daily({ snapshots }) {
         <StatCard title="Win Rate" value={filtered.length > 0 ? `${(profDays / filtered.length * 100).toFixed(0)}%` : '0%'} />
         <StatCard title="Total Days" value={filtered.length} />
       </div>
-      <div className="grid md:grid-cols-1 gap-4 mb-6">
+      <div className="grid gap-4 mb-6">
         <DailyPnLChart dailyData={filtered} />
         <WalletGrowthChart snapshots={filtered} floorData />
       </div>
