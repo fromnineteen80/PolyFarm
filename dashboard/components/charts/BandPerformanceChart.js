@@ -18,5 +18,5 @@ export default function BandPerformanceChart({ bandData }) {
       y: { ticks: { color: '#888' }, grid: { color: '#2a2a2a' } },
     },
   }
-  return <div className="card"><Bar data={data} options={options} /></div>
+  return <div className="card min-h-[200px] max-h-[400px] lg:max-h-none"><Bar data={data} options={options} /></div>
 }

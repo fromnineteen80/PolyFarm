@@ -72,7 +72,7 @@ export default function Performance({ trades, snapshots }) {
   return (
     <Layout>
       <h1 className="text-2xl font-bold mb-4">Performance Analytics</h1>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard title="All-Time P&L" value={formatCurrency(totalPnl)} color={totalPnl >= 0 ? 'text-profit' : 'text-loss'} />
         <StatCard title="Win Rate" value={`${winRate.toFixed(0)}%`} />
         <StatCard title="Total Trades" value={trades.length} />
@@ -81,7 +81,7 @@ export default function Performance({ trades, snapshots }) {
         <StatCard title="Max Drawdown" value={`${(maxDrawdown * 100).toFixed(1)}%`} color="text-loss" />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
+      <div className="grid lg:grid-cols-2 gap-4 mb-6">
         <WalletGrowthChart snapshots={snapshots} floorData />
         <WinRateChart data7d={wr7} data30d={wr30} />
         <ExitTypeChart exitCounts={exitCounts} />

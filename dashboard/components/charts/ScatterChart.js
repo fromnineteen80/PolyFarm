@@ -29,5 +29,5 @@ export default function ScatterChart({ trades, xField, yField, xlabel, ylabel, c
       y: { title: { display: true, text: ylabel || yField, color: '#888' }, ticks: { color: '#888' }, grid: { color: '#2a2a2a' } },
     },
   }
-  return <div className="card"><Scatter data={data} options={options} /></div>
+  return <div className="card min-h-[200px] max-h-[400px] lg:max-h-none"><Scatter data={data} options={options} /></div>
 }

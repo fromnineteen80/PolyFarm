@@ -37,7 +37,7 @@ export default function Daily({ snapshots }) {
     <Layout>
       <h1 className="text-2xl font-bold mb-4">Daily Results</h1>
       <DateRangePicker onChange={(s, e) => setRange({ start: s, end: e })} />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 my-4">
         <StatCard title="Total P&L" value={formatCurrency(totalPnl)} color={totalPnl >= 0 ? 'text-profit' : 'text-loss'} />
         <StatCard title="Avg Daily" value={formatCurrency(avgPnl)} />
         <StatCard title="Best Day" value={formatCurrency(bestDay === -Infinity ? 0 : bestDay)} color="text-profit" />
@@ -61,8 +61,8 @@ export default function Daily({ snapshots }) {
             <th className="text-left text-neutral py-2 px-2">Date</th>
             <th className="text-right text-neutral py-2 px-2">Wallet</th>
             <th className="text-right text-neutral py-2 px-2">P&L</th>
-            <th className="text-right text-neutral py-2 px-2">Floor</th>
-            <th className="text-right text-neutral py-2 px-2">Trades</th>
+            <th className="text-right text-neutral py-2 px-2 hidden md:table-cell">Floor</th>
+            <th className="text-right text-neutral py-2 px-2 hidden md:table-cell">Trades</th>
           </tr></thead>
           <tbody>
             {[...filtered].reverse().map((d, i) => {
@@ -72,8 +72,8 @@ export default function Daily({ snapshots }) {
                   <td className="py-2 px-2">{d.date}</td>
                   <td className="py-2 px-2 text-right">{formatCurrency(d.wallet_value)}</td>
                   <td className={`py-2 px-2 text-right ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
-                  <td className="py-2 px-2 text-right">{formatCurrency(d.floor_value)}</td>
-                  <td className="py-2 px-2 text-right">{d.trades_today || 0}</td>
+                  <td className="py-2 px-2 text-right hidden md:table-cell">{formatCurrency(d.floor_value)}</td>
+                  <td className="py-2 px-2 text-right hidden md:table-cell">{d.trades_today || 0}</td>
                 </tr>
               )
             })}

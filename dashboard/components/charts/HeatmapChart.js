@@ -40,5 +40,5 @@ export default function HeatmapChart({ trades }) {
       y: { type: 'linear', min: -0.5, max: 6.5, ticks: { color: '#888', stepSize: 1, callback: v => DAYS[v] || '' }, grid: { display: false } },
     },
   }
-  return <div className="card"><Chart type="matrix" data={data} options={options} /></div>
+  return <div className="card min-h-[200px] max-h-[400px] lg:max-h-none"><Chart type="matrix" data={data} options={options} /></div>
 }

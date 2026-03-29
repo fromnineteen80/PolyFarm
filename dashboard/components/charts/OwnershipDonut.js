@@ -30,5 +30,5 @@ export default function OwnershipDonut({ investors, walletValue }) {
       }
     },
   }
-  return <div className="card"><Doughnut data={data} options={options} /></div>
+  return <div className="card min-h-[200px] max-h-[400px] lg:max-h-none"><Doughnut data={data} options={options} /></div>
 }

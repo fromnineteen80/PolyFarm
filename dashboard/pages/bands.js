@@ -49,7 +49,7 @@ export default function Bands({ trades }) {
             className={`px-3 py-2 rounded text-sm min-h-[44px] ${bandFilter === b ? 'bg-info text-white' : 'border border-border text-neutral'}`}>{b === 'All' ? 'All Bands' : `Band ${b}`}</button>
         ))}
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {['A', 'B', 'C'].map(b => (
           <StatCard key={b} title={`Band ${b}`} value={`${bandStats[b].winRate.toFixed(0)}% WR`}
             subtitle={`${bandStats[b].trades} trades | ${formatCurrency(bandStats[b].totalPnl)}`} />
@@ -57,7 +57,7 @@ export default function Bands({ trades }) {
         <StatCard title="Combined" value={`${filtered.length} trades`}
           subtitle={formatCurrency(filtered.reduce((s, t) => s + parseFloat(t.pnl || 0), 0))} />
       </div>
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
+      <div className="grid lg:grid-cols-2 gap-4 mb-6">
         <BandPerformanceChart bandData={bandStats} />
         <ExitTypeChart exitCounts={exitCounts} />
       </div>

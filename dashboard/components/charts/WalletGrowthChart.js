@@ -35,5 +35,5 @@ export default function WalletGrowthChart({ snapshots, floorData }) {
       y: { ticks: { color: '#888', callback: v => '$' + v.toLocaleString() }, grid: { color: '#2a2a2a' } },
     },
   }
-  return <div className="card"><Line data={data} options={options} /></div>
+  return <div className="card min-h-[200px] max-h-[400px] lg:max-h-none"><Line data={data} options={options} /></div>
 }

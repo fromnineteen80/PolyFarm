@@ -60,13 +60,13 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
     <Layout>
       <div className="mb-6">
         <p className="text-sm text-neutral">Portfolio Value</p>
-        <p className="text-4xl font-bold">{formatCurrency(walletValue)}</p>
+        <p className="text-3xl font-bold">{formatCurrency(walletValue)}</p>
         <p className={`text-lg ${sessionPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
           Today: {sessionPnl >= 0 ? '+' : ''}{formatCurrency(sessionPnl)}
         </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard title="Floor" value={formatCurrency(floorValue)} subtitle={`Gap: ${formatCurrency(gap)}`} />
         <StatCard title="Utilization" value={walletValue > 0 ? ((walletValue - gap) / walletValue * 100).toFixed(0) + '%' : '0%'} />
         <StatCard title="Open Positions" value={openTrades.length} />
@@ -91,22 +91,22 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
         <div className="table-scroll mb-6">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-border">
-              <th className="text-left text-neutral py-2 px-2 sticky left-0 bg-background">Market</th>
-              <th className="text-left text-neutral py-2 px-2">Sport</th>
+              <th className="text-left text-neutral py-2 px-2">Market</th>
               <th className="text-left text-neutral py-2 px-2">Strategy</th>
-              <th className="text-left text-neutral py-2 px-2">Band</th>
               <th className="text-right text-neutral py-2 px-2">Entry</th>
-              <th className="text-right text-neutral py-2 px-2">Target</th>
+              <th className="text-left text-neutral py-2 px-2 hidden md:table-cell">Sport</th>
+              <th className="text-left text-neutral py-2 px-2 hidden md:table-cell">Band</th>
+              <th className="text-right text-neutral py-2 px-2 hidden md:table-cell">Target</th>
             </tr></thead>
             <tbody>
               {openTrades.map((t, i) => (
                 <tr key={i} className="border-b border-border">
-                  <td className="py-2 px-2 max-w-[150px] truncate sticky left-0 bg-card">{t.market_slug}</td>
-                  <td className="py-2 px-2">{t.sport}</td>
+                  <td className="py-2 px-2 max-w-[150px] truncate">{t.market_slug}</td>
                   <td className="py-2 px-2" style={{ color: STRATEGY_COLORS[t.position_type] || '#fff' }}>{t.position_type}</td>
-                  <td className="py-2 px-2">{t.band}</td>
                   <td className="py-2 px-2 text-right">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
-                  <td className="py-2 px-2 text-right">{parseFloat(t.exit_price || t.entry_price || 0).toFixed(4)}</td>
+                  <td className="py-2 px-2 hidden md:table-cell">{t.sport}</td>
+                  <td className="py-2 px-2 hidden md:table-cell">{t.band}</td>
+                  <td className="py-2 px-2 text-right hidden md:table-cell">{parseFloat(t.exit_price || t.entry_price || 0).toFixed(4)}</td>
                 </tr>
               ))}
             </tbody>

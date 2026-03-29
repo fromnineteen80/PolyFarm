@@ -54,24 +54,24 @@ export default function Markets({ mappings: initial }) {
         <div className="table-scroll mb-6">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-border">
-              <th className="text-left text-neutral py-2 px-2 sticky left-0 bg-background">Market</th>
-              <th className="text-left text-neutral py-2 px-2">Sport</th>
-              <th className="text-left text-neutral py-2 px-2">Type</th>
+              <th className="text-left text-neutral py-2 px-2">Market</th>
               <th className="text-left text-neutral py-2 px-2">Status</th>
               <th className="text-right text-neutral py-2 px-2">Confidence</th>
-              <th className="text-left text-neutral py-2 px-2">Teams</th>
+              <th className="text-left text-neutral py-2 px-2 hidden md:table-cell">Sport</th>
+              <th className="text-left text-neutral py-2 px-2 hidden md:table-cell">Type</th>
+              <th className="text-left text-neutral py-2 px-2 hidden lg:table-cell">Teams</th>
             </tr></thead>
             <tbody>
               {filtered.map((m, i) => {
                 const statusColor = m.mapping_status === 'CONFIRMED' ? 'text-profit' : m.mapping_status === 'FUZZY' ? 'text-bandA' : 'text-loss'
                 return (
                   <tr key={i} className="border-b border-border">
-                    <td className="py-2 px-2 max-w-[150px] truncate sticky left-0 bg-card">{m.polymarket_slug}</td>
-                    <td className="py-2 px-2">{m.sport}</td>
-                    <td className="py-2 px-2">{m.market_type}</td>
+                    <td className="py-2 px-2 max-w-[150px] truncate">{m.polymarket_slug}</td>
                     <td className={`py-2 px-2 ${statusColor}`}>{m.mapping_status}</td>
                     <td className="py-2 px-2 text-right">{(parseFloat(m.mapping_confidence || 0) * 100).toFixed(0)}%</td>
-                    <td className="py-2 px-2">{m.teams}</td>
+                    <td className="py-2 px-2 hidden md:table-cell">{m.sport}</td>
+                    <td className="py-2 px-2 hidden md:table-cell">{m.market_type}</td>
+                    <td className="py-2 px-2 hidden lg:table-cell">{m.teams}</td>
                   </tr>
                 )
               })}

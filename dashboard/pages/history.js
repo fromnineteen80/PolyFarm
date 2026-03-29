@@ -44,7 +44,7 @@ export default function History({ trades }) {
         ]}
         onApply={setFilters} onReset={() => setFilters({})}
       />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <StatCard title="Total P&L" value={formatCurrency(totalPnl)} color={totalPnl >= 0 ? 'text-profit' : 'text-loss'} />
         <StatCard title="Trades" value={filtered.length} />
         <StatCard title="Win Rate" value={filtered.length > 0 ? `${(wins / filtered.length * 100).toFixed(0)}%` : '0%'} />

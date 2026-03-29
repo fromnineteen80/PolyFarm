@@ -43,12 +43,12 @@ export default function Investors({ investors, events, config, walletValue }) {
   return (
     <Layout>
       <h1 className="text-2xl font-bold mb-4">Capital Management</h1>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <StatCard title="Portfolio Value" value={formatCurrency(walletValue)} />
         <StatCard title="Total Units" value={totalUnits.toFixed(2)} />
         <StatCard title="Investors" value={investors.length} />
       </div>
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
+      <div className="grid lg:grid-cols-2 gap-4 mb-6">
         <OwnershipDonut investors={investors} walletValue={walletValue} />
         <OwnershipAreaChart events={events} investors={investors} />
       </div>
@@ -76,9 +76,9 @@ export default function Investors({ investors, events, config, walletValue }) {
           <table className="w-full text-sm">
             <thead><tr className="border-b border-border">
               <th className="text-left text-neutral py-2 px-2">Investor</th>
-              <th className="text-right text-neutral py-2 px-2">Units</th>
               <th className="text-right text-neutral py-2 px-2">Ownership</th>
               <th className="text-right text-neutral py-2 px-2">Value</th>
+              <th className="text-right text-neutral py-2 px-2 hidden md:table-cell">Units</th>
             </tr></thead>
             <tbody>
               {investors.map((inv, i) => {
@@ -88,9 +88,9 @@ export default function Investors({ investors, events, config, walletValue }) {
                 return (
                   <tr key={i} className="border-b border-border">
                     <td className="py-2 px-2">{inv.first_name} {inv.last_name}</td>
-                    <td className="py-2 px-2 text-right">{units.toFixed(2)}</td>
                     <td className="py-2 px-2 text-right">{pct.toFixed(1)}%</td>
                     <td className="py-2 px-2 text-right">{formatCurrency(val)}</td>
+                    <td className="py-2 px-2 text-right hidden md:table-cell">{units.toFixed(2)}</td>
                   </tr>
                 )
               })}
@@ -106,22 +106,22 @@ export default function Investors({ investors, events, config, walletValue }) {
       <div className="table-scroll">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-border">
-            <th className="text-left text-neutral py-2 px-2">Date</th>
             <th className="text-left text-neutral py-2 px-2">Investor</th>
             <th className="text-left text-neutral py-2 px-2">Type</th>
             <th className="text-right text-neutral py-2 px-2">Amount</th>
-            <th className="text-right text-neutral py-2 px-2">Units</th>
-            <th className="text-right text-neutral py-2 px-2">Ownership</th>
+            <th className="text-left text-neutral py-2 px-2 hidden md:table-cell">Date</th>
+            <th className="text-right text-neutral py-2 px-2 hidden md:table-cell">Units</th>
+            <th className="text-right text-neutral py-2 px-2 hidden md:table-cell">Ownership</th>
           </tr></thead>
           <tbody>
             {events.map((e, i) => (
               <tr key={i} className="border-b border-border">
-                <td className="py-2 px-2">{e.date}</td>
                 <td className="py-2 px-2">{e.first_name} {e.last_name}</td>
                 <td className="py-2 px-2">{e.event_type}</td>
                 <td className="py-2 px-2 text-right">{formatCurrency(e.amount)}</td>
-                <td className="py-2 px-2 text-right">{parseFloat(e.units_assigned || 0).toFixed(2)}</td>
-                <td className="py-2 px-2 text-right">{parseFloat(e.ownership_pct_after || 0).toFixed(1)}%</td>
+                <td className="py-2 px-2 hidden md:table-cell">{e.date}</td>
+                <td className="py-2 px-2 text-right hidden md:table-cell">{parseFloat(e.units_assigned || 0).toFixed(2)}</td>
+                <td className="py-2 px-2 text-right hidden md:table-cell">{parseFloat(e.ownership_pct_after || 0).toFixed(1)}%</td>
               </tr>
             ))}
           </tbody>
