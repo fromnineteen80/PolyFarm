@@ -47,6 +47,7 @@ class OpenPosition:
     peak_gain: float = 0.0
     hold_to_resolution: bool = False
     fade_team: Optional[str] = None
+    game_id: Optional[str] = None
     paper_mode: bool = True
 
 class OrderManager:
@@ -124,6 +125,9 @@ class OrderManager:
                 entry_time=datetime.now(timezone.utc),
                 sell_order_id=None,
                 fade_team=fade_team,
+                game_id=getattr(
+                    signal, "game_id", None
+                ),
                 paper_mode=True,
             )
             await self.pm.add_position(
@@ -256,6 +260,9 @@ class OrderManager:
                 entry_time=datetime.now(timezone.utc),
                 sell_order_id=sell_order_id,
                 fade_team=fade_team,
+                game_id=getattr(
+                    signal, "game_id", None
+                ),
                 paper_mode=False,
             )
             await self.pm.add_position(
@@ -1006,6 +1013,7 @@ class OrderManager:
                 self.wallet.state.loss_mode
             ),
             "fade_team": fade_team,
+            "game_id": getattr(signal, "game_id", None),
         }
 
     def _is_game_tied(self, score: str) -> bool:

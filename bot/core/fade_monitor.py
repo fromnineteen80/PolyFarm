@@ -38,6 +38,7 @@ class FadeSignal:
     confidence: float = 0.85
     is_live: bool = True
     market_type: str = "moneyline"
+    game_id: str | None = None
 
 class FadeMonitor:
 

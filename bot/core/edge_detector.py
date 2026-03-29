@@ -39,6 +39,7 @@ class EdgeSignal:
     market_type: str
     timestamp: str
     strategy: str = "oracle_arb"
+    game_id: Optional[str] = None
 
 class EdgeDetector:
 

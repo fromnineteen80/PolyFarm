@@ -307,6 +307,183 @@ class AlertManager:
         )
         self._enqueue(msg)
 
+    # ─────────────────────────────────────────────
+    # 1. PRE-GAME INTELLIGENCE ALERT
+    # ─────────────────────────────────────────────
+
+    async def send_pre_game_intel(self, game, signals):
+        """
+        Fires ~90 min before game start when any
+        qualifying signal or team matchup is found.
+        game: MarketInfo from registry
+        signals: dict with keys: oracle_arb, dominant,
+                 fade — each None or signal data
+        """
+        sport_emoji = {
+            "basketball_nba": "🏀",
+            "basketball_ncaab": "🏀",
+            "icehockey_nhl": "🏒",
+            "baseball_mlb": "⚾",
+            "americanfootball_nfl": "🏈",
+            "americanfootball_ncaaf": "🏈",
+            "soccer_epl": "⚽",
+            "soccer_usa_mls": "⚽",
+            "soccer_mls": "⚽",
+            "soccer_uefa_champs_league": "⚽",
+            "tennis_atp": "🎾",
+            "tennis_wta": "🎾",
+            "mma_mixed_martial_arts": "🥊",
+            "golf_pga_tour": "⛳",
+        }
+        emoji = sport_emoji.get(game.sport, "🎯")
+
+        lines = [
+            f"{emoji} PRE-GAME INTEL",
+            f"{game.home_team} vs {game.away_team}",
+            f"Sport: {game.sport} | "
+            f"Start: {game.start_time}",
+            f"Volume: ${game.volume:,.0f}",
+            "",
+        ]
+
+        arb = signals.get("oracle_arb")
+        if arb:
+            lines.append("📐 ORACLE ARB SETUP")
+            lines.append(
+                f"  Poly: {arb['poly_price']:.4f} | "
+                f"Sharp: {arb['sharp_prob']:.4f}"
+            )
+            lines.append(
+                f"  Gap: {arb['gap']:.4f} | "
+                f"Band: {arb['band']}"
+            )
+            if arb.get("line_movement"):
+                lines.append(
+                    f"  Sharp moved: "
+                    f"{arb['line_movement']}"
+                )
+            lines.append("")
+
+        dom = signals.get("dominant")
+        if dom:
+            from config import DOMINANT_TEAMS
+            team_cfg = DOMINANT_TEAMS.get(
+                dom["team"], {}
+            )
+            lines.append(
+                f"⭐ DOMINANT TEAM: {dom['team']}"
+            )
+            lines.append(
+                f"  Comeback rate: "
+                f"{team_cfg.get('comeback_win_rate_when_trailing', 0):.0%}"
+            )
+            lines.append(
+                f"  Overreaction: "
+                f"{team_cfg.get('market_overreaction_tendency', 'unknown')}"
+            )
+            deficit = team_cfg.get(
+                "deficit_range", (0, 0)
+            )
+            lines.append(
+                f"  Exception triggers at "
+                f"{deficit[0]}-{deficit[1]} deficit"
+            )
+            notes = team_cfg.get("notes", "")
+            if notes:
+                lines.append(f"  Why: {notes}")
+            lines.append("")
+
+        fade = signals.get("fade")
+        if fade:
+            from config import FADE_TEAMS, FADE_MIN_GAP
+            fade_cfg = FADE_TEAMS.get(
+                fade["team"], {}
+            )
+            conf = fade_cfg.get("confidence", "medium")
+            min_gap = FADE_MIN_GAP.get(conf, 0.10)
+            lines.append(
+                f"🚫 FADE TARGET: {fade['team']}"
+            )
+            lines.append(
+                f"  Confidence: {conf} | "
+                f"Min gap: {min_gap:.2f}"
+            )
+            reason = fade_cfg.get("reason", "")
+            if reason:
+                lines.append(f"  Why: {reason}")
+            lines.append("")
+
+        self._enqueue("\n".join(lines))
+
+    # ─────────────────────────────────────────────
+    # 2. GAME COMPLETE SUMMARY ALERT
+    # ─────────────────────────────────────────────
+
+    async def send_game_summary(self, game_slug,
+                                 trades, final_score=None,
+                                 teams=None, sport=None):
+        """
+        Fires when all positions for a game close
+        or game is_finished=True.
+        trades: list of closed trade dicts for this game
+        """
+        if not trades:
+            return
+
+        sport_emoji = {
+            "basketball_nba": "🏀",
+            "icehockey_nhl": "🏒",
+            "baseball_mlb": "⚾",
+            "americanfootball_nfl": "🏈",
+            "soccer_epl": "⚽",
+        }
+        emoji = sport_emoji.get(sport or "", "🏁")
+
+        lines = [f"{emoji} GAME COMPLETE"]
+        if teams:
+            lines.append(teams)
+        if final_score:
+            lines.append(f"Final: {final_score}")
+        lines.append("")
+
+        total_pnl = 0.0
+        wins = 0
+        for t in trades:
+            pnl = float(t.get("pnl", 0) or 0)
+            total_pnl += pnl
+            if pnl > 0:
+                wins += 1
+            entry = float(
+                t.get("entry_price", 0) or 0
+            )
+            exit_p = float(
+                t.get("exit_price", 0) or 0
+            )
+            etype = t.get("exit_type", "?")
+            sign = "+" if pnl >= 0 else ""
+            lines.append(
+                f"  {entry:.4f} → {exit_p:.4f} "
+                f"({etype}) {sign}${pnl:.4f}"
+            )
+
+        lines.append("")
+        count = len(trades)
+        wr = wins / count * 100 if count > 0 else 0
+        sign = "+" if total_pnl >= 0 else ""
+        lines.append(
+            f"Trades: {count} | Won: {wins} | "
+            f"Rate: {wr:.0f}%"
+        )
+        lines.append(
+            f"Game P&L: {sign}${total_pnl:.4f}"
+        )
+
+        self._enqueue("\n".join(lines))
+
+    # ─────────────────────────────────────────────
+    # 3. ENHANCED END OF DAY REPORT
+    # ─────────────────────────────────────────────
+
     async def send_daily_report(self, stats: dict):
         date = stats.get("date", "")
         pnl = stats.get("pnl", 0)
@@ -317,14 +494,142 @@ class AlertManager:
             pnl / start * 100 if start > 0 else 0
         )
         sign = "+" if pnl >= 0 else ""
-        msg = (
-            f"📊 DAILY COMPLETE {date}\n"
+
+        lines = [
+            f"📊 DAILY COMPLETE {date}",
             f"P&L: {sign}${pnl:.2f} "
-            f"({sign}{pnl_pct:.1f}%)\n"
-            f"Wallet: ${start:.2f} → ${end:.2f}\n"
-            f"Peak today: +{peak:.1%}"
-        )
-        self._enqueue(msg)
+            f"({sign}{pnl_pct:.1f}%)",
+            f"Wallet: ${start:.2f} → ${end:.2f}",
+            f"Peak today: +{peak:.1%}",
+            "",
+        ]
+
+        # Strategy breakdown
+        strats = stats.get("strategies")
+        if strats:
+            lines.append("BY STRATEGY:")
+            for name, s in strats.items():
+                trades = s.get("trades", 0)
+                if trades == 0:
+                    continue
+                wr = s.get("win_rate", 0)
+                s_pnl = s.get("pnl", 0)
+                s_sign = "+" if s_pnl >= 0 else ""
+                lines.append(
+                    f"  {name}: {trades} trades | "
+                    f"{wr:.0f}% WR | "
+                    f"{s_sign}${s_pnl:.2f}"
+                )
+            lines.append("")
+
+        # Sport breakdown
+        sports = stats.get("sports")
+        if sports:
+            lines.append("BY SPORT:")
+            sorted_sports = sorted(
+                sports.items(),
+                key=lambda x: x[1].get("pnl", 0),
+                reverse=True
+            )
+            for sport, s in sorted_sports:
+                trades = s.get("trades", 0)
+                if trades == 0:
+                    continue
+                s_pnl = s.get("pnl", 0)
+                s_sign = "+" if s_pnl >= 0 else ""
+                lines.append(
+                    f"  {sport}: {trades} trades | "
+                    f"{s_sign}${s_pnl:.2f}"
+                )
+            lines.append("")
+
+        # Fee summary
+        fees = stats.get("total_fees", 0)
+        rebates = stats.get("total_rebates", 0)
+        if fees or rebates:
+            net_cost = fees - rebates
+            lines.append("FEES:")
+            lines.append(
+                f"  Taker fees: ${fees:.4f}"
+            )
+            lines.append(
+                f"  Maker rebates: ${rebates:.4f}"
+            )
+            lines.append(
+                f"  Net cost: ${net_cost:.4f}"
+            )
+            lines.append("")
+
+        # All-time summary
+        alltime = stats.get("alltime")
+        if alltime:
+            orig = alltime.get("original_capital", 0)
+            current = alltime.get("current_value", 0)
+            at_gain = current - orig
+            at_pct = (
+                at_gain / orig * 100
+                if orig > 0 else 0
+            )
+            days = alltime.get("days_running", 0)
+            avg_daily = (
+                at_pct / days if days > 0 else 0
+            )
+            at_sign = "+" if at_gain >= 0 else ""
+            lines.append("ALL-TIME:")
+            lines.append(
+                f"  Start: ${orig:.2f} → "
+                f"Now: ${current:.2f}"
+            )
+            lines.append(
+                f"  Gain: {at_sign}${at_gain:.2f} "
+                f"({at_sign}{at_pct:.1f}%)"
+            )
+            lines.append(
+                f"  Days: {days} | "
+                f"Avg daily: {avg_daily:.2f}%"
+            )
+            if avg_daily > 0 and current > 0:
+                proj_30 = current * (
+                    (1 + avg_daily / 100) ** 30
+                )
+                lines.append(
+                    f"  30-day projection: "
+                    f"${proj_30:.2f}"
+                )
+            lines.append("")
+
+        # Paper mode progress
+        paper = stats.get("paper_progress")
+        if paper:
+            completed = paper.get("completed", 0)
+            wr = paper.get("win_rate", 0)
+            lines.append("PAPER PROGRESS:")
+            lines.append(
+                f"  {completed}/50 trades"
+            )
+            lines.append(
+                f"  Win rate: {wr:.0%} "
+                f"(need 70%)"
+            )
+            if completed > 0:
+                days_est = max(
+                    1,
+                    int(
+                        (50 - completed)
+                        / max(
+                            paper.get(
+                                "trades_per_day", 1
+                            ), 1
+                        )
+                    )
+                )
+                lines.append(
+                    f"  Est. days to unlock: "
+                    f"~{days_est}"
+                )
+            lines.append("")
+
+        self._enqueue("\n".join(lines))
 
     async def close(self):
         if self._session:

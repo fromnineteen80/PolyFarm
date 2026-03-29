@@ -45,6 +45,7 @@ class ExceptionSignal:
     confidence: float = 0.90
     is_live: bool = True
     market_type: str = "moneyline"
+    game_id: Optional[str] = None
 
 class ExceptionMonitor:
 

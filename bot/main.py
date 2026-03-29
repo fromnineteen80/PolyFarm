@@ -165,6 +165,12 @@ async def main():
             midnight_scheduler(
                 wallet, alerts, market_loader
             ),
+            pre_game_scanner(
+                registry, mapper, alerts
+            ),
+            game_complete_scanner(
+                registry, position_monitor, alerts
+            ),
         ]
 
         if PHASE2_ENABLED:
@@ -231,6 +237,158 @@ async def main():
             await shutdown(
                 wallet, alerts, order_manager
             )
+
+
+async def pre_game_scanner(registry, mapper, alerts):
+    """
+    Scan for upcoming games 90 min before start.
+    Fire pre-game intel alert if any qualifying
+    signal or team matchup found. Once per game.
+    """
+    from config import (
+        DOMINANT_TEAMS, FADE_TEAMS,
+        BAND_A_MIN_PRICE, BAND_A_MIN_EDGE,
+        BAND_B_MIN_PRICE, BAND_B_MIN_EDGE,
+        BAND_C_MIN_PRICE, BAND_C_MIN_EDGE,
+        FAVORITES_FLOOR,
+    )
+    alerted_slugs = set()
+
+    while True:
+        try:
+            now = datetime.now(timezone.utc)
+            window_start = now + timedelta(minutes=30)
+            window_end = now + timedelta(minutes=90)
+            markets = await registry.all_markets()
+
+            for market in markets:
+                if market.slug in alerted_slugs:
+                    continue
+                if market.is_live or market.is_finished:
+                    continue
+                try:
+                    start = datetime.fromisoformat(
+                        market.start_time.replace(
+                            "Z", "+00:00"
+                        )
+                    )
+                    if not (window_start <= start
+                            <= window_end):
+                        continue
+                except Exception:
+                    continue
+
+                signals = {}
+
+                # Check oracle arb
+                sharp = mapper.get_sharp_probability(
+                    market.slug, max_age_seconds=120
+                )
+                if sharp and market.yes_price >= \
+                   FAVORITES_FLOOR:
+                    gap = sharp - market.yes_price
+                    band = None
+                    if market.yes_price >= \
+                       BAND_A_MIN_PRICE and \
+                       gap >= BAND_A_MIN_EDGE:
+                        band = "A"
+                    elif market.yes_price >= \
+                         BAND_B_MIN_PRICE and \
+                         gap >= BAND_B_MIN_EDGE:
+                        band = "B"
+                    elif market.yes_price >= \
+                         BAND_C_MIN_PRICE and \
+                         gap >= BAND_C_MIN_EDGE:
+                        band = "C"
+                    if band:
+                        signals["oracle_arb"] = {
+                            "poly_price": market.yes_price,
+                            "sharp_prob": sharp,
+                            "gap": gap,
+                            "band": band,
+                            "line_movement": None,
+                        }
+
+                # Check dominant team
+                home_l = market.home_team.lower()
+                away_l = market.away_team.lower()
+                for tn, tc in DOMINANT_TEAMS.items():
+                    if tc["sport"] != market.sport:
+                        continue
+                    if tn.lower() in home_l or \
+                       tn.lower() in away_l:
+                        signals["dominant"] = {
+                            "team": tn
+                        }
+                        break
+
+                # Check fade team
+                for tn, tc in FADE_TEAMS.items():
+                    if tc["sport"] != market.sport:
+                        continue
+                    if tn.lower() in home_l or \
+                       tn.lower() in away_l:
+                        signals["fade"] = {
+                            "team": tn
+                        }
+                        break
+
+                if signals:
+                    await alerts.send_pre_game_intel(
+                        market, signals
+                    )
+                    alerted_slugs.add(market.slug)
+
+        except Exception as e:
+            logger.error(
+                f"Pre-game scanner error: {e}"
+            )
+
+        await asyncio.sleep(60)
+
+
+async def game_complete_scanner(registry,
+                                 position_monitor,
+                                 alerts):
+    """
+    Check for finished games and fire game
+    complete summary if trades occurred.
+    """
+    from data.database import get_closed_trades_by_game
+    alerted_games = set()
+
+    while True:
+        try:
+            markets = await registry.all_markets()
+            for market in markets:
+                if not market.is_finished:
+                    continue
+                if market.slug in alerted_games:
+                    continue
+
+                # Check if we had any trades
+                trades = await get_closed_trades_by_game(
+                    market.slug
+                )
+                if trades:
+                    await alerts.send_game_summary(
+                        game_slug=market.slug,
+                        trades=trades,
+                        final_score=market.current_score,
+                        teams=(
+                            f"{market.home_team} vs "
+                            f"{market.away_team}"
+                        ),
+                        sport=market.sport,
+                    )
+                alerted_games.add(market.slug)
+
+        except Exception as e:
+            logger.error(
+                f"Game complete scanner error: {e}"
+            )
+
+        await asyncio.sleep(30)
 
 
 async def midnight_scheduler(wallet, alerts,
@@ -305,7 +463,96 @@ async def write_end_of_day(wallet, alerts):
         "paper_mode": PAPER_MODE,
     })
 
-    # Send daily report
+    # Build enriched daily report
+    from data.database import (
+        get_today_closed_trades, get_paper_trade_stats
+    )
+    closed = await get_today_closed_trades(
+        today, PAPER_MODE
+    )
+
+    # Strategy breakdown
+    strats = {}
+    for name in ("oracle_arb", "exception",
+                 "fade", "overnight"):
+        st = [t for t in closed
+              if t.get("position_type") == name
+              or (name == "oracle_arb"
+                  and t.get("position_type")
+                  in ("normal", "oracle_arb"))]
+        if not st:
+            strats[name] = {
+                "trades": 0, "win_rate": 0,
+                "pnl": 0
+            }
+            continue
+        wins = sum(
+            1 for t in st
+            if float(t.get("pnl", 0) or 0) > 0
+        )
+        total_pnl = sum(
+            float(t.get("pnl", 0) or 0)
+            for t in st
+        )
+        strats[name] = {
+            "trades": len(st),
+            "win_rate": wins / len(st) * 100
+            if st else 0,
+            "pnl": total_pnl,
+        }
+
+    # Sport breakdown
+    sports = {}
+    for t in closed:
+        sport = t.get("sport", "unknown")
+        if sport not in sports:
+            sports[sport] = {"trades": 0, "pnl": 0}
+        sports[sport]["trades"] += 1
+        sports[sport]["pnl"] += float(
+            t.get("pnl", 0) or 0
+        )
+
+    # Fee totals
+    total_fees = sum(
+        float(t.get("taker_fee_paid", 0) or 0)
+        for t in closed
+    )
+    total_rebates = sum(
+        float(t.get("maker_rebate_earned", 0) or 0)
+        for t in closed
+    )
+
+    # All-time
+    alltime = None
+    if first_date and first_value:
+        try:
+            orig = float(first_value)
+            days_running = (
+                datetime.now()
+                - datetime.fromisoformat(first_date)
+            ).days
+            alltime = {
+                "original_capital": orig,
+                "current_value": wallet_value,
+                "days_running": max(days_running, 1),
+            }
+        except Exception:
+            pass
+
+    # Paper progress
+    paper_progress = None
+    if PAPER_MODE:
+        ps = await get_paper_trade_stats()
+        trades_today = len([
+            t for t in closed
+            if t.get("paper_mode")
+        ])
+        paper_progress = {
+            "completed": ps["count"],
+            "win_rate": ps["win_rate"],
+            "trades_per_day": max(trades_today, 1),
+        }
+
     await alerts.send_daily_report({
         "date": today,
         "wallet_start": wallet.state.session_start_value,
@@ -315,6 +562,12 @@ async def write_end_of_day(wallet, alerts):
             - wallet.state.session_start_value
         ),
         "peak_gain": wallet.state.daily_peak_gain,
+        "strategies": strats,
+        "sports": sports,
+        "total_fees": total_fees,
+        "total_rebates": total_rebates,
+        "alltime": alltime,
+        "paper_progress": paper_progress,
     })
 
 

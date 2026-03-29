@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS trades (
     profit_mode_at_entry TEXT,
     loss_mode_at_entry TEXT,
     exception_trigger_reason TEXT,
-    fade_team TEXT
+    fade_team TEXT,
+    game_id TEXT
 );
 ALTER TABLE trades DISABLE ROW LEVEL SECURITY;
 

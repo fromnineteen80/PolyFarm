@@ -139,6 +139,32 @@ async def get_paper_trade_stats() -> dict:
         "win_rate": wins / len(trades)
     }
 
+async def get_closed_trades_by_game(
+    game_id: str
+) -> list:
+    result = await db_execute(
+        lambda: _supabase.table("trades")
+            .select("*")
+            .eq("game_id", game_id)
+            .not_.is_("timestamp_exit", "null")
+            .execute()
+    )
+    return result.data or []
+
+async def get_today_closed_trades(
+    date_str: str, paper_mode: bool
+) -> list:
+    result = await db_execute(
+        lambda: _supabase.table("trades")
+            .select("*")
+            .gte("timestamp_entry", date_str + "T00:00:00Z")
+            .lte("timestamp_entry", date_str + "T23:59:59Z")
+            .not_.is_("timestamp_exit", "null")
+            .eq("paper_mode", paper_mode)
+            .execute()
+    )
+    return result.data or []
+
 # ─────────────────────────────────────────────────────
 # SESSIONS
 # ─────────────────────────────────────────────────────
