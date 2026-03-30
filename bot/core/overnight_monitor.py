@@ -83,18 +83,13 @@ class OvernightMonitor:
             if market.volume < OVERNIGHT_MIN_VOLUME:
                 continue
 
-            mapping = self.mapper.get_mapping(
-                market.slug
-            )
-            if not mapping or \
-               mapping["mapping_status"] == \
-               "UNCONFIRMED":
+            if not self.mapper or not hasattr(self.mapper, 'is_matched'):
+                continue
+            if not self.mapper.is_matched(market.slug):
                 continue
 
-            sharp_prob = (
-                self.mapper.get_sharp_probability(
-                    market.slug, max_age_seconds=60
-                )
+            sharp_prob = self.mapper.get_fair_prob(
+                market.slug, "home"
             )
             if not sharp_prob:
                 continue
@@ -172,11 +167,9 @@ class OvernightMonitor:
         ]
 
         for position in overnight_positions:
-            sharp_prob = (
-                self.mapper.get_sharp_probability(
-                    position.slug, max_age_seconds=120
-                )
-            )
+            sharp_prob = self.mapper.get_fair_prob(
+                position.slug, "home"
+            ) if self.mapper else None
             if not sharp_prob:
                 continue
             current_edge = (

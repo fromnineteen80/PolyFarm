@@ -251,15 +251,6 @@ async def upsert_market_mapping(mapping: dict):
             .execute()
     )
 
-async def get_market_mappings(
-    status: str = None
-) -> list:
-    query = _supabase.table("market_mappings").select("*")
-    if status:
-        query = query.eq("mapping_status", status)
-    result = await db_execute(lambda: query.execute())
-    return result.data or []
-
 # ─────────────────────────────────────────────────────
 # CAPITAL EVENTS AND INVESTORS
 # ─────────────────────────────────────────────────────

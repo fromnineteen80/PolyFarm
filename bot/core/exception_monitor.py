@@ -247,8 +247,10 @@ class ExceptionMonitor:
                 continue
 
             # Get oracle gap
-            sharp_prob = self.mapper.get_sharp_probability(
-                market.slug
+            if not self.mapper or not hasattr(self.mapper, 'get_fair_prob'):
+                continue
+            sharp_prob = self.mapper.get_fair_prob(
+                market.slug, "home"
             )
             if not sharp_prob:
                 continue
