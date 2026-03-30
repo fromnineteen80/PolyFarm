@@ -45,14 +45,14 @@ export default function Bands({ trades }) {
     <Layout>
       <h1 className="text-2xl font-bold mb-4">Band Performance</h1>
       <div className="flex gap-2 mb-4">
-        {['All', 'A', 'B', 'C'].map(b => (
+        {[['All', 'All Bands'], ['A', 'Prime (A)'], ['B', 'Standard (B)'], ['C', 'Value (C)']].map(([b, label]) => (
           <button key={b} onClick={() => setBandFilter(b)}
-            className={`btn ${bandFilter === b ? 'btn-toggle-active' : 'btn-toggle-inactive'}`}>{b === 'All' ? 'All Bands' : `Band ${b}`}</button>
+            className={`btn ${bandFilter === b ? 'btn-toggle-active' : 'btn-toggle-inactive'}`}>{label}</button>
         ))}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {['A', 'B', 'C'].map(b => (
-          <StatCard key={b} title={`Band ${b}`} value={`${bandStats[b].winRate.toFixed(0)}% WR`}
+        {[['A', 'Prime'], ['B', 'Standard'], ['C', 'Value']].map(([b, name]) => (
+          <StatCard key={b} title={`${name} (${b})`} value={`${bandStats[b].winRate.toFixed(0)}% WR`}
             subtitle={`${bandStats[b].trades} trades | ${formatCurrency(bandStats[b].totalPnl)}`} />
         ))}
         <StatCard title="Combined" value={`${filtered.length} trades`}

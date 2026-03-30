@@ -10,31 +10,36 @@ import { uploadProfilePhoto } from '../../lib/supabase'
 
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions)
-  if (!session) return { redirect: { destination: '/auth/signin', permanent: false } }
+  if (!session?.user) return { redirect: { destination: '/auth/signin', permanent: false } }
   if (!session.user.hasProfile) return { redirect: { destination: '/profile/setup', permanent: false } }
 
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const email = session.user.email
 
-  const [profileRes, investorRes, eventsRes, cfgRes, snapRes] = await Promise.all([
-    sb.from('investor_profiles').select('*').eq('email', email).single(),
-    sb.from('investors').select('*').eq('email', email).single(),
-    sb.from('capital_events').select('*').or(`first_name.eq.${session.user.profile?.first_name},email.eq.${email}`).order('timestamp', { ascending: false }),
-    sb.from('bot_config').select('*'),
-    sb.from('daily_snapshots').select('wallet_value').order('date', { ascending: false }).limit(1),
-  ])
-
-  const cfg = {}
-  cfgRes.data?.forEach(r => { cfg[r.key] = r.value })
+  let profileData = null, investorData = null, eventsData = [], cfg = {}, walletVal = 0
+  try {
+    const [profileRes, investorRes, eventsRes, cfgRes, snapRes] = await Promise.all([
+      sb.from('investor_profiles').select('*').eq('email', email).maybeSingle(),
+      sb.from('investors').select('*').eq('email', email).maybeSingle(),
+      sb.from('capital_events').select('*').eq('first_name', session.user.profile?.first_name || '').order('timestamp', { ascending: false }),
+      sb.from('bot_config').select('*'),
+      sb.from('daily_snapshots').select('wallet_value').order('date', { ascending: false }).limit(1),
+    ])
+    profileData = profileRes.data
+    investorData = investorRes.data
+    eventsData = eventsRes.data || []
+    cfgRes.data?.forEach(r => { cfg[r.key] = r.value })
+    walletVal = parseFloat(snapRes.data?.[0]?.wallet_value || 0)
+  } catch (e) {}
 
   return {
     props: {
-      session,
-      profile: profileRes.data || null,
-      investor: investorRes.data || null,
-      events: eventsRes.data || [],
+      session: JSON.parse(JSON.stringify(session)),
+      profile: profileData || null,
+      investor: investorData || null,
+      events: eventsData,
       totalUnits: parseFloat(cfg.total_units_outstanding || 0),
-      walletValue: parseFloat(snapRes.data?.[0]?.wallet_value || 0),
+      walletValue: walletVal,
       isPaper: cfg.current_mode !== 'live',
     }
   }

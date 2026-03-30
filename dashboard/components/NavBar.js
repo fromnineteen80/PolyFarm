@@ -7,7 +7,6 @@ import { formatCurrency, calcInvestorValue } from '../lib/calculations'
 import Icon from './Icon'
 
 const NAV_LINKS = [
-  { href: '/', label: 'Overview' },
   { href: '/projections', label: 'Projections' },
   { href: '/bands', label: 'Bands' },
   { href: '/daily', label: 'Daily' },
