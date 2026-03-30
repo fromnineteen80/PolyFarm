@@ -8,22 +8,27 @@ import { formatCurrency } from '../../lib/calculations'
 
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions)
-  if (!session) return { redirect: { destination: '/auth/signin', permanent: false } }
+  if (!session?.user) return { redirect: { destination: '/auth/signin', permanent: false } }
   if (session.user.hasProfile) return { redirect: { destination: '/', permanent: false } }
 
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const [cfgRes, snapRes] = await Promise.all([
-    sb.from('bot_config').select('*'),
-    sb.from('daily_snapshots').select('wallet_value').order('date', { ascending: false }).limit(1),
-  ])
-  const cfg = {}
-  cfgRes.data?.forEach(r => { cfg[r.key] = r.value })
+  let cfg = {}
+  let paperWallet = 700
+  try {
+    const [cfgRes, snapRes] = await Promise.all([
+      sb.from('bot_config').select('*'),
+      sb.from('daily_snapshots').select('wallet_value').order('date', { ascending: false }).limit(1),
+    ])
+    cfgRes.data?.forEach(r => { cfg[r.key] = r.value })
+    paperWallet = parseFloat(snapRes.data?.[0]?.wallet_value || 700)
+  } catch (e) {
+    // Supabase may not be reachable
+  }
 
   const isPaper = cfg.current_mode !== 'live'
-  const paperWallet = parseFloat(snapRes.data?.[0]?.wallet_value || 1000)
   const paperAllocation = paperWallet / 2
 
-  return { props: { session, isPaper, paperAllocation } }
+  return { props: { session: JSON.parse(JSON.stringify(session)), isPaper, paperAllocation } }
 }
 
 export default function ProfileSetup({ session, isPaper, paperAllocation }) {
