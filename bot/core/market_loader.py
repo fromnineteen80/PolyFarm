@@ -1,27 +1,44 @@
 """
-Market discovery and registry using the official
-polymarket-us SDK. Loads active moneyline markets
-for target sports, maintains a registry of
-MarketInfo objects, and manages WebSocket subs.
+Market discovery and registry using Polymarket US
+v2 league endpoints for current events and the
+SDK for BBO/order operations.
 """
 import asyncio
+import json
 import logging
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import Optional
+import httpx
 from config import logger as config_logger
 
 logger = logging.getLogger("polyfarm.market_loader")
 
-MIN_MARKET_VOLUME = 20000
+MIN_MARKET_VOLUME = 0  # v2 doesn't return volume; allow all
+
+GATEWAY_URL = "https://gateway.polymarket.us"
+
+# Leagues to poll via v2 endpoint
+TARGET_LEAGUES = [
+    "nba", "nfl", "mlb", "nhl",
+    "ncaab", "ncaaf",
+]
+
+# Sport key mapping from league to our internal format
+LEAGUE_TO_SPORT = {
+    "nba": "basketball_nba",
+    "ncaab": "basketball_ncaab",
+    "nfl": "americanfootball_nfl",
+    "ncaaf": "americanfootball_ncaaf",
+    "mlb": "baseball_mlb",
+    "nhl": "icehockey_nhl",
+}
 
 
 def parse_bbo(bbo: dict) -> tuple:
     """
     Parse response from client.markets.bbo(slug).
-    Returns (bid, ask, current_price) as floats.
-    bestBid and bestAsk are OBJECTS with "value" key
-    in the BBO endpoint (different from events.list).
+    bestBid and bestAsk are OBJECTS with "value" key.
     """
     try:
         md = bbo.get("marketData", {})
@@ -117,24 +134,30 @@ class MarketLoader:
         self.registry = registry
         self.ws_manager = ws_manager
         self.min_volume = min_volume or MIN_MARKET_VOLUME
+        self._http = None
+
+    async def _get_http(self):
+        if self._http is None or self._http.is_closed:
+            self._http = httpx.AsyncClient(timeout=15)
+        return self._http
 
     async def load_all_markets(self):
-        """Load all active sports moneyline markets."""
+        """Load current moneyline markets from v2 league endpoints."""
         try:
             new_slugs = []
+            for league in TARGET_LEAGUES:
+                slugs = await self._fetch_league(league)
+                for s in slugs:
+                    if s not in new_slugs:
+                        new_slugs.append(s)
 
-            # Load scheduled games
-            scheduled = await self._fetch_events(live=False)
-            for slug in scheduled:
-                new_slugs.append(slug)
+            # Also try v2 sports for soccer
+            for sport_slug in ["soccer"]:
+                slugs = await self._fetch_sport_v2(sport_slug)
+                for s in slugs:
+                    if s not in new_slugs:
+                        new_slugs.append(s)
 
-            # Load live games
-            live = await self._fetch_events(live=True)
-            for slug in live:
-                if slug not in new_slugs:
-                    new_slugs.append(slug)
-
-            # Subscribe WebSocket to all slugs
             if self.ws_manager and new_slugs:
                 await self.ws_manager.subscribe_markets(new_slugs)
 
@@ -144,161 +167,148 @@ class MarketLoader:
         except Exception as e:
             logger.error(f"Market load error: {e}")
 
-    async def _fetch_events(self, live=False):
-        """Fetch events from SDK and build registry."""
+    async def _fetch_league(self, league: str) -> list:
+        """Fetch events from v2 /leagues/{league}/events endpoint."""
         slugs = []
         try:
-            params = {
-                "active": True,
-                "live": live,
-                "ended": False,
-                "categories": "sports",
-                "limit": 100,
-            }
-            result = await self.client.events.list(params)
-            events = result.get("events", [])
+            http = await self._get_http()
+            r = await http.get(f"{GATEWAY_URL}/v2/leagues/{league}/events")
+            if r.status_code != 200:
+                logger.warning(f"v2 leagues/{league} returned {r.status_code}")
+                return slugs
+
+            data = r.json()
+            events = data.get("events", [])
+            sport = LEAGUE_TO_SPORT.get(league, league)
 
             for event in events:
-                event_id = event.get("id", "")
-                event_slug = event.get("slug", "")
-                is_live = event.get("live", False)
-                is_ended = event.get("ended", False)
-                series_slug = event.get("seriesSlug", "")
-                game_id = event.get("gameId", 0)
-                sportradar_id = event.get("sportradarGameId", "")
-                start_time = event.get("startTime", "") or event.get("eventDate", "")
-
-                if is_ended:
-                    continue
-
-                # Extract teams — build full name from safeName + name
-                # SDK returns name="Spurs", safeName="San Antonio"
-                # Full name = "San Antonio Spurs" (matches Odds API)
-                teams = event.get("teams", [])
-                home = teams[0] if len(teams) > 0 else {}
-                away = teams[1] if len(teams) > 1 else {}
-
-                def full_team_name(t):
-                    safe = t.get("safeName", "")
-                    short = t.get("name", "")
-                    if safe and short:
-                        return f"{safe} {short}"
-                    return short or safe or ""
-
-                # Extract event state
-                state = event.get("eventState", {}) or {}
-                score = state.get("score") or event.get("score")
-                period = state.get("period") or event.get("period")
-                elapsed = state.get("elapsed") or event.get("elapsed")
-                spread_line = state.get("mainSpreadLine", 0) or 0
-                total_line = state.get("mainTotalLine", 0) or 0
-
-                # Football state
-                fb = state.get("footballState", {}) or {}
-                fb_down = fb.get("down", 0) or 0
-                fb_yard = fb.get("yard", 0) or 0
-                fb_possession = fb.get("possessionProviderId", 0) or 0
-
-                # Latest update
-                meta = event.get("metadata", {}) or {}
-                update = meta.get("latestGameUpdate", {}) or {}
-
-                # Determine sport from series slug or team league
-                sport = ""
-                league = home.get("league", "") or away.get("league", "")
-                if league:
-                    sport_map = {
-                        "nba": "basketball_nba",
-                        "ncaab": "basketball_ncaab",
-                        "nfl": "americanfootball_nfl",
-                        "ncaaf": "americanfootball_ncaaf",
-                        "mlb": "baseball_mlb",
-                        "nhl": "icehockey_nhl",
-                        "mls": "soccer_usa_mls",
-                        "epl": "soccer_epl",
-                    }
-                    sport = sport_map.get(league.lower(), league.lower())
-
-                # Filter markets — moneyline only
-                for market in event.get("markets", []):
-                    mtype = market.get("sportsMarketTypeV2", "")
-                    if mtype != "SPORTS_MARKET_TYPE_MONEYLINE":
-                        continue
-                    if not market.get("active"):
-                        continue
-
-                    slug = market.get("slug")
-                    if not slug:
-                        continue
-
-                    # Get prices from outcomePrices if available
-                    outcome_prices = market.get("outcomePrices", "")
-                    yes_price = 0.5
-                    if outcome_prices:
-                        try:
-                            import json
-                            prices = json.loads(outcome_prices) if isinstance(outcome_prices, str) else outcome_prices
-                            if isinstance(prices, list) and len(prices) > 0:
-                                yes_price = float(prices[0])
-                        except Exception:
-                            pass
-
-                    # Fallback to bestBid/bestAsk if present
-                    bid_price = float(market.get("bestBid", 0) or 0)
-                    ask_price = float(market.get("bestAsk", 0) or 0)
-                    if ask_price > 0:
-                        yes_price = ask_price
-
-                    mkt_start = market.get("gameStartTime", "") or start_time
-                    market_sides = market.get("marketSides", [])
-
-                    info = MarketInfo(
-                        slug=slug,
-                        event_id=str(event_id),
-                        event_slug=event_slug,
-                        sport=sport,
-                        league=league,
-                        game_id=game_id,
-                        sportradar_game_id=str(sportradar_id),
-                        home_team=full_team_name(home),
-                        away_team=full_team_name(away),
-                        home_color=home.get("colorPrimary", ""),
-                        away_color=away.get("colorPrimary", ""),
-                        home_team_id=home.get("id", 0) or 0,
-                        away_team_id=away.get("id", 0) or 0,
-                        home_record=home.get("record", ""),
-                        away_record=away.get("record", ""),
-                        home_ranking=home.get("ranking", ""),
-                        away_ranking=away.get("ranking", ""),
-                        home_conference=home.get("conference", ""),
-                        away_conference=away.get("conference", ""),
-                        yes_price=yes_price,
-                        bid_price=bid_price,
-                        volume=0.0,
-                        liquidity=0.0,
-                        is_live=is_live,
-                        is_finished=is_ended,
-                        current_score=score,
-                        current_period=period,
-                        time_elapsed=elapsed,
-                        game_start_time=mkt_start,
-                        main_spread_line=float(spread_line or 0),
-                        main_total_line=float(total_line or 0),
-                        football_down=fb_down,
-                        football_yard=fb_yard,
-                        possession_team_id=int(fb_possession or 0),
-                        latest_update_title=update.get("title", ""),
-                        latest_update_team=update.get("team", ""),
-                        latest_update_clock=update.get("clock", ""),
-                        market_type="moneyline",
-                        series_slug=series_slug,
-                        market_sides=market_sides,
-                    )
-                    await self.registry.update(slug, info)
-                    slugs.append(slug)
+                event_slugs = await self._process_event(event, sport, league)
+                slugs.extend(event_slugs)
 
         except Exception as e:
-            logger.error(f"Event fetch error (live={live}): {e}")
+            logger.error(f"League fetch error {league}: {e}")
+        return slugs
+
+    async def _fetch_sport_v2(self, sport_slug: str) -> list:
+        """Fetch events from v2 /sports/{sport}/events endpoint."""
+        slugs = []
+        try:
+            http = await self._get_http()
+            r = await http.get(f"{GATEWAY_URL}/v2/sports/{sport_slug}/events")
+            if r.status_code != 200:
+                return slugs
+
+            data = r.json()
+            events = data.get("events", [])
+            league_hint = data.get("league", sport_slug)
+
+            for event in events:
+                # Determine sport from event league if available
+                event_league = ""
+                teams = event.get("teams", [])
+                if teams:
+                    event_league = teams[0].get("league", "")
+                sport_key = LEAGUE_TO_SPORT.get(event_league, f"soccer_{sport_slug}")
+                event_slugs = await self._process_event(event, sport_key, event_league or sport_slug)
+                slugs.extend(event_slugs)
+
+        except Exception as e:
+            logger.error(f"Sport v2 fetch error {sport_slug}: {e}")
+        return slugs
+
+    async def _process_event(self, event: dict, sport: str, league: str) -> list:
+        """Process one event and extract moneyline markets."""
+        slugs = []
+
+        event_id = str(event.get("id", ""))
+        event_slug = event.get("slug", "")
+        is_live = event.get("live", False)
+        is_ended = event.get("ended", False)
+        series_slug = event.get("seriesSlug", "")
+        game_id = event.get("gameId", 0) or 0
+        sportradar_id = event.get("sportradarGameId", "") or ""
+        start_time = event.get("startTime", "") or ""
+        score = event.get("score", "") or ""
+        period = event.get("period", "") or ""
+        elapsed = event.get("elapsed", "") or ""
+
+        if is_ended:
+            return slugs
+
+        # Extract teams
+        teams = event.get("teams", [])
+        home = teams[0] if len(teams) > 0 else {}
+        away = teams[1] if len(teams) > 1 else {}
+
+        def full_team_name(t):
+            safe = t.get("safeName", "")
+            short = t.get("name", "")
+            if safe and short:
+                return f"{safe} {short}"
+            return short or safe or ""
+
+        for market in event.get("markets", []):
+            mtype = market.get("marketType", "")
+            stype = market.get("sportsMarketTypeV2", "")
+            if mtype != "moneyline" and "MONEYLINE" not in stype:
+                continue
+            if not market.get("active"):
+                continue
+
+            slug = market.get("slug")
+            if not slug:
+                continue
+
+            # Get price from marketSides
+            market_sides = market.get("marketSides", [])
+            yes_price = 0.5
+            for side in market_sides:
+                if side.get("long"):
+                    price_str = side.get("price", "0.5")
+                    try:
+                        yes_price = float(price_str)
+                    except (ValueError, TypeError):
+                        yes_price = 0.5
+                    break
+
+            mkt_start = market.get("gameStartTime", "") or start_time
+
+            info = MarketInfo(
+                slug=slug,
+                event_id=event_id,
+                event_slug=event_slug,
+                sport=sport,
+                league=league,
+                game_id=game_id,
+                sportradar_game_id=str(sportradar_id),
+                home_team=full_team_name(home),
+                away_team=full_team_name(away),
+                home_color=home.get("colorPrimary", ""),
+                away_color=away.get("colorPrimary", ""),
+                home_team_id=home.get("id", 0) or 0,
+                away_team_id=away.get("id", 0) or 0,
+                home_record=home.get("record", ""),
+                away_record=away.get("record", ""),
+                home_ranking=home.get("ranking", ""),
+                away_ranking=away.get("ranking", ""),
+                home_conference=home.get("conference", ""),
+                away_conference=away.get("conference", ""),
+                yes_price=yes_price,
+                bid_price=0.0,
+                volume=0.0,
+                liquidity=0.0,
+                is_live=is_live,
+                is_finished=is_ended,
+                current_score=score if score else None,
+                current_period=period if period else None,
+                time_elapsed=elapsed if elapsed else None,
+                game_start_time=mkt_start,
+                market_type="moneyline",
+                series_slug=series_slug,
+                market_sides=market_sides,
+            )
+            await self.registry.update(slug, info)
+            slugs.append(slug)
 
         return slugs
 
@@ -350,19 +360,16 @@ class MarketLoader:
                     "market_type": m.market_type,
                     "series_slug": m.series_slug,
                 }
-                # Enrich with sharp odds data if available
                 if odds_api and odds_api.is_matched(m.slug):
                     consensus = odds_api.get_consensus_data(m.slug)
                     if consensus:
-                        team_side = "home"  # default
-                        sharp = odds_api.get_fair_prob(m.slug, team_side)
+                        sharp = odds_api.get_fair_prob(m.slug, "home")
                         data["current_sharp_prob"] = sharp
                         data["current_edge"] = round(sharp - m.yes_price, 4) if sharp else None
                         data["odds_api_event_id"] = consensus.get("odds_api_event_id", "")
                         data["match_confidence"] = 1.0
                         data["last_sharp_update"] = consensus.get("updated_at")
 
-                # Enrich with price movement if available
                 if ws_markets:
                     velocity, direction = ws_markets.calculate_velocity(m.slug)
                     pressure = ws_markets.get_net_buy_pressure(m.slug)
