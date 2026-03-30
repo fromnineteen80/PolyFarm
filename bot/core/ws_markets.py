@@ -34,6 +34,9 @@ class MarketsWebSocket:
         self._last_heartbeat = None
         self._reconnect_delay = self.RECONNECT_BASE
         self._running = False
+        self._price_history: dict = {}
+        self._trade_flow: dict = {}
+        self._HISTORY_WINDOW_SECONDS = 1800
 
     async def start(self):
         self._running = True
@@ -131,6 +134,72 @@ class MarketsWebSocket:
     def get_subscribed_slugs(self):
         return self._subscribed_slugs.copy()
 
+    def _append_price_history(self, slug, price, bid, ask):
+        now = datetime.now(timezone.utc)
+        entry = {"price": price, "bid": bid, "ask": ask, "timestamp": now.isoformat()}
+        if slug not in self._price_history:
+            self._price_history[slug] = []
+        self._price_history[slug].append(entry)
+        cutoff = now.timestamp() - self._HISTORY_WINDOW_SECONDS
+        self._price_history[slug] = [
+            e for e in self._price_history[slug]
+            if datetime.fromisoformat(e["timestamp"]).timestamp() > cutoff
+        ]
+
+    def _record_trade_flow(self, slug, price, quantity, taker_intent):
+        if slug not in self._trade_flow:
+            self._trade_flow[slug] = {
+                "buy_volume": 0.0,
+                "sell_volume": 0.0,
+                "window_start": datetime.now(timezone.utc).isoformat(),
+            }
+        dollar_volume = price * quantity
+        if taker_intent == "ORDER_INTENT_BUY_LONG":
+            self._trade_flow[slug]["buy_volume"] += dollar_volume
+        else:
+            self._trade_flow[slug]["sell_volume"] += dollar_volume
+
+    def get_price_history(self, slug):
+        return self._price_history.get(slug, [])
+
+    def get_trade_flow(self, slug):
+        return self._trade_flow.get(slug, {})
+
+    def calculate_velocity(self, slug):
+        history = self._price_history.get(slug, [])
+        if len(history) < 2:
+            return 0.0, "stable"
+        oldest = history[0]
+        newest = history[-1]
+        try:
+            t0 = datetime.fromisoformat(oldest["timestamp"]).timestamp()
+            t1 = datetime.fromisoformat(newest["timestamp"]).timestamp()
+            elapsed_minutes = (t1 - t0) / 60
+            if elapsed_minutes < 0.1:
+                return 0.0, "stable"
+            price_change = (newest["price"] - oldest["price"]) * 100
+            velocity = price_change / elapsed_minutes
+            if velocity < -0.2:
+                direction = "falling"
+            elif velocity > 0.2:
+                direction = "rising"
+            else:
+                direction = "stable"
+            return round(velocity, 3), direction
+        except Exception:
+            return 0.0, "stable"
+
+    def get_net_buy_pressure(self, slug):
+        flow = self._trade_flow.get(slug, {})
+        buy = flow.get("buy_volume", 0)
+        sell = flow.get("sell_volume", 0)
+        total = buy + sell
+        if total < 10:
+            return 1.0
+        if sell == 0:
+            return 2.0
+        return round(buy / sell, 3)
+
     def _on_market_data_lite(self, data):
         try:
             d = data.get("marketDataLite", {})
@@ -159,6 +228,7 @@ class MarketsWebSocket:
                 except asyncio.QueueEmpty:
                     pass
                 self.price_queue.put_nowait(event)
+            self._append_price_history(slug, current, bid, ask)
         except Exception as e:
             logger.error(f"Market data lite error: {e}")
 
@@ -170,6 +240,7 @@ class MarketsWebSocket:
                 return
             price = float(t.get("price", {}).get("value", 0) or 0)
             quantity = float(t.get("quantity", {}).get("value", 0) or 0)
+            taker_intent = t.get("taker", {}).get("intent", "")
             try:
                 self.trade_queue.put_nowait({
                     "market_slug": slug,
@@ -188,6 +259,7 @@ class MarketsWebSocket:
                     "quantity": quantity,
                     "trade_time": t.get("tradeTime"),
                 })
+            self._record_trade_flow(slug, price, quantity, taker_intent)
         except Exception as e:
             logger.error(f"Trade event error: {e}")
 

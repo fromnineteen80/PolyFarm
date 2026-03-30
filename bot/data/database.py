@@ -371,3 +371,38 @@ async def upsert_participant(data: dict):
             .upsert(data, on_conflict="sport_id,participant_id")
             .execute()
     )
+
+# ─────────────────────────────────────────────────────
+# SHARP ODDS AND PRICE HISTORY
+# ─────────────────────────────────────────────────────
+
+async def upsert_sharp_odds(data: dict):
+    return await db_execute(
+        lambda: _supabase.table("sharp_odds")
+            .upsert(data, on_conflict="odds_api_event_id")
+            .execute()
+    )
+
+async def update_sharp_odds_slug(event_id: str, polymarket_slug: str):
+    return await db_execute(
+        lambda: _supabase.table("sharp_odds")
+            .update({"polymarket_slug": polymarket_slug})
+            .eq("odds_api_event_id", event_id)
+            .execute()
+    )
+
+async def upsert_price_history(slug, snapshots, trade_flow, velocity, direction, net_buy_pressure, current_price, price_30m_ago):
+    return await db_execute(
+        lambda: _supabase.table("price_history")
+            .upsert({
+                "market_slug": slug,
+                "snapshots": snapshots,
+                "trade_flow": trade_flow,
+                "price_velocity": velocity,
+                "price_direction": direction,
+                "net_buy_pressure": net_buy_pressure,
+                "current_price": current_price,
+                "price_30m_ago": price_30m_ago,
+            }, on_conflict="market_slug")
+            .execute()
+    )
