@@ -27,7 +27,9 @@ MIN_BOOKS_FOR_CONSENSUS = 2
 
 SPORT_KEYS_NON_SOCCER = [
     "basketball_nba",
+    "basketball_ncaab",
     "americanfootball_nfl",
+    "americanfootball_ncaaf",
     "baseball_mlb",
     "icehockey_nhl",
 ]

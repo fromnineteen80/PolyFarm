@@ -63,7 +63,7 @@ const FADE_TEAMS = {
 
 const TENDENCY_COLORS = { very_high: 'bg-profit text-black', high: 'bg-bandA text-black', medium: 'bg-paper text-black', low: 'bg-neutral text-white' }
 const CONFIDENCE_COLORS = { very_high: 'bg-profit text-black', high: 'bg-bandA text-black', medium: 'bg-paper text-black' }
-const SPORT_LABELS = { basketball_nba: 'NBA', icehockey_nhl: 'NHL', baseball_mlb: 'MLB', basketball_ncaab: 'NCAAB', americanfootball_nfl: 'NFL', soccer_epl: 'EPL', soccer_usa_mls: 'MLS' }
+const SPORT_LABELS = { basketball_nba: 'NBA', icehockey_nhl: 'NHL', baseball_mlb: 'MLB', basketball_ncaab: 'NCAAB', americanfootball_nfl: 'NFL', americanfootball_ncaaf: 'NCAAF', soccer_epl: 'EPL', soccer_usa_mls: 'MLS' }
 
 export async function getServerSideProps(context) {
   const session = await getServerSession(context.req, context.res, authOptions)

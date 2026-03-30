@@ -209,6 +209,7 @@ async def main():
         asyncio.create_task(pre_game_scanner(registry, odds_api, alerts), name="pre_game"),
         asyncio.create_task(game_complete_scanner(registry, position_monitor, alerts), name="game_complete"),
         asyncio.create_task(heartbeat_loop(), name="heartbeat"),
+        asyncio.create_task(paper_milestone_checker(alerts), name="paper_milestones"),
     ]
 
     if odds_api:
@@ -267,6 +268,153 @@ async def main():
         await markets_ws.stop()
         if odds_api:
             await odds_api.close()
+
+
+async def paper_milestone_checker(alerts):
+    """Check paper trade count every 5 minutes.
+    Fire analysis report at every 50-trade milestone."""
+    from data.database import get_paper_trade_stats, get_today_closed_trades
+    last_milestone = 0
+
+    while True:
+        await asyncio.sleep(300)
+        try:
+            stats = await get_paper_trade_stats()
+            count = stats.get("count", 0)
+            if count <= 0:
+                continue
+
+            # Check if we crossed a 50-trade milestone
+            current_milestone = (count // 50) * 50
+            if current_milestone <= last_milestone:
+                continue
+            if current_milestone == 0:
+                continue
+
+            last_milestone = current_milestone
+
+            # Build analysis from all paper trades
+            from data.database import db_execute
+            from data.database import _supabase
+            result = await db_execute(
+                lambda: _supabase.table("trades")
+                    .select("*")
+                    .eq("paper_mode", True)
+                    .not_.is_("timestamp_exit", "null")
+                    .execute()
+            )
+            trades = result.data or []
+            if not trades:
+                continue
+
+            total_pnl = sum(float(t.get("pnl", 0) or 0) for t in trades)
+            wins = sum(1 for t in trades if float(t.get("pnl", 0) or 0) > 0)
+            win_rate = wins / len(trades) if trades else 0
+
+            # By sport
+            by_sport = {}
+            for t in trades:
+                s = t.get("sport", "unknown") or "unknown"
+                if s not in by_sport:
+                    by_sport[s] = {"trades": 0, "wins": 0, "pnl": 0}
+                by_sport[s]["trades"] += 1
+                pnl = float(t.get("pnl", 0) or 0)
+                by_sport[s]["pnl"] += pnl
+                if pnl > 0:
+                    by_sport[s]["wins"] += 1
+            for s in by_sport:
+                by_sport[s]["win_rate"] = by_sport[s]["wins"] / by_sport[s]["trades"] if by_sport[s]["trades"] > 0 else 0
+
+            # By band
+            by_band = {}
+            for t in trades:
+                b = t.get("band", "?") or "?"
+                if b not in by_band:
+                    by_band[b] = {"trades": 0, "wins": 0, "pnl": 0}
+                by_band[b]["trades"] += 1
+                pnl = float(t.get("pnl", 0) or 0)
+                by_band[b]["pnl"] += pnl
+                if pnl > 0:
+                    by_band[b]["wins"] += 1
+            for b in by_band:
+                by_band[b]["win_rate"] = by_band[b]["wins"] / by_band[b]["trades"] if by_band[b]["trades"] > 0 else 0
+
+            # By direction at entry
+            by_direction = {}
+            for t in trades:
+                d = t.get("price_direction_at_entry", "unknown") or "unknown"
+                if d not in by_direction:
+                    by_direction[d] = {"trades": 0, "wins": 0}
+                by_direction[d]["trades"] += 1
+                if float(t.get("pnl", 0) or 0) > 0:
+                    by_direction[d]["wins"] += 1
+            for d in by_direction:
+                by_direction[d]["win_rate"] = by_direction[d]["wins"] / by_direction[d]["trades"] if by_direction[d]["trades"] > 0 else 0
+
+            # By edge bin
+            by_edge_bin = {"2-4c": {"trades": 0, "wins": 0}, "4-6c": {"trades": 0, "wins": 0}, "6-8c": {"trades": 0, "wins": 0}, "8-10c": {"trades": 0, "wins": 0}, "10c+": {"trades": 0, "wins": 0}}
+            for t in trades:
+                edge = float(t.get("edge_at_entry", 0) or t.get("raw_edge_at_entry", 0) or 0)
+                ec = edge * 100
+                if ec >= 10:
+                    b = "10c+"
+                elif ec >= 8:
+                    b = "8-10c"
+                elif ec >= 6:
+                    b = "6-8c"
+                elif ec >= 4:
+                    b = "4-6c"
+                else:
+                    b = "2-4c"
+                by_edge_bin[b]["trades"] += 1
+                if float(t.get("pnl", 0) or 0) > 0:
+                    by_edge_bin[b]["wins"] += 1
+            for b in by_edge_bin:
+                by_edge_bin[b]["win_rate"] = by_edge_bin[b]["wins"] / by_edge_bin[b]["trades"] if by_edge_bin[b]["trades"] > 0 else 0
+
+            # Hold times
+            winner_holds = [int(t.get("hold_duration_seconds", 0) or 0) / 60 for t in trades if float(t.get("pnl", 0) or 0) > 0]
+            loser_holds = [int(t.get("hold_duration_seconds", 0) or 0) / 60 for t in trades if float(t.get("pnl", 0) or 0) <= 0]
+            avg_hold_winners = sum(winner_holds) / len(winner_holds) if winner_holds else 0
+            avg_hold_losers = sum(loser_holds) / len(loser_holds) if loser_holds else 0
+
+            # Generate recommendations
+            recommendations = []
+            for s, data in by_sport.items():
+                if data["trades"] >= 5 and data["win_rate"] < 0.60:
+                    recommendations.append(f"{s}: {data['win_rate']:.0%} win rate is below 60%. Consider reducing position size or adding filters.")
+            for b, data in by_band.items():
+                if data["trades"] >= 5 and data["win_rate"] < 0.60:
+                    recommendations.append(f"Band {b}: {data['win_rate']:.0%} win rate. Edge threshold may need increasing.")
+            for d, data in by_direction.items():
+                if d == "rising" and data["trades"] >= 3 and data["win_rate"] < 0.50:
+                    recommendations.append(f"Rising price entries have {data['win_rate']:.0%} WR. Direction modifier may need tightening.")
+            if avg_hold_losers > 0 and avg_hold_losers > avg_hold_winners * 2:
+                recommendations.append(f"Losers held {avg_hold_losers:.0f}m vs winners {avg_hold_winners:.0f}m. Consider tighter timeout.")
+            if not recommendations:
+                recommendations.append("No specific issues detected. Continue accumulating data.")
+
+            go_live_ready = count >= 300 and win_rate >= 0.70
+
+            analysis = {
+                "win_rate": win_rate,
+                "total_pnl": total_pnl,
+                "avg_pnl": total_pnl / len(trades) if trades else 0,
+                "by_sport": by_sport,
+                "by_band": by_band,
+                "by_direction": by_direction,
+                "by_edge_bin": by_edge_bin,
+                "avg_hold_winners": avg_hold_winners,
+                "avg_hold_losers": avg_hold_losers,
+                "recommendations": recommendations,
+                "go_live_ready": go_live_ready,
+            }
+
+            await alerts.send_paper_milestone(current_milestone, analysis)
+            logger.info(f"Paper milestone report sent: {current_milestone} trades, {win_rate:.0%} WR")
+
+        except Exception as e:
+            logger.error(f"Paper milestone checker error: {e}")
 
 
 async def heartbeat_loop():

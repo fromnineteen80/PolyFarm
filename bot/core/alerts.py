@@ -643,6 +643,114 @@ class AlertManager:
 
         self._enqueue("\n".join(lines))
 
+    # ─────────────────────────────────────────────
+    # PAPER TRADING MILESTONE ANALYSIS
+    # ─────────────────────────────────────────────
+
+    async def send_paper_milestone(self, milestone, analysis):
+        """
+        Sent every 50 paper trades with full
+        performance breakdown and recommendations.
+        """
+        a = analysis
+        lines = [
+            f"PAPER MILESTONE: {milestone} TRADES",
+            "",
+            f"Win Rate: {a.get('win_rate', 0):.0%} (need 70%)",
+            f"Total P&L: {'+'if a.get('total_pnl',0)>=0 else ''}{a.get('total_pnl',0):.2f}",
+            f"Avg P&L per trade: {'+'if a.get('avg_pnl',0)>=0 else ''}{a.get('avg_pnl',0):.4f}",
+            "",
+            "BY SPORT:",
+        ]
+        for sport, data in sorted(
+            a.get("by_sport", {}).items(),
+            key=lambda x: x[1].get("pnl", 0),
+            reverse=True
+        ):
+            wr = data.get("win_rate", 0)
+            pnl = data.get("pnl", 0)
+            count = data.get("trades", 0)
+            flag = " [WEAK]" if wr < 0.60 and count >= 5 else ""
+            lines.append(
+                f"  {sport}: {count} trades | "
+                f"{wr:.0%} WR | "
+                f"{'+'if pnl>=0 else ''}{pnl:.2f}{flag}"
+            )
+
+        lines.append("")
+        lines.append("BY BAND:")
+        for band, data in sorted(
+            a.get("by_band", {}).items()
+        ):
+            wr = data.get("win_rate", 0)
+            pnl = data.get("pnl", 0)
+            count = data.get("trades", 0)
+            lines.append(
+                f"  Band {band}: {count} trades | "
+                f"{wr:.0%} WR | "
+                f"{'+'if pnl>=0 else ''}{pnl:.2f}"
+            )
+
+        lines.append("")
+        lines.append("BY ENTRY DIRECTION:")
+        for direction, data in a.get(
+            "by_direction", {}
+        ).items():
+            wr = data.get("win_rate", 0)
+            count = data.get("trades", 0)
+            lines.append(
+                f"  {direction}: {count} trades | "
+                f"{wr:.0%} WR"
+            )
+
+        lines.append("")
+        lines.append("BY EDGE SIZE:")
+        for edge_bin, data in a.get(
+            "by_edge_bin", {}
+        ).items():
+            wr = data.get("win_rate", 0)
+            count = data.get("trades", 0)
+            lines.append(
+                f"  {edge_bin}: {count} trades | "
+                f"{wr:.0%} WR"
+            )
+
+        lines.append("")
+        lines.append("TIMING:")
+        lines.append(
+            f"  Avg hold (winners): "
+            f"{a.get('avg_hold_winners', 0):.0f}m"
+        )
+        lines.append(
+            f"  Avg hold (losers): "
+            f"{a.get('avg_hold_losers', 0):.0f}m"
+        )
+
+        # Recommendations
+        recs = a.get("recommendations", [])
+        if recs:
+            lines.append("")
+            lines.append("RECOMMENDATIONS:")
+            for r in recs:
+                lines.append(f"  - {r}")
+
+        # Go-live readiness
+        lines.append("")
+        ready = a.get("go_live_ready", False)
+        if ready:
+            lines.append(
+                "STATUS: READY for live mode "
+                "(300+ trades, 70%+ WR)"
+            )
+        else:
+            remaining = max(0, 300 - milestone)
+            lines.append(
+                f"STATUS: {remaining} trades remaining "
+                f"to unlock evaluation"
+            )
+
+        self._enqueue("\n".join(lines))
+
     async def close(self):
         if self._session:
             await self._session.close()
