@@ -161,7 +161,7 @@ async def main():
     odds_key = os.environ.get("ODDS_API_KEY")
     if odds_key:
         odds_api = OddsAPIClient(api_key=odds_key, db=db)
-        await odds_api.startup(registry)
+        await odds_api.startup(registry, client)
         edge_detector.odds_api = odds_api
         edge_detector.ws_markets = markets_ws
         # Wire to monitors that need sharp probs

@@ -1,12 +1,15 @@
 """
 The Odds API client for PolyFarm.
 Fetches US bookmaker consensus odds and matches
-them to Polymarket market slugs.
-Provides fair probability and movement-adjusted
-composite edge signal for edge detection.
+them to Polymarket market slugs using structured
+team data from both APIs.
 
 Sharp reference: consensus from US books
 (DraftKings, FanDuel, BetMGM, Caesars, etc.)
+
+Matching: Uses Polymarket SDK team registry
+(client.sports.teams()) for exact team name
+lookups. No fuzzy string matching.
 """
 import asyncio
 import logging
@@ -20,7 +23,6 @@ logger = logging.getLogger("polyfarm.odds_api")
 BASE_URL = "https://api.the-odds-api.com"
 POLL_INTERVAL = 180
 MATCH_TIME_WINDOW = 7200
-MIN_MATCH_CONFIDENCE = 0.7
 MIN_BOOKS_FOR_CONSENSUS = 2
 
 SPORT_KEYS_NON_SOCCER = [
@@ -49,8 +51,13 @@ DIRECTION_SIZE_MULTIPLIER = {
     "falling_strong": 1.15, "default": 1.00, "caution": 0.85,
 }
 
+# ─────────────────────────────────────────────
+# TEAM NAME NORMALIZATION
+# ─────────────────────────────────────────────
 
 def normalize_team(name: str) -> str:
+    """Normalize for comparison. Lowercase, strip
+    punctuation and common suffixes."""
     if not name:
         return ""
     n = name.lower().strip()
@@ -60,26 +67,9 @@ def normalize_team(name: str) -> str:
     return n.strip()
 
 
-def name_similarity(a: str, b: str) -> float:
-    na, nb = normalize_team(a), normalize_team(b)
-    if na == nb:
-        return 1.0
-    if not na or not nb:
-        return 0.0
-    ta, tb = set(na.split()), set(nb.split())
-    if not ta or not tb:
-        return 0.0
-    intersection = ta & tb
-    if not intersection:
-        return 0.0
-    union = ta | tb
-    score = len(intersection) / len(union)
-    shorter = ta if len(ta) <= len(tb) else tb
-    longer = tb if len(ta) <= len(tb) else ta
-    if shorter.issubset(longer) and len(shorter) >= 1:
-        score = max(score, 0.85)
-    return score
-
+# ─────────────────────────────────────────────
+# ODDS MATH
+# ─────────────────────────────────────────────
 
 def american_to_implied(price: int) -> float:
     if price == 0:
@@ -93,15 +83,18 @@ def calculate_fair_probs(outcomes, home_team, away_team):
     home_price = None
     away_price = None
     draw_price = None
+    nh = normalize_team(home_team)
+    na = normalize_team(away_team)
 
     for o in outcomes:
         name = o.get("name", "")
         price = o.get("price", 0)
+        nn = normalize_team(name)
         if name == "Draw":
             draw_price = price
-        elif normalize_team(name) == normalize_team(home_team):
+        elif nn == nh:
             home_price = price
-        elif normalize_team(name) == normalize_team(away_team):
+        elif nn == na:
             away_price = price
         else:
             if home_price is None and name != "Draw":
@@ -177,6 +170,10 @@ def consensus_from_bookmakers(bookmakers, home_team, away_team):
     return avg_home, avg_away, avg_draw, books_used, raw_bookmakers
 
 
+# ─────────────────────────────────────────────
+# MAIN CLIENT
+# ─────────────────────────────────────────────
+
 class OddsAPIClient:
 
     def __init__(self, api_key, db):
@@ -185,6 +182,13 @@ class OddsAPIClient:
         self._soccer_keys = []
         self._sharp_odds = {}
         self._market_map = {}
+
+        # Team registry from Polymarket SDK
+        # {team_id: {"name": "Los Angeles Lakers", "league": "nba", ...}}
+        self._poly_teams = {}
+        # {normalized_name: team_id}
+        self._poly_name_to_id = {}
+
         self._requests_remaining = 100000
         self._requests_used = 0
         self._last_poll = None
@@ -222,6 +226,57 @@ class OddsAPIClient:
             logger.error(f"Odds API error: {e}")
             return None, {}
 
+    # ─────────────────────────────────────────
+    # TEAM REGISTRY
+    # ─────────────────────────────────────────
+
+    async def build_team_registry(self, poly_client):
+        """
+        Call client.sports.teams() to build a
+        complete team name lookup from Polymarket.
+        This gives us the canonical team names
+        that match what events.list() returns.
+        """
+        try:
+            result = await poly_client.sports.teams({})
+            teams = result if isinstance(result, list) else result.get("teams", [])
+            for team in teams:
+                tid = team.get("id")
+                name = team.get("name", "")
+                if tid and name:
+                    self._poly_teams[tid] = {
+                        "name": name,
+                        "league": team.get("league", ""),
+                        "abbreviation": team.get("abbreviation", ""),
+                        "record": team.get("record", ""),
+                        "conference": team.get("conference", ""),
+                        "safeName": team.get("safeName", ""),
+                    }
+                    self._poly_name_to_id[normalize_team(name)] = tid
+            logger.info(f"Team registry: {len(self._poly_teams)} teams loaded from Polymarket SDK")
+        except Exception as e:
+            logger.error(f"Failed to build team registry: {e}")
+
+    def get_canonical_name(self, team_name: str) -> str:
+        """
+        Look up the canonical Polymarket team name.
+        Returns the exact name from the SDK team
+        registry, or the input name if not found.
+        """
+        normalized = normalize_team(team_name)
+        tid = self._poly_name_to_id.get(normalized)
+        if tid and tid in self._poly_teams:
+            return self._poly_teams[tid]["name"]
+        return team_name
+
+    def get_team_by_id(self, team_id: int) -> Optional[dict]:
+        """Look up team data by Polymarket team ID."""
+        return self._poly_teams.get(team_id)
+
+    # ─────────────────────────────────────────
+    # STARTUP
+    # ─────────────────────────────────────────
+
     async def discover_soccer_keys(self):
         data, _ = await self._get("/v4/sports")
         if not data:
@@ -240,14 +295,34 @@ class OddsAPIClient:
         self._soccer_keys = soccer_keys
         logger.info(f"Active soccer keys: {soccer_keys}")
 
-    async def startup(self, market_registry):
+    async def startup(self, market_registry, poly_client):
+        """
+        Full startup sequence.
+        poly_client: AsyncPolymarketUS instance
+        market_registry: MarketRegistry instance
+        """
         logger.info("Odds API client starting up")
+
+        # Build team registry from Polymarket SDK
+        await self.build_team_registry(poly_client)
+        await asyncio.sleep(0.5)
+
+        # Discover soccer sport keys
         await self.discover_soccer_keys()
         await asyncio.sleep(1)
+
+        # Fetch initial odds from all sports
         await self.fetch_all_odds()
         await asyncio.sleep(1)
+
+        # Match Polymarket markets to Odds API events
         await self.match_markets(market_registry)
+
         logger.info("Odds API startup complete")
+
+    # ─────────────────────────────────────────
+    # ODDS FETCHING
+    # ─────────────────────────────────────────
 
     def _all_sport_keys(self):
         return SPORT_KEYS_NON_SOCCER + self._soccer_keys
@@ -324,7 +399,28 @@ class OddsAPIClient:
         except Exception as e:
             logger.debug(f"Sharp odds upsert error: {e}")
 
+    # ─────────────────────────────────────────
+    # MARKET MATCHING — TEAM ID BASED
+    # ─────────────────────────────────────────
+
     async def match_markets(self, market_registry):
+        """
+        Match Polymarket markets to Odds API events
+        using team names from the Polymarket SDK
+        team registry. No fuzzy matching needed —
+        both sources use canonical team names.
+
+        Matching strategy:
+        1. Get home_team and away_team from the
+           Polymarket MarketInfo (populated from
+           events.list() teams[] array)
+        2. Get home_team and away_team from each
+           Odds API event
+        3. Normalize both and compare for exact match
+        4. Confirm with start time proximity
+        5. If team registry has the team, use the
+           canonical name for comparison
+        """
         matched = 0
         unmatched = 0
         registry_items = {}
@@ -336,49 +432,80 @@ class OddsAPIClient:
         for slug, market in registry_items.items():
             if slug in self._market_map:
                 continue
+
             poly_home = getattr(market, 'home_team', '') or ''
             poly_away = getattr(market, 'away_team', '') or ''
-            poly_sport = getattr(market, 'sport', '') or ''
             poly_start = getattr(market, 'game_start_time', '') or ''
+
             if not poly_home or not poly_away:
                 unmatched += 1
                 continue
+
+            # Use canonical names from team registry
+            # if available, otherwise use as-is
+            canon_home = self.get_canonical_name(poly_home)
+            canon_away = self.get_canonical_name(poly_away)
+            norm_home = normalize_team(canon_home)
+            norm_away = normalize_team(canon_away)
+
             best_event_id = None
             best_confidence = 0.0
+
             for event_id, odds in self._sharp_odds.items():
-                odds_sport = odds.get("sport_key", "")
-                if poly_sport not in odds_sport and not odds_sport.startswith(poly_sport[:4]):
-                    continue
-                if poly_start and odds.get("commence_time"):
+                odds_home = odds.get("home_team", "")
+                odds_away = odds.get("away_team", "")
+                odds_start = odds.get("commence_time", "")
+
+                # Normalize Odds API names through
+                # team registry too
+                canon_odds_home = self.get_canonical_name(odds_home)
+                canon_odds_away = self.get_canonical_name(odds_away)
+                norm_odds_home = normalize_team(canon_odds_home)
+                norm_odds_away = normalize_team(canon_odds_away)
+
+                # Start time proximity check
+                if poly_start and odds_start:
                     try:
                         pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00"))
-                        ot = datetime.fromisoformat(odds["commence_time"].replace("Z", "+00:00"))
+                        ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00"))
                         if abs((pt - ot).total_seconds()) > MATCH_TIME_WINDOW:
                             continue
                     except Exception:
                         pass
-                h_sim = name_similarity(poly_home, odds.get("home_team", ""))
-                a_sim = name_similarity(poly_away, odds.get("away_team", ""))
-                conf_fwd = (h_sim + a_sim) / 2
-                h_rev = name_similarity(poly_home, odds.get("away_team", ""))
-                a_rev = name_similarity(poly_away, odds.get("home_team", ""))
-                conf_rev = (h_rev + a_rev) / 2
-                confidence = max(conf_fwd, conf_rev)
-                if confidence > best_confidence:
-                    best_confidence = confidence
-                    best_event_id = event_id
 
-            if best_confidence >= MIN_MATCH_CONFIDENCE and best_event_id:
+                # Exact match — standard orientation
+                if norm_home == norm_odds_home and norm_away == norm_odds_away:
+                    best_event_id = event_id
+                    best_confidence = 1.0
+                    break
+
+                # Exact match — reversed orientation
+                if norm_home == norm_odds_away and norm_away == norm_odds_home:
+                    best_event_id = event_id
+                    best_confidence = 1.0
+                    break
+
+                # Partial match — one team matches exactly
+                if norm_home == norm_odds_home or norm_home == norm_odds_away:
+                    if best_confidence < 0.8:
+                        best_event_id = event_id
+                        best_confidence = 0.8
+                elif norm_away == norm_odds_away or norm_away == norm_odds_home:
+                    if best_confidence < 0.8:
+                        best_event_id = event_id
+                        best_confidence = 0.8
+
+            if best_confidence >= 0.8 and best_event_id:
                 self._market_map[slug] = best_event_id
                 matched += 1
-                method = "exact" if best_confidence >= 0.99 else "fuzzy"
+                method = "exact" if best_confidence >= 1.0 else "partial"
                 odds = self._sharp_odds[best_event_id]
                 try:
                     await self.db.upsert_market_mapping({
                         "polymarket_slug": slug,
                         "polymarket_event_id": getattr(market, "event_id", None),
                         "odds_api_event_id": best_event_id,
-                        "sport_key": poly_sport,
+                        "sport_key": odds.get("sport_key", ""),
                         "home_team_polymarket": poly_home,
                         "away_team_polymarket": poly_away,
                         "home_team_odds_api": odds.get("home_team"),
@@ -402,6 +529,10 @@ class OddsAPIClient:
         except Exception:
             pass
 
+    # ─────────────────────────────────────────
+    # SHARP PROBABILITY LOOKUP
+    # ─────────────────────────────────────────
+
     def get_fair_prob(self, polymarket_slug, team_side="home"):
         event_id = self._market_map.get(polymarket_slug)
         if not event_id:
@@ -423,6 +554,10 @@ class OddsAPIClient:
 
     def is_matched(self, slug):
         return slug in self._market_map
+
+    # ─────────────────────────────────────────
+    # COMPOSITE EDGE SIGNAL
+    # ─────────────────────────────────────────
 
     def get_edge_signal(self, polymarket_slug, team_side, poly_yes_price, ws_markets, band_threshold):
         sharp_prob = self.get_fair_prob(polymarket_slug, team_side)
@@ -465,6 +600,10 @@ class OddsAPIClient:
             "event_id": event_id,
         }
 
+    # ─────────────────────────────────────────
+    # PRICE HISTORY FLUSH
+    # ─────────────────────────────────────────
+
     async def flush_price_history(self, ws_markets):
         for slug in list(ws_markets.get_subscribed_slugs()):
             try:
@@ -483,6 +622,10 @@ class OddsAPIClient:
                 )
             except Exception as e:
                 logger.error(f"Price history flush error for {slug}: {e}")
+
+    # ─────────────────────────────────────────
+    # POLLING LOOP
+    # ─────────────────────────────────────────
 
     async def poll_loop(self, market_registry_fn, ws_markets):
         last_price_flush = datetime.now(timezone.utc)

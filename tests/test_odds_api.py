@@ -1,9 +1,9 @@
 from core.odds_api_client import (
     normalize_team,
-    name_similarity,
     american_to_implied,
     calculate_fair_probs,
     consensus_from_bookmakers,
+    OddsAPIClient,
 )
 
 
@@ -67,9 +67,37 @@ def test_consensus_insufficient_books():
     assert h is None
 
 
-def test_name_similarity_exact():
-    assert name_similarity("Boston Celtics", "Boston Celtics") == 1.0
+def test_normalize_team():
+    assert normalize_team("Los Angeles Lakers") == "los angeles lakers"
+    assert normalize_team("Manchester City FC") == "manchester city"
+    assert normalize_team("The Lakers") == "lakers"
+    assert normalize_team("") == ""
 
 
-def test_name_similarity_zero():
-    assert name_similarity("Boston Celtics", "Miami Heat") == 0.0
+def test_team_registry_canonical_lookup():
+    client = OddsAPIClient.__new__(OddsAPIClient)
+    client._poly_teams = {
+        123: {"name": "Los Angeles Lakers", "league": "nba"},
+        456: {"name": "Boston Celtics", "league": "nba"},
+    }
+    client._poly_name_to_id = {
+        "los angeles lakers": 123,
+        "boston celtics": 456,
+    }
+    # Exact lookup
+    assert client.get_canonical_name("Los Angeles Lakers") == "Los Angeles Lakers"
+    assert client.get_canonical_name("Boston Celtics") == "Boston Celtics"
+    # Normalized lookup
+    assert client.get_canonical_name("los angeles lakers") == "Los Angeles Lakers"
+    # Unknown team returns input
+    assert client.get_canonical_name("Unknown Team") == "Unknown Team"
+
+
+def test_team_registry_by_id():
+    client = OddsAPIClient.__new__(OddsAPIClient)
+    client._poly_teams = {
+        123: {"name": "Los Angeles Lakers", "league": "nba"},
+    }
+    team = client.get_team_by_id(123)
+    assert team["name"] == "Los Angeles Lakers"
+    assert client.get_team_by_id(999) is None
