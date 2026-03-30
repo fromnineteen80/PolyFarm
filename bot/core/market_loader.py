@@ -373,11 +373,12 @@ class MarketLoader:
 
                 await upsert_market(data)
             except Exception as e:
-                logger.debug(f"Market flush error {m.slug}: {e}")
+                logger.error(f"Market flush error {m.slug}: {e}")
         logger.info(f"Flushed {len(markets)} markets to Supabase")
 
     async def flush_loop(self, odds_api=None, ws_markets=None):
         """Flush markets to Supabase every 60 seconds."""
+        logger.info("Market flush loop started")
         while True:
             await asyncio.sleep(60)
             try:
