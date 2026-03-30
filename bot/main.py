@@ -14,7 +14,6 @@ from data.database import (
 )
 from core.wallet import WalletManager
 from core.market_loader import MarketLoader, MarketRegistry
-from core.market_mapper import MarketMapper
 from core.edge_detector import EdgeDetector
 from core.order_manager import OrderManager
 from core.position_monitor import PositionMonitor
@@ -78,7 +77,6 @@ async def main():
 
     registry = MarketRegistry()
     wallet = WalletManager(client, PAPER_MODE)
-    mapper = MarketMapper(registry, None)
 
     position_monitor = PositionMonitor(
         client, wallet, None, registry
@@ -92,15 +90,15 @@ async def main():
     wallet.set_order_manager(order_manager)
 
     exception_monitor = ExceptionMonitor(
-        client, wallet, registry, mapper,
+        client, wallet, registry, None,
         order_manager, position_monitor
     )
     fade_monitor = FadeMonitor(
-        client, wallet, registry, mapper,
+        client, wallet, registry, None,
         order_manager, position_monitor
     )
     overnight_monitor = OvernightMonitor(
-        client, wallet, registry, mapper,
+        client, wallet, registry, None,
         order_manager, position_monitor
     )
 
@@ -126,10 +124,8 @@ async def main():
         registry=registry,
         ws_manager=markets_ws,
     )
-    mapper.loader = market_loader
-
     edge_detector = EdgeDetector(
-        registry, mapper, wallet, position_monitor
+        registry, None, wallet, position_monitor
     )
     edge_detector.price_queue = price_queue
 
@@ -157,7 +153,25 @@ async def main():
     # ── STEP 11: Load markets ─────────────────────
     await market_loader.load_all_markets()
 
-    # ── STEP 12: Send session start alert ─────────
+    # ── STEP 12: Initialize OddsPapi ─────────────
+    from core.oddspapi_client import OddsPapiClient
+    import data.database as db
+
+    oddspapi = None
+    odds_key = os.environ.get("ODDS_API_KEY")
+    if odds_key:
+        oddspapi = OddsPapiClient(api_key=odds_key, db=db)
+        await oddspapi.startup(registry)
+        edge_detector.oddspapi = oddspapi
+        # Wire oddspapi to monitors that need sharp probs
+        exception_monitor.mapper = oddspapi
+        fade_monitor.mapper = oddspapi
+        overnight_monitor.mapper = oddspapi
+        logger.info("OddsPapi integration active")
+    else:
+        logger.warning("ODDS_API_KEY not set — running without sharp odds")
+
+    # ── STEP 13: Send session start alert ─────────
     stats = await get_bot_config("paper_trades_completed")
     paper_progress = int(stats or 0)
     await alerts.send_session_start(
@@ -191,10 +205,15 @@ async def main():
         asyncio.create_task(fade_monitor.monitor_loop(), name="fade_monitor"),
         asyncio.create_task(overnight_monitor.monitor_loop(), name="overnight_monitor"),
         asyncio.create_task(midnight_scheduler(wallet, alerts, market_loader), name="midnight"),
-        asyncio.create_task(pre_game_scanner(registry, mapper, alerts), name="pre_game"),
+        asyncio.create_task(pre_game_scanner(registry, oddspapi, alerts), name="pre_game"),
         asyncio.create_task(game_complete_scanner(registry, position_monitor, alerts), name="game_complete"),
         asyncio.create_task(heartbeat_loop(), name="heartbeat"),
     ]
+
+    if oddspapi:
+        tasks.append(
+            asyncio.create_task(oddspapi.poll_loop(registry), name="oddspapi_poll")
+        )
 
     if PHASE2_ENABLED:
         from phase2.binance_feed import BinanceFeed
@@ -245,6 +264,8 @@ async def main():
         await shutdown(wallet, alerts, order_manager)
         await private_ws.stop()
         await markets_ws.stop()
+        if oddspapi:
+            await oddspapi.close()
 
 
 async def heartbeat_loop():
@@ -293,7 +314,7 @@ async def pre_game_scanner(registry, mapper, alerts):
                     continue
 
                 signals = {}
-                sharp = mapper.get_sharp_probability(market.slug, max_age_seconds=120)
+                sharp = mapper.get_fair_prob(market.slug, "home") if mapper else None
                 if sharp and market.yes_price >= FAVORITES_FLOOR:
                     gap = sharp - market.yes_price
                     band = None

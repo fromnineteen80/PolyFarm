@@ -13,35 +13,6 @@ WS_MARKETS = "wss://api.polymarket.us/v1/ws/markets"
 WS_PRIVATE = "wss://api.polymarket.us/v1/ws/private"
 
 # ─────────────────────────────────────────────────────
-# THE ODDS API
-# ─────────────────────────────────────────────────────
-ODDS_API_BASE = "https://api.the-odds-api.com/v4"
-ODDS_POLL_INTERVAL = int(os.environ.get(
-    "ODDS_POLL_INTERVAL", "10"
-))
-ODDS_BOOKMAKERS = "pinnacle,draftkings,fanduel,betmgm"
-ODDS_MARKETS = "h2h,spreads,totals"
-
-# Sport keys validated against Odds API on startup
-# soccer_usa_mls tried first, falls back to soccer_mls
-ODDS_SPORTS_CONFIGURED = [
-    "basketball_nba",
-    "icehockey_nhl",
-    "baseball_mlb",
-    "basketball_ncaab",
-    "americanfootball_ncaaf",
-    "americanfootball_nfl",
-    "soccer_epl",
-    "soccer_usa_mls",
-    "soccer_uefa_champs_league",
-    "tennis_atp",
-    "tennis_wta",
-    "mma_mixed_martial_arts",
-    "golf_pga_tour",
-]
-ODDS_SPORTS_ACTIVE = []  # Populated at startup after validation
-
-# ─────────────────────────────────────────────────────
 # FEE STRUCTURE — Polymarket US published rates
 # ─────────────────────────────────────────────────────
 TAKER_FEE_RATE = 0.003
