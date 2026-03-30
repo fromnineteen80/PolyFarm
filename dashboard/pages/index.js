@@ -183,7 +183,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
             <tbody>
               {openTrades.map((t, i) => (
                 <tr key={i} className="border-b border-border">
-                  <td className="py-2 px-2 max-w-[150px] truncate">{t.market_slug}</td>
+                  <td className="py-2 px-2 break-words">{t.market_slug}</td>
                   <td className={`py-2 px-2 ${STRATEGY_CLASS[t.position_type] || ''}`}>{t.position_type}</td>
                   <td className="py-2 px-2 text-right">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
                   <td className="py-2 px-2 hidden md:table-cell">{t.sport}</td>
@@ -214,7 +214,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
                 return (
                   <tr key={i} className="border-b border-border">
                     <td className="py-2 px-2">{t.timestamp_exit?.split('T')[0]}</td>
-                    <td className="py-2 px-2 max-w-[150px] truncate">{t.market_slug}</td>
+                    <td className="py-2 px-2 break-words">{t.market_slug}</td>
                     <td className={`py-2 px-2 text-right ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
                     <td className="py-2 px-2">{t.exit_type}</td>
                   </tr>

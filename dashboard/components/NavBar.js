@@ -76,7 +76,7 @@ export default function NavBar() {
     <nav className="bg-surface border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-lg font-bold text-white min-h-[44px] flex items-center">PolyFarm</Link>
+          <Link href="/" className="text-lg font-bold text-white min-h-[44px] flex items-center">OracleFarming</Link>
           <div className="hidden md:flex gap-1">
             {NAV_LINKS.map(l => (
               <Link key={l.href} href={l.href}

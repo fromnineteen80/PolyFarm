@@ -110,7 +110,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-[480px]">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-white">Welcome to PolyFarm</h1>
+          <h1 className="text-2xl font-bold text-white">Welcome to OracleFarming</h1>
           <p className="text-sm text-neutral mt-2">Complete your investor profile to access the dashboard.</p>
         </div>
 

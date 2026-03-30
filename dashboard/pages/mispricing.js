@@ -124,7 +124,7 @@ export default function Mispricing({ markets: initial, config }) {
                   <tr key={i} className="border-b border-border hover:bg-surface">
                     <td className="py-2 px-2"><ScoreBadge score={m.score} /></td>
                     <td className="py-2 px-2">
-                      <div className="max-w-[180px]">
+                      <div className="min-w-0">
                         <p className="font-semibold truncate">{m.home_team} vs {m.away_team}</p>
                         <p className="text-xs text-neutral"><SportIcon sport={m.sport} showLabel /> {m.tournament_name ? `| ${m.tournament_name}` : ''}</p>
                         {m.is_live ? (

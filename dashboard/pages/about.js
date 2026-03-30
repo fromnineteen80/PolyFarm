@@ -13,11 +13,11 @@ export default function About() {
   return (
     <Layout>
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">PolyFarm -- Strategy and Investment Overview</h1>
+        <h1 className="text-2xl font-bold mb-6">OracleFarming -- Strategy and Investment Overview</h1>
 
-        <Section title="What PolyFarm Does">
+        <Section title="What OracleFarming Does">
           <p>
-            PolyFarm is an automated prediction market trading system built on Polymarket US, the first federally regulated prediction market exchange in the United States. The system runs four complementary strategies simultaneously, generating returns through systematic exploitation of pricing inefficiencies between Polymarket's crowd-driven order book and sharp consensus odds from regulated US sportsbooks.
+            OracleFarming is an automated prediction market trading system built on Polymarket US, the first federally regulated prediction market exchange in the United States. The system runs four complementary strategies simultaneously, generating returns through systematic exploitation of pricing inefficiencies between Polymarket's crowd-driven order book and sharp consensus odds from regulated US sportsbooks.
           </p>
           <p>
             The system takes no directional view on game outcomes. It profits from pricing corrections, not from predicting winners.
@@ -32,10 +32,10 @@ export default function About() {
             Polymarket prices based on general crowd sentiment. US sportsbooks price based on where large, sophisticated money is actually moving. When those two prices diverge meaningfully, the direction of the correct trade is knowable with high confidence before the crowd catches up.
           </p>
           <p>
-            PolyFarm monitors every active sports moneyline market on Polymarket US simultaneously via real-time WebSocket connection, compares each market's implied probability against the vig-removed consensus fair line from The Odds API, and executes trades in real time when the gap exceeds the minimum qualifying threshold.
+            OracleFarming monitors every active sports moneyline market on Polymarket US simultaneously via real-time WebSocket connection, compares each market's implied probability against the vig-removed consensus fair line from The Odds API, and executes trades in real time when the gap exceeds the minimum qualifying threshold.
           </p>
           <p>
-            One boundary the system never crosses is futures markets. Every position PolyFarm takes is on a live or same-day game with a defined resolution window. Futures contracts, season win totals, award markets, and any market resolving beyond 24 hours are excluded entirely. Capital must recycle continuously to compound.
+            One boundary the system never crosses is futures markets. Every position OracleFarming takes is on a live or same-day game with a defined resolution window. Futures contracts, season win totals, award markets, and any market resolving beyond 24 hours are excluded entirely. Capital must recycle continuously to compound.
           </p>
         </Section>
 
@@ -65,13 +65,13 @@ export default function About() {
             For live in-game markets the minimum edge threshold reduces by 1 percentage point per band because repricing events are more frequent during play.
           </p>
           <p>
-            Beyond the static edge from sportsbook consensus, PolyFarm incorporates real-time price movement analysis. A rolling 30-minute price history buffer tracks price velocity and direction. A trade flow tracker monitors buy versus sell dollar volume. These combine into a composite edge signal with three components:
+            Beyond the static edge from sportsbook consensus, OracleFarming incorporates real-time price movement analysis. A rolling 30-minute price history buffer tracks price velocity and direction. A trade flow tracker monitors buy versus sell dollar volume. These combine into a composite edge signal with three components:
           </p>
           <p>
             Static edge from the sportsbook consensus provides the base signal. Price direction modifies the entry threshold -- when the Polymarket crowd is actively selling (price falling away from the sharp line), the required edge threshold drops by 15% because the gap is widening and conviction is highest. When the crowd is buying (price rising toward the sharp line), the threshold increases by 20% because the gap may be closing. Net buy pressure modifies position sizing -- strong net selling with a falling price triggers 15% larger positions, while heavy buying or rising prices reduce position size by 15%.
           </p>
           <p>
-            This means PolyFarm does not just detect that a gap exists. It detects whether the gap is growing or shrinking, and sizes accordingly. Standard oracle arbitrage treats every qualifying gap identically. PolyFarm trades larger when the crowd is creating the gap and smaller when the crowd is correcting it.
+            This means OracleFarming does not just detect that a gap exists. It detects whether the gap is growing or shrinking, and sizes accordingly. Standard oracle arbitrage treats every qualifying gap identically. OracleFarming trades larger when the crowd is creating the gap and smaller when the crowd is correcting it.
           </p>
           <p>
             Win rate expectations: Band A 88% to 93%. Band B 83% to 88%. Band C 78% to 83%. Blended target above 82%.
@@ -134,7 +134,7 @@ export default function About() {
             In prediction markets, liquidity is not guaranteed. Near the end of a game, the losing side of the order book thins because nobody wants to buy a position likely to settle at zero. A system not designed around this can find itself holding positions with no buyers.
           </p>
           <p>
-            PolyFarm addresses this at multiple levels. Volume minimums at entry ensure enough active participants for reliable exits. Bid-ask spread checks filter deteriorating liquidity before entry.
+            OracleFarming addresses this at multiple levels. Volume minimums at entry ensure enough active participants for reliable exits. Bid-ask spread checks filter deteriorating liquidity before entry.
           </p>
           <p>
             The timeout trigger is the primary safety mechanism. At 30 minutes for oracle arb, 15 for exception, 20 for fade -- if the GTC sell has not filled, the bot cancels it and evaluates current edge. If meaningful edge remains, it modifies the sell price. If edge has compressed, it places an IOC order at current best bid -- taking whatever the market pays right now and exiting cleanly.
@@ -143,7 +143,7 @@ export default function About() {
             Pre-resolution triggers fire before the dangerous end-of-game window. NBA at 2 minutes remaining. NFL at 4 minutes. MLB at the 8th inning. NHL at 5 minutes of regulation. Soccer at minute 80. The system exits via IOC while liquidity still exists, before the final drain.
           </p>
           <p>
-            The result is that PolyFarm holds most positions for two to fifteen minutes and exits during periods of high market liquidity. Hold-to-resolution positions represent at most 15% of open positions and only enter when original edge exceeded 12% with entry price above 65 cents.
+            The result is that OracleFarming holds most positions for two to fifteen minutes and exits during periods of high market liquidity. Hold-to-resolution positions represent at most 15% of open positions and only enter when original edge exceeded 12% with entry price above 65 cents.
           </p>
         </Section>
 
@@ -197,7 +197,7 @@ export default function About() {
 
         <Section title="The Compounding Model">
           <p>
-            PolyFarm's return profile comes from capital turnover velocity rather than maximizing individual trade returns. The same dollar cycling through multiple high-confidence reprice events throughout each day generates superior compounding compared to larger directional bets held for hours.
+            OracleFarming's return profile comes from capital turnover velocity rather than maximizing individual trade returns. The same dollar cycling through multiple high-confidence reprice events throughout each day generates superior compounding compared to larger directional bets held for hours.
           </p>
           <p>
             The compounding formula is straightforward:
@@ -221,7 +221,7 @@ export default function About() {
             These projections assume continuous compounding with no withdrawals and no drawdown days, which is not realistic. Actual performance will include losing days, reduced-sizing sessions from loss tiers, and periods with low market activity. The projections represent the mathematical ceiling, not guaranteed outcomes.
           </p>
           <p>
-            Why this model should outperform standard oracle arbitrage: most oracle arb systems detect the same static gap and enter at a fixed size. PolyFarm's composite signal layer -- incorporating real-time price direction and trade flow pressure -- means the system enters larger when conditions are most favorable (crowd selling, gap widening) and smaller when conditions are deteriorating (crowd buying, gap narrowing). Over hundreds of trades this directional sizing creates a meaningful edge over flat-sized approaches, because winning trades are systematically larger than losing ones.
+            Why this model should outperform standard oracle arbitrage: most oracle arb systems detect the same static gap and enter at a fixed size. OracleFarming's composite signal layer -- incorporating real-time price direction and trade flow pressure -- means the system enters larger when conditions are most favorable (crowd selling, gap widening) and smaller when conditions are deteriorating (crowd buying, gap narrowing). Over hundreds of trades this directional sizing creates a meaningful edge over flat-sized approaches, because winning trades are systematically larger than losing ones.
           </p>
           <p>
             The 300-trade paper validation period exists specifically to measure whether this theoretical advantage materializes in practice before real capital is deployed.

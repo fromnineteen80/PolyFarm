@@ -22,6 +22,7 @@ GATEWAY_URL = "https://gateway.polymarket.us"
 TARGET_LEAGUES = [
     "nba", "nfl", "mlb", "nhl",
     "ncaab", "ncaaf",
+    "epl", "mls",
 ]
 
 # Sport key mapping from league to our internal format
@@ -32,6 +33,8 @@ LEAGUE_TO_SPORT = {
     "ncaaf": "americanfootball_ncaaf",
     "mlb": "baseball_mlb",
     "nhl": "icehockey_nhl",
+    "epl": "soccer_epl",
+    "mls": "soccer_usa_mls",
 }
 
 
@@ -147,13 +150,6 @@ class MarketLoader:
             new_slugs = []
             for league in TARGET_LEAGUES:
                 slugs = await self._fetch_league(league)
-                for s in slugs:
-                    if s not in new_slugs:
-                        new_slugs.append(s)
-
-            # Also try v2 sports for soccer
-            for sport_slug in ["soccer"]:
-                slugs = await self._fetch_sport_v2(sport_slug)
                 for s in slugs:
                     if s not in new_slugs:
                         new_slugs.append(s)

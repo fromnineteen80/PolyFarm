@@ -66,7 +66,7 @@ export default function TradeTable({ trades }) {
               const stratClass = STRATEGY_MAP[t.position_type] || ''
               return (
                 <tr key={i} className="border-b border-border hover:bg-surface">
-                  <td className="py-2 px-2 max-w-[150px] truncate">{t.market_slug}</td>
+                  <td className="py-2 px-2 break-words">{t.market_slug}</td>
                   <td className={`py-2 px-2 ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
                   <td className="py-2 px-2">{t.exit_type || '-'}</td>
                   <td className="py-2 px-2 whitespace-nowrap hidden md:table-cell">{t.timestamp_entry?.split('T')[0]}</td>
