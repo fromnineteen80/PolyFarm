@@ -34,6 +34,7 @@ export async function getServerSideProps(context) {
 export default function ProfileSetup({ session, isPaper, paperAllocation }) {
   const router = useRouter()
   const fileRef = useRef(null)
+  const email = session?.user?.email || ''
   const [form, setForm] = useState({
     first_name: '',
     last_name: '',
@@ -76,7 +77,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
     try {
       let photoUrl = null
       if (photoFile) {
-        photoUrl = await uploadProfilePhoto(photoFile, session.user.email)
+        photoUrl = await uploadProfilePhoto(photoFile, email)
       }
 
       const res = await fetch('/api/profile/create', {
@@ -156,7 +157,7 @@ export default function ProfileSetup({ session, isPaper, paperAllocation }) {
             <div>
               <label className="block text-sm text-neutral mb-1">Email</label>
               <input
-                type="email" readOnly value={session.user.email}
+                type="email" readOnly value={email}
                 className="input input-readonly"
               />
             </div>

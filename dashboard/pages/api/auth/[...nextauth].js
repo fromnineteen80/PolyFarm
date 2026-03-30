@@ -24,13 +24,18 @@ export const authOptions = {
     },
     async session({ session }) {
       if (!session?.user?.email) return session
-      const { data } = await supabase
-        .from('investor_profiles')
-        .select('id, first_name, last_name, profile_photo_url, display_name')
-        .eq('email', session.user.email)
-        .single()
-      session.user.hasProfile = !!data
-      session.user.profile = data || null
+      try {
+        const { data } = await supabase
+          .from('investor_profiles')
+          .select('id, first_name, last_name, profile_photo_url, display_name')
+          .eq('email', session.user.email)
+          .maybeSingle()
+        session.user.hasProfile = !!data
+        session.user.profile = data || null
+      } catch (e) {
+        session.user.hasProfile = false
+        session.user.profile = null
+      }
       return session
     }
   },
