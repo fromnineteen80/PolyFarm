@@ -905,8 +905,7 @@ class OrderManager:
         """
         if not PAPER_MODE:
             try:
-                await self.client.orders\
-                    .cancel_all_open_orders()
+                await self.client.orders.cancel_all()
             except Exception as e:
                 logger.error(
                     f"Cancel all orders error: {e}"

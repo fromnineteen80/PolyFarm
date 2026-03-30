@@ -12,10 +12,6 @@ POLYMARKET_PUBLIC_URL = "https://gateway.polymarket.us"
 WS_MARKETS = "wss://api.polymarket.us/v1/ws/markets"
 WS_PRIVATE = "wss://api.polymarket.us/v1/ws/private"
 
-# gRPC (Phase 2)
-GRPC_PRODUCTION = "grpc-api.polymarketexchange.com:443"
-GRPC_PREPROD = "grpc-api.preprod.polymarketexchange.com:443"
-
 # ─────────────────────────────────────────────────────
 # THE ODDS API
 # ─────────────────────────────────────────────────────

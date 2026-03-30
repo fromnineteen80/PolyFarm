@@ -1,6 +1,5 @@
 import os
 import logging
-from config import GRPC_PRODUCTION, GRPC_PREPROD
 
 logger = logging.getLogger("polyfarm.grpc")
 
@@ -13,10 +12,7 @@ class GRPCAdapter:
     """
 
     def __init__(self, use_preprod: bool = False):
-        self.endpoint = (
-            GRPC_PREPROD if use_preprod
-            else GRPC_PRODUCTION
-        )
+        self.endpoint = None
         self._channel = None
         self._available = False
         self._check_protos()
