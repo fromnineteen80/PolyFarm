@@ -333,46 +333,6 @@ async def insert_research_signal(signal: dict) -> dict:
     return result.data[0] if result.data else {}
 
 # ─────────────────────────────────────────────────────
-# ODDSPAPI TABLES
-# ─────────────────────────────────────────────────────
-
-async def upsert_pinnacle_odds(data: dict):
-    return await db_execute(
-        lambda: _supabase.table("pinnacle_odds")
-            .upsert(data, on_conflict="oddspapi_fixture_id")
-            .execute()
-    )
-
-async def update_pinnacle_odds_slug(fixture_id: str, polymarket_slug: str):
-    return await db_execute(
-        lambda: _supabase.table("pinnacle_odds")
-            .update({"polymarket_slug": polymarket_slug})
-            .eq("oddspapi_fixture_id", fixture_id)
-            .execute()
-    )
-
-async def upsert_fixture_mapping(data: dict):
-    return await db_execute(
-        lambda: _supabase.table("oddspapi_fixture_mappings")
-            .upsert(data, on_conflict="polymarket_slug")
-            .execute()
-    )
-
-async def upsert_tournament(data: dict):
-    return await db_execute(
-        lambda: _supabase.table("oddspapi_tournaments")
-            .upsert(data, on_conflict="tournament_id")
-            .execute()
-    )
-
-async def upsert_participant(data: dict):
-    return await db_execute(
-        lambda: _supabase.table("oddspapi_participants")
-            .upsert(data, on_conflict="sport_id,participant_id")
-            .execute()
-    )
-
-# ─────────────────────────────────────────────────────
 # SHARP ODDS AND PRICE HISTORY
 # ─────────────────────────────────────────────────────
 
