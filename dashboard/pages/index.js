@@ -256,9 +256,19 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
             value={`${sysConfig?.ws_markets_status || 'UNKNOWN'} · markets + private WebSocket`}
           />
           <StatusRow
-            label="SharpAPI"
-            dot={statusDot(sysConfig?.sharpapi_last_update, 30, 120)}
-            value={`${sysConfig?.sharpapi_last_update ? 'CONNECTED' : 'UNKNOWN'} · last update ${timeAgo(sysConfig?.sharpapi_last_update)}`}
+            label="Odds API"
+            dot={statusDot(sysConfig?.odds_api_last_poll, 300, 900)}
+            value={`Last poll ${timeAgo(sysConfig?.odds_api_last_poll)} · ${sysConfig?.odds_api_requests_used || '0'} / 100,000 credits used`}
+          />
+          <StatusRow
+            label="Matching"
+            dot={parseInt(sysConfig?.markets_unmatched_count || 0) === 0 ? 'dot-green' : parseInt(sysConfig?.markets_unmatched_count || 0) <= 5 ? 'dot-yellow' : 'dot-red'}
+            value={`${sysConfig?.markets_matched_count || '0'} matched · ${sysConfig?.markets_unmatched_count || '0'} unmatched`}
+          />
+          <StatusRow
+            label="WebSocket"
+            dot={parseInt(sysConfig?.ws_reconnect_count || 0) === 0 ? 'dot-green' : parseInt(sysConfig?.ws_reconnect_count || 0) <= 3 ? 'dot-yellow' : 'dot-red'}
+            value={`${(() => { try { return JSON.parse(sysConfig?.ws_markets_subscribed_slugs || '[]').length } catch(e) { return 0 } })()} subscribed · ${sysConfig?.ws_reconnect_count || '0'} reconnects`}
           />
           <StatusRow
             label="Supabase"

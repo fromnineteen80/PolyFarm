@@ -53,6 +53,8 @@ export default function TradeTable({ trades }) {
               <TH k="sport" label="Sport" hide="hidden md:table-cell" />
               <TH k="position_type" label="Strategy" hide="hidden md:table-cell" />
               <TH k="band" label="Band" hide="hidden md:table-cell" />
+              <TH k="edge_at_entry" label="Edge" hide="hidden lg:table-cell" />
+              <TH k="price_direction_at_entry" label="Dir" hide="hidden lg:table-cell" />
               <TH k="entry_price" label="Entry" hide="hidden lg:table-cell" />
               <TH k="exit_price" label="Exit Price" hide="hidden lg:table-cell" />
               <TH k="hold_duration_seconds" label="Hold" hide="hidden lg:table-cell" />
@@ -71,6 +73,8 @@ export default function TradeTable({ trades }) {
                   <td className="py-2 px-2 hidden md:table-cell">{t.sport}</td>
                   <td className={`py-2 px-2 hidden md:table-cell ${stratClass}`}>{t.position_type}</td>
                   <td className="py-2 px-2 hidden md:table-cell">{t.band}</td>
+                  <td className={`py-2 px-2 hidden lg:table-cell ${parseFloat(t.edge_at_entry || 0) > 0 ? 'text-profit' : ''}`}>{t.edge_at_entry ? `+${(parseFloat(t.edge_at_entry) * 100).toFixed(1)}¢` : '-'}</td>
+                  <td className="py-2 px-2 hidden lg:table-cell text-xs">{t.price_direction_at_entry === 'falling' ? '↓' : t.price_direction_at_entry === 'rising' ? '↑' : '→'}</td>
                   <td className="py-2 px-2 hidden lg:table-cell">{parseFloat(t.entry_price || 0).toFixed(4)}</td>
                   <td className="py-2 px-2 hidden lg:table-cell">{t.exit_price ? parseFloat(t.exit_price).toFixed(4) : '-'}</td>
                   <td className="py-2 px-2 hidden lg:table-cell">{t.hold_duration_seconds ? Math.round(t.hold_duration_seconds / 60) + 'm' : '-'}</td>

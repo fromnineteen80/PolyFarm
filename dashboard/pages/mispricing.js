@@ -4,7 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 import { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import StatCard from '../components/StatCard'
-import ScatterChart from '../components/charts/ScatterChart'
+import ScoreBadge from '../components/ScoreBadge'
+import EdgeBadge from '../components/EdgeBadge'
+import DirectionArrow from '../components/DirectionArrow'
+import BookCount from '../components/BookCount'
+import LiveGameState from '../components/LiveGameState'
+import Icon from '../components/Icon'
 import supabase from '../lib/supabase'
 import { formatCurrency } from '../lib/calculations'
 
@@ -13,156 +18,129 @@ export async function getServerSideProps(context) {
   if (!session) return { redirect: { destination: '/auth/signin', permanent: false } }
   if (!session.user.hasProfile) return { redirect: { destination: '/profile/setup', permanent: false } }
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const [mapRes, tradeRes, snapRes] = await Promise.all([
-    sb.from('market_mappings').select('*'),
-    sb.from('trades').select('raw_edge_at_entry,pnl,pnl_pct,band').not('timestamp_exit', 'is', null).order('timestamp_exit', { ascending: false }).limit(50),
-    sb.from('daily_snapshots').select('wallet_value').order('date', { ascending: false }).limit(1),
+  const [marketsRes, cfgRes] = await Promise.all([
+    sb.from('markets').select('*').gt('current_edge', 0.02).order('current_edge', { ascending: false }),
+    sb.from('bot_config').select('key, value').in('key', ['markets_matched_count', 'markets_unmatched_count']),
   ])
-  return { props: { session, mappings: mapRes.data || [], recentTrades: tradeRes.data || [], walletValue: parseFloat(snapRes.data?.[0]?.wallet_value || 1000) } }
+  const cfg = {}
+  cfgRes.data?.forEach(r => { try { cfg[r.key] = JSON.parse(r.value) } catch(e) { cfg[r.key] = r.value } })
+  return { props: { session, markets: marketsRes.data || [], config: cfg } }
 }
 
-const SPORT_CODES = { basketball_nba: 'NBA', icehockey_nhl: 'NHL', baseball_mlb: 'MLB', basketball_ncaab: 'NCB', americanfootball_nfl: 'NFL', americanfootball_ncaaf: 'NCF', soccer_epl: 'EPL', soccer_usa_mls: 'MLS', soccer_mls: 'MLS', tennis_atp: 'ATP', tennis_wta: 'WTA', mma_mixed_martial_arts: 'MMA', golf_pga_tour: 'PGA' }
+function calcScore(edge, direction, pressure) {
+  const base = Math.min((edge || 0) / 0.10, 1.0) * 60
+  const dir = direction === 'falling' ? 30 : direction === 'stable' ? 15 : 0
+  const press = (pressure || 1) < 0.7 ? 10 : (pressure || 1) <= 1.3 ? 5 : 0
+  return Math.round(base + dir + press)
+}
 
-export default function Mispricing({ mappings: initial, recentTrades, walletValue }) {
-  const [mappings, setMappings] = useState(initial)
-  const [filters, setFilters] = useState({ sport: '', minEdge: 0, liveOnly: false, confirmedOnly: false, band: '' })
-  const [showFees, setShowFees] = useState(false)
+export default function Mispricing({ markets: initial, config }) {
+  const [markets, setMarkets] = useState(initial)
+  const [updating, setUpdating] = useState(false)
+  const [filters, setFilters] = useState({ sport: '', minEdge: '' })
 
   useEffect(() => {
     const interval = setInterval(async () => {
-      const { data } = await supabase.from('market_mappings').select('*')
-      if (data) setMappings(data)
+      setUpdating(true)
+      const { data } = await supabase.from('markets').select('*').gt('current_edge', 0.02).order('current_edge', { ascending: false })
+      if (data) setMarkets(data)
+      setUpdating(false)
     }, 30000)
     return () => clearInterval(interval)
   }, [])
 
-  // Build rows with calculated fields
-  const rows = mappings.map(m => {
-    const polyPrice = parseFloat(m.yes_price || 0)
-    const sharpPrice = parseFloat(m.sharp_prob || 0)
-    const edge = sharpPrice - polyPrice
-    const takerFee = polyPrice * 0.003
-    const exitTarget = polyPrice + edge * 0.65
-    const rebate = (1 - exitTarget) * 0.002
-    const netPct = polyPrice > 0 ? ((edge - takerFee + rebate) / polyPrice) * 100 : 0
-    let band = '--'
-    if (polyPrice >= 0.70 && edge >= 0.08) band = 'A'
-    else if (polyPrice >= 0.60 && edge >= 0.05) band = 'B'
-    else if (polyPrice >= 0.55 && edge >= 0.03) band = 'C'
-    return { ...m, polyPrice, sharpPrice, edge, takerFee, rebate, netPct, band, belowFloor: polyPrice < 0.55 }
-  }).filter(r => {
-    if (filters.sport && r.sport !== filters.sport) return false
-    if (filters.minEdge && r.edge * 100 < parseFloat(filters.minEdge)) return false
-    if (filters.liveOnly && r.mapping_status !== 'LIVE') return false
-    if (filters.confirmedOnly && r.mapping_status === 'UNCONFIRMED') return false
-    if (filters.band && r.band !== filters.band) return false
+  const filtered = markets.filter(m => {
+    if (filters.sport && !m.sport?.includes(filters.sport)) return false
+    if (filters.minEdge && (m.current_edge || 0) * 100 < parseFloat(filters.minEdge)) return false
     return true
-  }).sort((a, b) => b.netPct - a.netPct)
+  }).map(m => ({
+    ...m,
+    score: calcScore(m.current_edge, m.current_price_direction, m.current_net_buy_pressure),
+  })).sort((a, b) => b.score - a.score)
 
-  const qualA = rows.filter(r => r.band === 'A').length
-  const qualB = rows.filter(r => r.band === 'B').length
-  const qualC = rows.filter(r => r.band === 'C').length
-  const avgEdge = rows.filter(r => r.band !== '--').length > 0
-    ? rows.filter(r => r.band !== '--').reduce((s, r) => s + r.edge, 0) / rows.filter(r => r.band !== '--').length : 0
-  const best = rows.find(r => r.band !== '--')
-  const sports = [...new Set(mappings.map(m => m.sport).filter(Boolean))]
+  const avgEdge = filtered.length > 0 ? filtered.reduce((s, m) => s + (m.current_edge || 0), 0) / filtered.length : 0
+  const fallingCount = filtered.filter(m => m.current_price_direction === 'falling').length
+  const sports = [...new Set(markets.map(m => m.sport).filter(Boolean))]
 
   return (
     <Layout>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Live Mispricing Monitor</h1>
-        <button onClick={() => window.location.reload()} className="btn btn-outline">Refresh</button>
+        <span className={`text-xs ${updating ? 'text-info' : 'text-neutral'}`}>{updating ? 'updating...' : ''}</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
-        <StatCard title="Monitored" value={mappings.length} />
-        <StatCard title="Band A" value={qualA} color="text-bandA" />
-        <StatCard title="Band B" value={qualB} color="text-bandB" />
-        <StatCard title="Band C" value={qualC} color="text-bandC" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <StatCard title="Active Signals" value={filtered.length} />
         <StatCard title="Avg Edge" value={`${(avgEdge * 100).toFixed(1)}¢`} />
-        <StatCard title="Best" value={best?.teams?.substring(0, 20) || '—'} subtitle={best ? `${(best.edge * 100).toFixed(1)}¢` : ''} />
+        <StatCard title="Falling Markets" value={fallingCount} color="text-loss" />
+        <StatCard title="Unmatched" value={config?.markets_unmatched_count || 0} subtitle="No Odds API data" />
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <select value={filters.sport} onChange={e => setFilters({ ...filters, sport: e.target.value })} className="input w-auto">
           <option value="">All Sports</option>
-          {sports.map(s => <option key={s} value={s}>{SPORT_CODES[s] || s}</option>)}
+          {sports.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <input type="number" placeholder="Min edge ¢" value={filters.minEdge || ''} onChange={e => setFilters({ ...filters, minEdge: e.target.value })} className="input w-24" />
-        <select value={filters.band} onChange={e => setFilters({ ...filters, band: e.target.value })} className="input w-auto">
-          <option value="">All Bands</option>
-          <option value="A">A</option><option value="B">B</option><option value="C">C</option>
-        </select>
-        <label className="flex items-center gap-1 text-sm text-neutral min-h-[44px]">
-          <input type="checkbox" checked={filters.confirmedOnly} onChange={e => setFilters({ ...filters, confirmedOnly: e.target.checked })} /> Confirmed only
-        </label>
+        <input type="number" placeholder="Min edge ¢" value={filters.minEdge} onChange={e => setFilters({ ...filters, minEdge: e.target.value })} className="input w-24" />
       </div>
 
-      {rows.length === 0 ? (
-        <div className="card text-center text-neutral py-8">No mispricing data available yet</div>
+      {filtered.length === 0 ? (
+        <div className="card text-center text-neutral py-8">
+          No mispricings detected above 2¢ edge. The bot is monitoring {config?.markets_matched_count || 0} markets.
+        </div>
       ) : (
-        <div className="table-scroll mb-4">
-          <table className="w-full text-xs">
+        <div className="table-scroll">
+          <table className="w-full text-sm">
             <thead><tr className="border-b border-border">
-              <th className="text-left py-2 px-2 text-neutral sticky left-0 bg-background">Market</th>
-              <th className="text-right py-2 px-2 text-neutral">Edge¢</th>
-              <th className="text-right py-2 px-2 text-neutral">Net%</th>
-              <th className="text-center py-2 px-2 text-neutral">Band</th>
-              <th className="text-left py-2 px-2 text-neutral hidden md:table-cell">Sport</th>
-              <th className="text-right py-2 px-2 text-neutral hidden md:table-cell">Poly¢</th>
-              <th className="text-right py-2 px-2 text-neutral hidden md:table-cell">Sharp¢</th>
-              <th className="text-right py-2 px-2 text-neutral hidden lg:table-cell">Taker$</th>
-              <th className="text-right py-2 px-2 text-neutral hidden lg:table-cell">Rebate$</th>
-              <th className="text-right py-2 px-2 text-neutral hidden lg:table-cell">Vol$k</th>
-              <th className="text-center py-2 px-2 text-neutral hidden lg:table-cell">Map</th>
+              <th className="text-left text-neutral py-2 px-2">Score</th>
+              <th className="text-left text-neutral py-2 px-2">Market</th>
+              <th className="text-right text-neutral py-2 px-2">Poly</th>
+              <th className="text-right text-neutral py-2 px-2">Sharp</th>
+              <th className="text-right text-neutral py-2 px-2">Edge</th>
+              <th className="text-left text-neutral py-2 px-2 hidden md:table-cell">Movement</th>
+              <th className="text-right text-neutral py-2 px-2 hidden md:table-cell">Pressure</th>
+              <th className="text-right text-neutral py-2 px-2 hidden lg:table-cell">Match</th>
             </tr></thead>
             <tbody>
-              {rows.map((r, i) => {
-                let rowBg = ''
-                if (r.belowFloor) rowBg = 'opacity-30 line-through'
-                else if (r.netPct >= 8) rowBg = 'bg-profit/20'
-                else if (r.netPct >= 5) rowBg = 'bg-profit/10'
-                else if (r.netPct >= 3) rowBg = 'bg-yellow-900/20'
-                else rowBg = 'opacity-60'
-                const bandColor = r.band === 'A' ? 'text-bandA' : r.band === 'B' ? 'text-bandB' : r.band === 'C' ? 'text-bandC' : 'text-neutral'
+              {filtered.map((m, i) => {
+                const pressureVal = m.current_net_buy_pressure || 1
+                const pressureColor = pressureVal < 0.7 ? 'text-loss' : pressureVal > 1.3 ? 'text-profit' : 'text-neutral'
+                const pressureLabel = pressureVal < 0.7 ? 'sell pressure' : pressureVal > 1.3 ? 'buy pressure' : 'neutral'
                 return (
-                  <tr key={i} className={`border-b border-border ${rowBg}`}>
-                    <td className="py-2 px-2 max-w-[140px] truncate sticky left-0 bg-card">{r.teams || r.polymarket_slug}</td>
-                    <td className="py-2 px-2 text-right">{(r.edge * 100).toFixed(1)}</td>
-                    <td className={`py-2 px-2 text-right font-bold ${r.netPct >= 5 ? 'text-profit' : r.netPct >= 3 ? 'text-bandA' : 'text-neutral'}`}>{r.netPct.toFixed(1)}</td>
-                    <td className={`py-2 px-2 text-center font-bold ${bandColor}`}>{r.band}</td>
-                    <td className="py-2 px-2 hidden md:table-cell">{SPORT_CODES[r.sport] || r.sport}</td>
-                    <td className="py-2 px-2 text-right hidden md:table-cell">{(r.polyPrice * 100).toFixed(1)}</td>
-                    <td className="py-2 px-2 text-right hidden md:table-cell">{(r.sharpPrice * 100).toFixed(1)}</td>
-                    <td className="py-2 px-2 text-right hidden lg:table-cell">${r.takerFee.toFixed(3)}</td>
-                    <td className="py-2 px-2 text-right hidden lg:table-cell">${r.rebate.toFixed(3)}</td>
-                    <td className="py-2 px-2 text-right hidden lg:table-cell">{r.volume ? (parseFloat(r.volume) / 1000).toFixed(0) : '—'}</td>
-                    <td className={`py-2 px-2 text-center hidden lg:table-cell ${r.mapping_status === 'CONFIRMED' ? 'text-profit' : 'text-bandA'}`}>{r.mapping_status === 'CONFIRMED' ? 'CONF' : r.mapping_status === 'FUZZY' ? 'FUZZ' : '—'}</td>
+                  <tr key={i} className="border-b border-border hover:bg-surface">
+                    <td className="py-2 px-2"><ScoreBadge score={m.score} /></td>
+                    <td className="py-2 px-2">
+                      <div className="max-w-[180px]">
+                        <p className="font-semibold truncate">{m.home_team} vs {m.away_team}</p>
+                        <p className="text-xs text-neutral">{m.tournament_name || m.sport}</p>
+                        {m.is_live ? (
+                          <LiveGameState score={m.game_score} period={m.game_period} elapsed={m.game_elapsed} isLive />
+                        ) : (
+                          <span className="text-xs text-neutral">Pre-game</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2 px-2 text-right">{((m.yes_price || 0) * 100).toFixed(0)}¢</td>
+                    <td className="py-2 px-2 text-right">
+                      {m.current_sharp_prob ? `${(m.current_sharp_prob * 100).toFixed(0)}¢` : '-'}
+                    </td>
+                    <td className="py-2 px-2 text-right"><EdgeBadge edge={m.current_edge} /></td>
+                    <td className="py-2 px-2 hidden md:table-cell">
+                      <DirectionArrow direction={m.current_price_direction} velocity={m.current_price_velocity} />
+                    </td>
+                    <td className="py-2 px-2 text-right hidden md:table-cell">
+                      <span className={`text-sm ${pressureColor}`}>{pressureVal.toFixed(1)}x</span>
+                      <p className="text-xs text-neutral">{pressureLabel}</p>
+                    </td>
+                    <td className="py-2 px-2 text-right hidden lg:table-cell">
+                      <span className="text-sm">{m.match_confidence ? `${(m.match_confidence * 100).toFixed(0)}%` : '-'}</span>
+                    </td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
         </div>
-      )}
-
-      <p className="text-xs text-neutral mb-2">Net% = ((Edge x Shares) - Taker Fee + Maker Rebate) / Position Size. Calculated at Band position size for ${formatCurrency(walletValue)} portfolio.</p>
-
-      <button onClick={() => setShowFees(!showFees)} className="btn btn-ghost text-xs">{showFees ? 'Hide' : 'Show'} fee explanation</button>
-      {showFees && (
-        <div className="card text-xs text-neutral mb-4">
-          <p>Taker fee: 0.30% of entry notional</p>
-          <p>Maker rebate: 0.20% of exit notional</p>
-          <p>Example: $30 Band A position at 65¢ entry</p>
-          <p>Taker: $0.09 | Target: 70.2¢ | Rebate: $0.03 | Net profit: $2.33</p>
-        </div>
-      )}
-
-      {recentTrades.length > 0 && (
-        <>
-          <h2 className="text-lg font-semibold mb-3">Capture Rate (Last 50 Trades)</h2>
-          <ScatterChart trades={recentTrades} xField="raw_edge_at_entry" yField="pnl_pct" xlabel="Entry Edge %" ylabel="P&L Captured %" colorByBand />
-        </>
       )}
     </Layout>
   )

@@ -129,6 +129,77 @@ export default function Performance({ trades, snapshots }) {
           ))}
         </tbody></table>
       </div>
+
+      {/* Edge vs Outcome and Direction vs Outcome */}
+      {trades.length >= 10 ? (
+        <>
+          <h2 className="text-lg font-semibold mt-6 mb-3">Edge vs Outcome</h2>
+          <div className="grid lg:grid-cols-2 gap-4 mb-6">
+            <div className="card min-h-[200px] max-h-[400px] lg:max-h-none">
+              <p className="text-sm text-neutral mb-2">Win Rate by Entry Edge</p>
+              {(() => {
+                const bins = [
+                  { label: '2-4¢', min: 0.02, max: 0.04 },
+                  { label: '4-6¢', min: 0.04, max: 0.06 },
+                  { label: '6-8¢', min: 0.06, max: 0.08 },
+                  { label: '8-10¢', min: 0.08, max: 0.10 },
+                  { label: '10¢+', min: 0.10, max: 999 },
+                ]
+                const binData = bins.map(b => {
+                  const bt = trades.filter(t => {
+                    const e = parseFloat(t.edge_at_entry || 0)
+                    return e >= b.min && e < b.max
+                  })
+                  const wins = bt.filter(t => parseFloat(t.pnl || 0) > 0).length
+                  return { label: b.label, count: bt.length, wr: bt.length > 0 ? (wins / bt.length * 100).toFixed(0) : 0 }
+                })
+                return (
+                  <div className="space-y-2">
+                    {binData.map(b => (
+                      <div key={b.label} className="flex items-center gap-2 text-sm">
+                        <span className="w-12 text-neutral">{b.label}</span>
+                        <div className="flex-1 bg-surface rounded h-5 overflow-hidden">
+                          <div className="bg-profit/40 h-5 rounded" style={{ width: `${b.wr}%` }} />
+                        </div>
+                        <span className="w-16 text-right">{b.wr}% ({b.count})</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+            </div>
+            <div className="card min-h-[200px] max-h-[400px] lg:max-h-none">
+              <p className="text-sm text-neutral mb-2">Win Rate by Price Direction at Entry</p>
+              {(() => {
+                const dirs = ['falling', 'stable', 'rising']
+                const dirData = dirs.map(d => {
+                  const dt = trades.filter(t => t.price_direction_at_entry === d)
+                  const wins = dt.filter(t => parseFloat(t.pnl || 0) > 0).length
+                  return { label: d, count: dt.length, wr: dt.length > 0 ? (wins / dt.length * 100).toFixed(0) : 0 }
+                })
+                const colors = { falling: 'bg-loss/40', stable: 'bg-neutral/40', rising: 'bg-profit/40' }
+                return (
+                  <div className="space-y-2">
+                    {dirData.map(d => (
+                      <div key={d.label} className="flex items-center gap-2 text-sm">
+                        <span className="w-16 text-neutral capitalize">{d.label}</span>
+                        <div className="flex-1 bg-surface rounded h-5 overflow-hidden">
+                          <div className={`${colors[d.label]} h-5 rounded`} style={{ width: `${d.wr}%` }} />
+                        </div>
+                        <span className="w-16 text-right">{d.wr}% ({d.count})</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="card text-center text-neutral py-8 mt-6">
+          Performance analytics will appear after 10 completed trades.
+        </div>
+      )}
     </Layout>
   )
 }

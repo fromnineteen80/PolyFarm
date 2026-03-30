@@ -70,11 +70,14 @@ export async function getServerSideProps(context) {
   if (!session) return { redirect: { destination: '/auth/signin', permanent: false } }
   if (!session.user.hasProfile) return { redirect: { destination: '/profile/setup', permanent: false } }
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const { data: trades } = await sb.from('trades').select('position_type,fade_team,exception_trigger_reason,pnl,sport,raw_edge_at_entry,hold_duration_seconds').not('timestamp_exit', 'is', null)
-  return { props: { session, trades: trades || [] } }
+  const [tradeRes, marketRes] = await Promise.all([
+    sb.from('trades').select('position_type,fade_team,exception_trigger_reason,pnl,sport,raw_edge_at_entry,hold_duration_seconds').not('timestamp_exit', 'is', null),
+    sb.from('markets').select('home_team,away_team,yes_price,current_sharp_prob,current_edge,is_live,game_status,game_score,game_start_time,sport'),
+  ])
+  return { props: { session, trades: tradeRes.data || [], activeMarkets: marketRes.data || [] } }
 }
 
-export default function Teams({ trades }) {
+export default function Teams({ trades, activeMarkets }) {
   const [sportFilter, setSportFilter] = useState('')
 
   // Build team performance from trades
@@ -116,6 +119,13 @@ export default function Teams({ trades }) {
     else if (confidenceScore >= 60) confidenceColor = 'text-bandA'
     else if (confidenceScore) confidenceColor = 'text-paper'
 
+    // Find active market for this team
+    const teamLower = name.toLowerCase()
+    const activeMarket = activeMarkets.find(m =>
+      (m.home_team || '').toLowerCase().includes(teamLower) ||
+      (m.away_team || '').toLowerCase().includes(teamLower)
+    )
+
     return (
       <div key={name} className="card">
         <div className="flex justify-between items-start mb-2">
@@ -123,10 +133,24 @@ export default function Teams({ trades }) {
             <h3 className="font-semibold">{name}</h3>
             <span className="text-xs text-neutral">{SPORT_LABELS[config.sport] || config.sport}</span>
           </div>
-          <span className={`text-xs px-2 py-0.5 rounded font-bold ${tendencyColor || 'bg-neutral text-white'}`}>
-            {(tendency || 'medium').toUpperCase().replace('_', ' ')}
-          </span>
+          <div className="flex items-center gap-2">
+            {activeMarket?.is_live && <span className="text-xs px-1.5 py-0.5 rounded bg-loss text-white font-bold">LIVE</span>}
+            <span className={`text-xs px-2 py-0.5 rounded font-bold ${tendencyColor || 'bg-neutral text-white'}`}>
+              {(tendency || 'medium').toUpperCase().replace('_', ' ')}
+            </span>
+          </div>
         </div>
+        {activeMarket && (
+          <div className="text-xs border border-border rounded p-2 mb-2 bg-surface">
+            {activeMarket.is_live && activeMarket.game_score && <p className="font-semibold">{activeMarket.game_score}</p>}
+            <p>Poly: {((activeMarket.yes_price || 0) * 100).toFixed(0)}¢
+              {activeMarket.current_sharp_prob && <span className="text-neutral"> | Sharp: {(activeMarket.current_sharp_prob * 100).toFixed(0)}¢</span>}
+              {activeMarket.current_edge && <span className={activeMarket.current_edge > 0 ? 'text-profit' : 'text-loss'}> | Edge: {activeMarket.current_edge > 0 ? '+' : ''}{(activeMarket.current_edge * 100).toFixed(1)}¢</span>}
+            </p>
+            {!activeMarket.is_live && activeMarket.game_start_time && <p className="text-neutral">{new Date(activeMarket.game_start_time).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>}
+          </div>
+        )}
+        {!activeMarket && <p className="text-xs text-neutral mb-2">No active market</p>}
         <p className="text-sm text-neutral mb-2">{type === 'dominant' ? config.notes : config.reason}</p>
         {type === 'dominant' && (
           <div className="text-xs text-neutral mb-2">
