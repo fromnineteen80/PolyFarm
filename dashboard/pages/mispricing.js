@@ -40,11 +40,18 @@ export default function Mispricing({ markets: initial, config }) {
   const [updating, setUpdating] = useState(false)
   const [filters, setFilters] = useState({ sport: '', minEdge: '' })
 
+  const [dataStale, setDataStale] = useState(false)
+
   useEffect(() => {
     const interval = setInterval(async () => {
       setUpdating(true)
-      const { data } = await supabase.from('markets').select('*').gt('current_edge', 0.02).order('current_edge', { ascending: false })
-      if (data) setMarkets(data)
+      try {
+        const { data } = await supabase.from('markets').select('*').gt('current_edge', 0.02).order('current_edge', { ascending: false })
+        if (data) setMarkets(data)
+        setDataStale(false)
+      } catch (e) {
+        setDataStale(true)
+      }
       setUpdating(false)
     }, 30000)
     return () => clearInterval(interval)
@@ -65,6 +72,12 @@ export default function Mispricing({ markets: initial, config }) {
 
   return (
     <Layout>
+      {dataStale && (
+        <div className="card border-loss border mb-4 flex items-center gap-2">
+          <span className="dot dot-red" />
+          <span className="text-sm text-loss font-semibold">Supabase connection lost. Showing last known data.</span>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Live Mispricing Monitor</h1>
         <span className={`text-xs ${updating ? 'text-info' : 'text-neutral'}`}>{updating ? 'updating...' : ''}</span>

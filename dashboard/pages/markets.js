@@ -23,10 +23,17 @@ export default function Markets({ markets: initial }) {
   const [markets, setMarkets] = useState(initial)
   const [filters, setFilters] = useState({ sport: '', status: '', reference: '', sort: 'volume' })
 
+  const [dataStale, setDataStale] = useState(false)
+
   useEffect(() => {
     const interval = setInterval(async () => {
-      const { data } = await supabase.from('markets').select('*').order('volume', { ascending: false })
-      if (data) setMarkets(data)
+      try {
+        const { data } = await supabase.from('markets').select('*').order('volume', { ascending: false })
+        if (data) setMarkets(data)
+        setDataStale(false)
+      } catch (e) {
+        setDataStale(true)
+      }
     }, 30000)
     return () => clearInterval(interval)
   }, [])
@@ -48,6 +55,12 @@ export default function Markets({ markets: initial }) {
 
   return (
     <Layout>
+      {dataStale && (
+        <div className="card border-loss border mb-4 flex items-center gap-2">
+          <span className="dot dot-red" />
+          <span className="text-sm text-loss font-semibold">Supabase connection lost. Showing last known data.</span>
+        </div>
+      )}
       <h1 className="text-2xl font-bold mb-4">Market Intelligence</h1>
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <select value={filters.sport} onChange={e => setFilters({ ...filters, sport: e.target.value })} className="input w-auto">

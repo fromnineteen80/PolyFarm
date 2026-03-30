@@ -16,14 +16,20 @@ export async function getServerSideProps(context) {
 
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const today = new Date().toISOString().split('T')[0]
-  const [snapRes, openRes, closedRes, cfgRes, todayTradesRes, sessionRes] = await Promise.all([
-    sb.from('daily_snapshots').select('*').order('date', { ascending: false }).limit(1),
-    sb.from('trades').select('*').is('timestamp_exit', null).limit(50),
-    sb.from('trades').select('*').not('timestamp_exit', 'is', null).order('timestamp_exit', { ascending: false }).limit(10),
-    sb.from('bot_config').select('*'),
-    sb.from('trades').select('*').gte('timestamp_entry', today + 'T00:00:00Z').not('timestamp_exit', 'is', null),
-    sb.from('sessions').select('*').order('start_time', { ascending: false }).limit(1),
-  ])
+  let snapRes, openRes, closedRes, cfgRes, todayTradesRes, sessionRes
+  try {
+    ;[snapRes, openRes, closedRes, cfgRes, todayTradesRes, sessionRes] = await Promise.all([
+      sb.from('daily_snapshots').select('*').order('date', { ascending: false }).limit(1),
+      sb.from('trades').select('*').is('timestamp_exit', null).limit(50),
+      sb.from('trades').select('*').not('timestamp_exit', 'is', null).order('timestamp_exit', { ascending: false }).limit(10),
+      sb.from('bot_config').select('*'),
+      sb.from('trades').select('*').gte('timestamp_entry', today + 'T00:00:00Z').not('timestamp_exit', 'is', null),
+      sb.from('sessions').select('*').order('start_time', { ascending: false }).limit(1),
+    ])
+  } catch (e) {
+    snapRes = { data: [] }; openRes = { data: [] }; closedRes = { data: [] }
+    cfgRes = { data: [] }; todayTradesRes = { data: [] }; sessionRes = { data: [] }
+  }
   const cfg = {}
   cfgRes.data?.forEach(r => { cfg[r.key] = r.value })
 
@@ -62,17 +68,26 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
   const [sysConfig, setSysConfig] = useState(config)
   const [sysLoading, setSysLoading] = useState(false)
 
+  const [dataStale, setDataStale] = useState(false)
+  const [lastSuccessfulPoll, setLastSuccessfulPoll] = useState(Date.now())
+
   useEffect(() => {
     const interval = setInterval(async () => {
-      const [tradesRes, cfgRes] = await Promise.all([
-        supabase.from('trades').select('*').is('timestamp_exit', null).limit(50),
-        supabase.from('bot_config').select('*'),
-      ])
-      if (tradesRes.data) setOpenTrades(tradesRes.data)
-      if (cfgRes.data) {
-        const c = {}
-        cfgRes.data.forEach(r => { c[r.key] = r.value })
-        setSysConfig(c)
+      try {
+        const [tradesRes, cfgRes] = await Promise.all([
+          supabase.from('trades').select('*').is('timestamp_exit', null).limit(50),
+          supabase.from('bot_config').select('*'),
+        ])
+        if (tradesRes.data) setOpenTrades(tradesRes.data)
+        if (cfgRes.data) {
+          const c = {}
+          cfgRes.data.forEach(r => { c[r.key] = r.value })
+          setSysConfig(c)
+        }
+        setDataStale(false)
+        setLastSuccessfulPoll(Date.now())
+      } catch (e) {
+        setDataStale(true)
       }
     }, 30000)
     return () => clearInterval(interval)
@@ -119,6 +134,12 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
 
   return (
     <Layout>
+      {dataStale && (
+        <div className="card border-loss border mb-4 flex items-center gap-2">
+          <span className="dot dot-red" />
+          <span className="text-sm text-loss font-semibold">Supabase connection lost. Showing last known data from {new Date(lastSuccessfulPoll).toLocaleTimeString()}.</span>
+        </div>
+      )}
       <div className="mb-6">
         <p className="text-sm text-neutral">Portfolio Value</p>
         <p className="text-3xl font-bold">{formatCurrency(walletValue)}</p>
