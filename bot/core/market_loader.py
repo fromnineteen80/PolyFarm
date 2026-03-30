@@ -206,10 +206,14 @@ class MarketLoader:
                 league = home.get("league", "") or away.get("league", "")
                 if league:
                     sport_map = {
-                        "nba": "basketball", "ncaab": "basketball",
-                        "nfl": "football", "ncaaf": "football",
-                        "mlb": "baseball", "nhl": "ice_hockey",
-                        "mls": "soccer", "epl": "soccer",
+                        "nba": "basketball_nba",
+                        "ncaab": "basketball_ncaab",
+                        "nfl": "americanfootball_nfl",
+                        "ncaaf": "americanfootball_ncaaf",
+                        "mlb": "baseball_mlb",
+                        "nhl": "icehockey_nhl",
+                        "mls": "soccer_usa_mls",
+                        "epl": "soccer_epl",
                     }
                     sport = sport_map.get(league.lower(), league.lower())
 

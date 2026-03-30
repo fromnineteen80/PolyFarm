@@ -138,10 +138,10 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
         <div className="card mb-6 border-paper border">
           <p className="text-paper font-semibold mb-2">Paper Trading Active</p>
           <div className="progress-track mb-2">
-            <div className="progress-fill bg-paper" style={{ width: `${Math.min(paperCompleted / 50 * 100, 100)}%` }} />
+            <div className="progress-fill bg-paper" style={{ width: `${Math.min(paperCompleted / 300 * 100, 100)}%` }} />
           </div>
-          <p className="text-sm text-neutral">{paperCompleted}/50 trades | {(paperWinRate * 100).toFixed(0)}% win rate</p>
-          <p className="text-xs text-neutral mt-1">Live mode unlocks automatically at 50 trades with 70%+ win rate</p>
+          <p className="text-sm text-neutral">{paperCompleted}/300 trades | {(paperWinRate * 100).toFixed(0)}% win rate</p>
+          <p className="text-xs text-neutral mt-1">Live mode unlocks at 300 trades with 70%+ win rate</p>
         </div>
       )}
 
@@ -227,7 +227,7 @@ export default function Overview({ snapshot, openTrades: initialOpen, recentTrad
           {isPaper && (
             <div className="flex justify-between text-sm">
               <span className="text-neutral">Paper</span>
-              <span className="font-semibold">{paperCompleted}/50 trades · {(paperWinRate * 100).toFixed(0)}% win rate</span>
+              <span className="font-semibold">{paperCompleted}/300 trades · {(paperWinRate * 100).toFixed(0)}% win rate</span>
             </div>
           )}
           <div className="flex justify-between text-sm">

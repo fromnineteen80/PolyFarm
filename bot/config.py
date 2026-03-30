@@ -163,7 +163,7 @@ PHASE1B_ENABLED = os.environ.get(
 PAPER_MODE = os.environ.get(
     "PAPER_MODE", "true"
 ).lower() == "true"
-PAPER_TRADES_REQUIRED = 50
+PAPER_TRADES_REQUIRED = 300
 PAPER_WIN_RATE_REQUIRED = 0.70
 PHASE2_ENABLED = os.environ.get(
     "PHASE2_CRYPTO_ENABLED", "false"

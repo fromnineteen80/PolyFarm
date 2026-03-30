@@ -30,7 +30,7 @@ export default function Projections({ snapshots, config }) {
         <h1 className="text-2xl font-bold mb-4">Growth vs Actual</h1>
         <div className="card text-center py-12 text-neutral">
           <p className="text-lg mb-2">Projections appear after first live trade.</p>
-          <p>Currently in paper mode: {completed}/50 trades.</p>
+          <p>Currently in paper mode: {completed}/300 trades.</p>
         </div>
       </Layout>
     )

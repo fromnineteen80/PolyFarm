@@ -315,7 +315,7 @@ class AlertManager:
             f"Floor: ${floor:.2f}\n"
             f"Working capital: ${capital:.2f}\n"
             f"Markets loaded: {market_count}\n"
-            f"Paper unlock: {paper_progress}/50 trades"
+            f"Paper unlock: {paper_progress}/300 trades"
         )
         self._enqueue(msg)
 
@@ -617,7 +617,7 @@ class AlertManager:
             wr = paper.get("win_rate", 0)
             lines.append("PAPER PROGRESS:")
             lines.append(
-                f"  {completed}/50 trades"
+                f"  {completed}/300 trades"
             )
             lines.append(
                 f"  Win rate: {wr:.0%} "
@@ -627,7 +627,7 @@ class AlertManager:
                 days_est = max(
                     1,
                     int(
-                        (50 - completed)
+                        (300 - completed)
                         / max(
                             paper.get(
                                 "trades_per_day", 1
