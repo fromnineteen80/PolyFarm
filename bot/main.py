@@ -153,21 +153,22 @@ async def main():
     # ── STEP 11: Load markets ─────────────────────
     await market_loader.load_all_markets()
 
-    # ── STEP 12: Initialize OddsPapi ─────────────
-    from core.oddspapi_client import OddsPapiClient
+    # ── STEP 12: Initialize Odds API ─────────────
+    from core.odds_api_client import OddsAPIClient
     import data.database as db
 
-    oddspapi = None
+    odds_api = None
     odds_key = os.environ.get("ODDS_API_KEY")
     if odds_key:
-        oddspapi = OddsPapiClient(api_key=odds_key, db=db)
-        await oddspapi.startup(registry)
-        edge_detector.oddspapi = oddspapi
-        # Wire oddspapi to monitors that need sharp probs
-        exception_monitor.mapper = oddspapi
-        fade_monitor.mapper = oddspapi
-        overnight_monitor.mapper = oddspapi
-        logger.info("OddsPapi integration active")
+        odds_api = OddsAPIClient(api_key=odds_key, db=db)
+        await odds_api.startup(registry)
+        edge_detector.odds_api = odds_api
+        edge_detector.ws_markets = markets_ws
+        # Wire to monitors that need sharp probs
+        exception_monitor.mapper = odds_api
+        fade_monitor.mapper = odds_api
+        overnight_monitor.mapper = odds_api
+        logger.info("Odds API integration active")
     else:
         logger.warning("ODDS_API_KEY not set — running without sharp odds")
 
@@ -205,14 +206,14 @@ async def main():
         asyncio.create_task(fade_monitor.monitor_loop(), name="fade_monitor"),
         asyncio.create_task(overnight_monitor.monitor_loop(), name="overnight_monitor"),
         asyncio.create_task(midnight_scheduler(wallet, alerts, market_loader), name="midnight"),
-        asyncio.create_task(pre_game_scanner(registry, oddspapi, alerts), name="pre_game"),
+        asyncio.create_task(pre_game_scanner(registry, odds_api, alerts), name="pre_game"),
         asyncio.create_task(game_complete_scanner(registry, position_monitor, alerts), name="game_complete"),
         asyncio.create_task(heartbeat_loop(), name="heartbeat"),
     ]
 
-    if oddspapi:
+    if odds_api:
         tasks.append(
-            asyncio.create_task(oddspapi.poll_loop(registry), name="oddspapi_poll")
+            asyncio.create_task(odds_api.poll_loop(lambda: registry, markets_ws), name="odds_api_poll")
         )
 
     if PHASE2_ENABLED:
@@ -264,8 +265,8 @@ async def main():
         await shutdown(wallet, alerts, order_manager)
         await private_ws.stop()
         await markets_ws.stop()
-        if oddspapi:
-            await oddspapi.close()
+        if odds_api:
+            await odds_api.close()
 
 
 async def heartbeat_loop():

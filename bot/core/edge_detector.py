@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timezone
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 from config import (
     FAVORITES_FLOOR,
@@ -42,31 +42,33 @@ class EdgeSignal:
     game_id: Optional[str] = None
     poly_price_at_entry: float = 0.0
     edge_at_entry: float = 0.0
-    oddspapi_fixture_id: str = ""
-    pinnacle_home_decimal: float = 0.0
-    pinnacle_away_decimal: float = 0.0
+    price_direction: str = "stable"
+    price_velocity: float = 0.0
+    net_buy_pressure: float = 1.0
+    size_multiplier: float = 1.0
+    composite_score: float = 0.0
+    books_used: list = field(default_factory=list)
+    odds_api_event_id: str = ""
 
 class EdgeDetector:
 
     def __init__(self, registry, mapper, wallet, position_monitor):
         self.registry = registry
-        self.mapper = mapper  # kept for backward compat, may be None
+        self.mapper = mapper
         self.wallet = wallet
         self.position_monitor = position_monitor
-        self.oddspapi = None  # set by main.py after init
+        self.odds_api = None
+        self.ws_markets = None
         self.price_queue: asyncio.Queue = asyncio.Queue()
         self._paper_stats: dict = {"completed": 0, "win_rate": 0.0}
 
-    def update_paper_stats(self, completed: int, win_rate: float):
+    def update_paper_stats(self, completed, win_rate):
         self._paper_stats = {"completed": completed, "win_rate": win_rate}
 
     async def detection_loop(self):
-        """Consumes WebSocket price events."""
         while True:
             try:
-                event = await asyncio.wait_for(
-                    self.price_queue.get(), timeout=1.0
-                )
+                event = await asyncio.wait_for(self.price_queue.get(), timeout=1.0)
                 await self.evaluate_signal(event)
             except asyncio.TimeoutError:
                 continue
@@ -74,12 +76,6 @@ class EdgeDetector:
                 logger.error(f"Detection loop error: {e}")
 
     def _get_team_side(self, market) -> str:
-        """
-        Determine if the YES (long) side of this
-        market represents the home or away team.
-        Compares market_sides data if available,
-        otherwise defaults to home.
-        """
         if not hasattr(market, "market_sides"):
             return "home"
         sides = getattr(market, "market_sides", None)
@@ -89,14 +85,14 @@ class EdgeDetector:
             if isinstance(side, dict) and side.get("long"):
                 team_name = side.get("team", {}).get("name", "")
                 if team_name and market.home_team:
-                    from core.oddspapi_client import normalize_team
+                    from core.odds_api_client import normalize_team
                     if normalize_team(team_name) == normalize_team(market.home_team):
                         return "home"
                     else:
                         return "away"
         return "home"
 
-    async def evaluate_signal(self, event: dict) -> Optional[EdgeSignal]:
+    async def evaluate_signal(self, event):
         slug = event.get("market_slug")
         yes_price = event.get("yes_price")
         if not slug or yes_price is None:
@@ -104,7 +100,6 @@ class EdgeDetector:
 
         poly_price = float(yes_price)
 
-        # ── GUARDS ──────────────────────────────────
         if poly_price < FAVORITES_FLOOR:
             return None
 
@@ -113,75 +108,79 @@ class EdgeDetector:
            not self.wallet.can_enter("band_c"):
             return None
 
-        # Check OddsPapi match
-        if not self.oddspapi or not self.oddspapi.is_matched(slug):
+        if not self.odds_api or not self.odds_api.is_matched(slug):
             return None
 
-        # Skip if already in this market
         if self.position_monitor.has_position(slug):
             return None
 
-        # ── SHARP PROBABILITY ───────────────────────
         market = await self.registry.get(slug)
         if not market:
             return None
 
-        team_side = self._get_team_side(market)
-        sharp_prob = self.oddspapi.get_fair_prob(slug, team_side)
-        if sharp_prob is None:
-            return None
-
-        raw_edge = sharp_prob - poly_price
-
-        # ── BAND CLASSIFICATION ─────────────────────
+        # Band classification (thresholds preserved exactly)
         is_live = market.is_live
         live_adj = LIVE_GAME_EDGE_REDUCTION if is_live else 0.0
 
         if poly_price >= BAND_A_MIN_PRICE:
             band = "A"
-            min_edge = BAND_A_MIN_EDGE - live_adj
+            band_threshold = BAND_A_MIN_EDGE - live_adj
             strategy_key = "band_a"
         elif poly_price >= BAND_B_MIN_PRICE:
             band = "B"
-            min_edge = BAND_B_MIN_EDGE - live_adj
+            band_threshold = BAND_B_MIN_EDGE - live_adj
             strategy_key = "band_b"
         elif poly_price >= BAND_C_MIN_PRICE:
             band = "C"
-            min_edge = BAND_C_MIN_EDGE - live_adj
+            band_threshold = BAND_C_MIN_EDGE - live_adj
             strategy_key = "band_c"
         else:
-            return None
-
-        if raw_edge < min_edge:
             return None
 
         if not self.wallet.can_enter(strategy_key):
             return None
 
-        # ── CONFIDENCE SCORE ────────────────────────
-        probs = self.oddspapi.get_both_fair_probs(slug)
-        freshness = 1.0  # OddsPapi polls every 3min
-        if probs and probs.get("updated_at"):
+        # Composite edge signal with price movement
+        team_side = self._get_team_side(market)
+        signal = self.odds_api.get_edge_signal(
+            polymarket_slug=slug,
+            team_side=team_side,
+            poly_yes_price=poly_price,
+            ws_markets=self.ws_markets,
+            band_threshold=band_threshold,
+        )
+
+        if signal is None:
+            return None
+
+        if not signal["qualifies"]:
+            return None
+
+        sharp_prob = signal["sharp_prob"]
+        static_edge = signal["static_edge"]
+        size_multiplier = signal["size_multiplier"]
+        composite_score = signal["composite_score"]
+        direction = signal["direction"]
+        raw_edge = static_edge
+
+        # Confidence score
+        consensus = self.odds_api.get_consensus_data(slug)
+        freshness = 1.0
+        if consensus and consensus.get("updated_at"):
             try:
-                updated = datetime.fromisoformat(
-                    probs["updated_at"].replace("Z", "+00:00")
-                )
+                updated = datetime.fromisoformat(consensus["updated_at"].replace("Z", "+00:00"))
                 age = (datetime.now(timezone.utc) - updated).total_seconds()
-                if age > 300:  # stale if over 5 min
+                if age > 300:
                     return None
                 freshness = 1.0 if age < 60 else 0.85
             except Exception:
                 pass
 
-        # Mapping quality
-        mapping_conf = 1.0  # OddsPapi matches are verified
-
-        # Liquidity
+        mapping_conf = 1.0
         volume = market.volume
         if volume < 20000:
             return None
         liquidity = 1.0 if volume > 50000 else 0.90
-
         stability = 1.0
 
         confidence = (
@@ -190,62 +189,45 @@ class EdgeDetector:
             liquidity * 0.25 +
             stability * 0.15
         )
-
         if confidence < CONFIDENCE_THRESHOLD:
             return None
 
-        # ── SPORT CONCENTRATION ─────────────────────
+        # Sport concentration
         open_positions = self.position_monitor.get_all_positions()
         total = len(open_positions)
         if total > 0:
-            sport_count = sum(
-                1 for p in open_positions.values()
-                if p.get("sport") == market.sport
-            )
+            sport_count = sum(1 for p in open_positions.values() if p.get("sport") == market.sport)
             if sport_count / total >= MAX_SINGLE_SPORT_PCT:
                 return None
 
-        # ── PAPER MODE UNLOCK CHECK ─────────────────
+        # Paper mode unlock
         from config import PAPER_MODE
         if not PAPER_MODE:
             if self._paper_stats["completed"] < PAPER_TRADES_REQUIRED:
-                logger.warning(
-                    f"Live mode blocked: "
-                    f"{self._paper_stats['completed']}"
-                    f"/{PAPER_TRADES_REQUIRED} paper trades"
-                )
+                logger.warning(f"Live mode blocked: {self._paper_stats['completed']}/{PAPER_TRADES_REQUIRED} paper trades")
                 return None
 
-        # ── FEE-ADJUSTED NET EDGE ───────────────────
-        position_usd = self.wallet.get_position_size_usd(strategy_key)
-        if position_usd <= 0:
+        # Position sizing with size_multiplier
+        base_position_usd = self.wallet.get_position_size_usd(strategy_key)
+        if base_position_usd <= 0:
             return None
+        position_usd = round(base_position_usd * size_multiplier, 2)
 
         shares = int(position_usd / poly_price)
         if shares < 1:
             return None
 
+        # Fee-adjusted net edge
         entry_notional = shares * poly_price
         taker_fee = entry_notional * TAKER_FEE_RATE
-
         exit_target = poly_price + (raw_edge * REPRICE_EXIT_PCT)
         exit_notional = shares * (1 - exit_target)
         maker_rebate = exit_notional * MAKER_REBATE_RATE
-
         net_edge_usd = (raw_edge * shares) - taker_fee + maker_rebate
         net_edge_pct = net_edge_usd / position_usd
 
-        if net_edge_pct < min_edge:
+        if net_edge_pct < band_threshold:
             return None
-
-        # Build enriched signal
-        fixture_id = ""
-        pinnacle_home = 0.0
-        pinnacle_away = 0.0
-        if probs:
-            fixture_id = probs.get("fixture_id", "")
-            pinnacle_home = probs.get("home_decimal", 0) or 0
-            pinnacle_away = probs.get("away_decimal", 0) or 0
 
         return EdgeSignal(
             slug=slug,
@@ -267,8 +249,12 @@ class EdgeDetector:
             timestamp=datetime.now(timezone.utc).isoformat(),
             strategy="oracle_arb",
             poly_price_at_entry=poly_price,
-            edge_at_entry=raw_edge,
-            oddspapi_fixture_id=fixture_id,
-            pinnacle_home_decimal=pinnacle_home,
-            pinnacle_away_decimal=pinnacle_away,
+            edge_at_entry=static_edge,
+            price_direction=direction,
+            price_velocity=signal["velocity"],
+            net_buy_pressure=signal["net_buy_pressure"],
+            size_multiplier=size_multiplier,
+            composite_score=composite_score,
+            books_used=signal["books_used"],
+            odds_api_event_id=signal["event_id"],
         )
