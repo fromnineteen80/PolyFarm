@@ -324,6 +324,17 @@ async def insert_research_signal(signal: dict) -> dict:
     return result.data[0] if result.data else {}
 
 # ─────────────────────────────────────────────────────
+# MARKETS TABLE
+# ─────────────────────────────────────────────────────
+
+async def upsert_market(data: dict):
+    return await db_execute(
+        lambda: _supabase.table("markets")
+            .upsert(data, on_conflict="market_slug")
+            .execute()
+    )
+
+# ─────────────────────────────────────────────────────
 # SHARP ODDS AND PRICE HISTORY
 # ─────────────────────────────────────────────────────
 

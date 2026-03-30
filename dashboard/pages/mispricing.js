@@ -3,6 +3,7 @@ import { authOptions } from './api/auth/[...nextauth]'
 import { createClient } from '@supabase/supabase-js'
 import { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
+import SportIcon from '../components/SportIcon'
 import StatCard from '../components/StatCard'
 import ScoreBadge from '../components/ScoreBadge'
 import EdgeBadge from '../components/EdgeBadge'
@@ -112,7 +113,7 @@ export default function Mispricing({ markets: initial, config }) {
                     <td className="py-2 px-2">
                       <div className="max-w-[180px]">
                         <p className="font-semibold truncate">{m.home_team} vs {m.away_team}</p>
-                        <p className="text-xs text-neutral">{m.tournament_name || m.sport}</p>
+                        <p className="text-xs text-neutral"><SportIcon sport={m.sport} showLabel /> {m.tournament_name ? `| ${m.tournament_name}` : ''}</p>
                         {m.is_live ? (
                           <LiveGameState score={m.game_score} period={m.game_period} elapsed={m.game_elapsed} isLive />
                         ) : (

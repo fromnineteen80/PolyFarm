@@ -74,6 +74,8 @@ class MarketInfo:
     series_slug: str = ""
     time_remaining_seconds: Optional[int] = None
     market_sides: list = None
+    home_color: str = ""
+    away_color: str = ""
 
 
 class MarketRegistry:
@@ -260,6 +262,8 @@ class MarketLoader:
                         sportradar_game_id=str(sportradar_id),
                         home_team=full_team_name(home),
                         away_team=full_team_name(away),
+                        home_color=home.get("colorPrimary", ""),
+                        away_color=away.get("colorPrimary", ""),
                         home_team_id=home.get("id", 0) or 0,
                         away_team_id=away.get("id", 0) or 0,
                         home_record=home.get("record", ""),
@@ -303,6 +307,83 @@ class MarketLoader:
         while True:
             await asyncio.sleep(300)
             await self.load_all_markets()
+
+    async def flush_to_supabase(self, odds_api=None, ws_markets=None):
+        """Write all markets to Supabase so dashboard can read them."""
+        from data.database import upsert_market
+        markets = await self.registry.all_markets()
+        for m in markets:
+            try:
+                data = {
+                    "market_slug": m.slug,
+                    "event_id": m.event_id,
+                    "event_slug": m.event_slug,
+                    "sport": m.sport,
+                    "league": m.league,
+                    "game_id": m.game_id,
+                    "sportradar_game_id": m.sportradar_game_id,
+                    "home_team": m.home_team,
+                    "away_team": m.away_team,
+                    "home_team_id": m.home_team_id,
+                    "away_team_id": m.away_team_id,
+                    "home_record": m.home_record,
+                    "away_record": m.away_record,
+                    "home_ranking": m.home_ranking,
+                    "away_ranking": m.away_ranking,
+                    "home_conference": m.home_conference,
+                    "away_conference": m.away_conference,
+                    "home_color": m.home_color,
+                    "away_color": m.away_color,
+                    "yes_price": m.yes_price,
+                    "bid_price": m.bid_price,
+                    "volume": m.volume,
+                    "liquidity": m.liquidity,
+                    "is_live": m.is_live,
+                    "is_finished": m.is_finished,
+                    "game_status": "live" if m.is_live else "finished" if m.is_finished else "upcoming",
+                    "game_score": m.current_score,
+                    "game_period": m.current_period,
+                    "game_elapsed": m.time_elapsed,
+                    "game_start_time": m.game_start_time or None,
+                    "main_spread_line": m.main_spread_line,
+                    "main_total_line": m.main_total_line,
+                    "market_type": m.market_type,
+                    "series_slug": m.series_slug,
+                }
+                # Enrich with sharp odds data if available
+                if odds_api and odds_api.is_matched(m.slug):
+                    consensus = odds_api.get_consensus_data(m.slug)
+                    if consensus:
+                        team_side = "home"  # default
+                        sharp = odds_api.get_fair_prob(m.slug, team_side)
+                        data["current_sharp_prob"] = sharp
+                        data["current_edge"] = round(sharp - m.yes_price, 4) if sharp else None
+                        data["odds_api_event_id"] = consensus.get("odds_api_event_id", "")
+                        data["match_confidence"] = 1.0
+                        data["last_sharp_update"] = consensus.get("updated_at")
+
+                # Enrich with price movement if available
+                if ws_markets:
+                    velocity, direction = ws_markets.calculate_velocity(m.slug)
+                    pressure = ws_markets.get_net_buy_pressure(m.slug)
+                    data["current_price_velocity"] = velocity
+                    data["current_price_direction"] = direction
+                    data["current_net_buy_pressure"] = pressure
+                    data["last_movement_update"] = datetime.now(timezone.utc).isoformat()
+
+                await upsert_market(data)
+            except Exception as e:
+                logger.debug(f"Market flush error {m.slug}: {e}")
+        logger.info(f"Flushed {len(markets)} markets to Supabase")
+
+    async def flush_loop(self, odds_api=None, ws_markets=None):
+        """Flush markets to Supabase every 60 seconds."""
+        while True:
+            await asyncio.sleep(60)
+            try:
+                await self.flush_to_supabase(odds_api, ws_markets)
+            except Exception as e:
+                logger.error(f"Market flush loop error: {e}")
 
     async def update_game_state(self, slug):
         """Update live game state for a market."""

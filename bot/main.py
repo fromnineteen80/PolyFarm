@@ -199,6 +199,7 @@ async def main():
         asyncio.create_task(private_ws.start(), name="ws_private"),
         asyncio.create_task(markets_ws.start(), name="ws_markets"),
         asyncio.create_task(market_loader.refresh_loop(), name="market_refresh"),
+        asyncio.create_task(market_loader.flush_loop(odds_api, markets_ws), name="market_flush"),
         asyncio.create_task(edge_detector.detection_loop(), name="edge_detection"),
         asyncio.create_task(position_monitor.monitor_loop(), name="position_monitor"),
         asyncio.create_task(wallet.monitor_loop(), name="wallet_recalculate"),

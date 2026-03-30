@@ -3,6 +3,7 @@ import { authOptions } from './api/auth/[...nextauth]'
 import { createClient } from '@supabase/supabase-js'
 import { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
+import SportIcon from '../components/SportIcon'
 import FilterBar from '../components/FilterBar'
 import EdgeBadge from '../components/EdgeBadge'
 import DirectionArrow from '../components/DirectionArrow'
@@ -94,7 +95,7 @@ export default function Markets({ markets: initial }) {
                         {m.home_record && m.away_record && ' / '}
                         {m.away_record && <span>{m.away_record}</span>}
                       </p>
-                      <p className="text-xs text-neutral">{m.tournament_name || m.sport}</p>
+                      <p className="text-xs text-neutral"><SportIcon sport={m.sport} showLabel /> {m.tournament_name ? `| ${m.tournament_name}` : ''}</p>
                     </div>
                   </td>
                   <td className="py-2 px-2 text-right">
