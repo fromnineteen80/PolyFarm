@@ -174,7 +174,10 @@ async def main():
 
     # ── STEP 13: Send session start alert ─────────
     stats = await get_bot_config("paper_trades_completed")
-    paper_progress = int(stats or 0)
+    try:
+        paper_progress = int(str(stats or 0).strip('"'))
+    except (ValueError, TypeError):
+        paper_progress = 0
     await alerts.send_session_start(
         wallet=wallet.state.live_portfolio_value,
         floor=wallet.state.floor_value,
