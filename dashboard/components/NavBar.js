@@ -19,6 +19,7 @@ const NAV_LINKS = [
   { href: '/markets', label: 'Markets' },
   { href: '/mispricing', label: 'Mispricing' },
   { href: '/teams', label: 'Teams' },
+  { href: '/about', label: 'About' },
 ]
 
 export default function NavBar() {
