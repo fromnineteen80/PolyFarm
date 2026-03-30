@@ -73,6 +73,7 @@ class MarketInfo:
     market_type: str = "moneyline"
     series_slug: str = ""
     time_remaining_seconds: Optional[int] = None
+    market_sides: list = None
 
 
 class MarketRegistry:
@@ -168,10 +169,19 @@ class MarketLoader:
                 if is_ended:
                     continue
 
-                # Extract teams
+                # Extract teams — build full name from safeName + name
+                # SDK returns name="Spurs", safeName="San Antonio"
+                # Full name = "San Antonio Spurs" (matches Odds API)
                 teams = event.get("teams", [])
                 home = teams[0] if len(teams) > 0 else {}
                 away = teams[1] if len(teams) > 1 else {}
+
+                def full_team_name(t):
+                    safe = t.get("safeName", "")
+                    short = t.get("name", "")
+                    if safe and short:
+                        return f"{safe} {short}"
+                    return short or safe or ""
 
                 # Extract event state
                 state = event.get("eventState", {}) or {}
@@ -210,22 +220,31 @@ class MarketLoader:
                         continue
                     if not market.get("active"):
                         continue
-                    if not market.get("acceptingOrders"):
-                        continue
 
                     slug = market.get("slug")
                     if not slug:
                         continue
 
-                    vol = float(market.get("volumeNum", 0) or 0)
-                    if vol < self.min_volume:
-                        continue
+                    # Get prices from outcomePrices if available
+                    outcome_prices = market.get("outcomePrices", "")
+                    yes_price = 0.5
+                    if outcome_prices:
+                        try:
+                            import json
+                            prices = json.loads(outcome_prices) if isinstance(outcome_prices, str) else outcome_prices
+                            if isinstance(prices, list) and len(prices) > 0:
+                                yes_price = float(prices[0])
+                        except Exception:
+                            pass
 
-                    # In events.list(), bestBid/bestAsk are PLAIN NUMBERS
+                    # Fallback to bestBid/bestAsk if present
                     bid_price = float(market.get("bestBid", 0) or 0)
                     ask_price = float(market.get("bestAsk", 0) or 0)
-                    liq = float(market.get("liquidityNum", 0) or 0)
+                    if ask_price > 0:
+                        yes_price = ask_price
+
                     mkt_start = market.get("gameStartTime", "") or start_time
+                    market_sides = market.get("marketSides", [])
 
                     info = MarketInfo(
                         slug=slug,
@@ -235,8 +254,8 @@ class MarketLoader:
                         league=league,
                         game_id=game_id,
                         sportradar_game_id=str(sportradar_id),
-                        home_team=home.get("name", ""),
-                        away_team=away.get("name", ""),
+                        home_team=full_team_name(home),
+                        away_team=full_team_name(away),
                         home_team_id=home.get("id", 0) or 0,
                         away_team_id=away.get("id", 0) or 0,
                         home_record=home.get("record", ""),
@@ -245,10 +264,10 @@ class MarketLoader:
                         away_ranking=away.get("ranking", ""),
                         home_conference=home.get("conference", ""),
                         away_conference=away.get("conference", ""),
-                        yes_price=ask_price,
+                        yes_price=yes_price,
                         bid_price=bid_price,
-                        volume=vol,
-                        liquidity=liq,
+                        volume=0.0,
+                        liquidity=0.0,
                         is_live=is_live,
                         is_finished=is_ended,
                         current_score=score,
@@ -265,6 +284,7 @@ class MarketLoader:
                         latest_update_clock=update.get("clock", ""),
                         market_type="moneyline",
                         series_slug=series_slug,
+                        market_sides=market_sides,
                     )
                     await self.registry.update(slug, info)
                     slugs.append(slug)

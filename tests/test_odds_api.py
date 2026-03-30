@@ -77,18 +77,20 @@ def test_normalize_team():
 def test_team_registry_canonical_lookup():
     client = OddsAPIClient.__new__(OddsAPIClient)
     client._poly_teams = {
-        123: {"name": "Los Angeles Lakers", "league": "nba"},
-        456: {"name": "Boston Celtics", "league": "nba"},
+        123: {"name": "Lakers", "full_name": "Los Angeles Lakers", "safeName": "Los Angeles"},
+        456: {"name": "Celtics", "full_name": "Boston Celtics", "safeName": "Boston"},
     }
     client._poly_name_to_id = {
         "los angeles lakers": 123,
+        "lakers": 123,
         "boston celtics": 456,
+        "celtics": 456,
     }
-    # Exact lookup
+    # Short name resolves to full name
+    assert client.get_canonical_name("Lakers") == "Los Angeles Lakers"
+    assert client.get_canonical_name("Celtics") == "Boston Celtics"
+    # Full name resolves to itself
     assert client.get_canonical_name("Los Angeles Lakers") == "Los Angeles Lakers"
-    assert client.get_canonical_name("Boston Celtics") == "Boston Celtics"
-    # Normalized lookup
-    assert client.get_canonical_name("los angeles lakers") == "Los Angeles Lakers"
     # Unknown team returns input
     assert client.get_canonical_name("Unknown Team") == "Unknown Team"
 
@@ -96,8 +98,9 @@ def test_team_registry_canonical_lookup():
 def test_team_registry_by_id():
     client = OddsAPIClient.__new__(OddsAPIClient)
     client._poly_teams = {
-        123: {"name": "Los Angeles Lakers", "league": "nba"},
+        123: {"name": "Lakers", "full_name": "Los Angeles Lakers"},
     }
     team = client.get_team_by_id(123)
-    assert team["name"] == "Los Angeles Lakers"
+    assert team["name"] == "Lakers"
+    assert team["full_name"] == "Los Angeles Lakers"
     assert client.get_team_by_id(999) is None

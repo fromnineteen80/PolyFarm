@@ -232,41 +232,54 @@ class OddsAPIClient:
 
     async def build_team_registry(self, poly_client):
         """
-        Call client.sports.teams() to build a
-        complete team name lookup from Polymarket.
-        This gives us the canonical team names
-        that match what events.list() returns.
+        Build team name registry from Polymarket
+        events data. Each event has teams[] with
+        name (short like "Spurs") and safeName
+        (city like "San Antonio"). Full name is
+        safeName + " " + name = "San Antonio Spurs"
+        which matches The Odds API team names.
         """
         try:
-            result = await poly_client.sports.teams({})
-            teams = result if isinstance(result, list) else result.get("teams", [])
-            for team in teams:
-                tid = team.get("id")
-                name = team.get("name", "")
-                if tid and name:
-                    self._poly_teams[tid] = {
-                        "name": name,
-                        "league": team.get("league", ""),
-                        "abbreviation": team.get("abbreviation", ""),
-                        "record": team.get("record", ""),
-                        "conference": team.get("conference", ""),
-                        "safeName": team.get("safeName", ""),
-                    }
-                    self._poly_name_to_id[normalize_team(name)] = tid
-            logger.info(f"Team registry: {len(self._poly_teams)} teams loaded from Polymarket SDK")
+            # Load teams from active events
+            result = await poly_client.events.list({
+                "active": True,
+                "categories": "sports",
+                "limit": 100,
+            })
+            events = result.get("events", [])
+            for event in events:
+                for team in event.get("teams", []):
+                    tid = team.get("id")
+                    short_name = team.get("name", "")
+                    safe_name = team.get("safeName", "")
+                    if tid and short_name:
+                        full_name = f"{safe_name} {short_name}" if safe_name else short_name
+                        self._poly_teams[tid] = {
+                            "name": short_name,
+                            "full_name": full_name,
+                            "safeName": safe_name,
+                            "league": team.get("league", ""),
+                            "abbreviation": team.get("abbreviation", ""),
+                            "record": team.get("record", ""),
+                        }
+                        self._poly_name_to_id[normalize_team(full_name)] = tid
+                        # Also index by short name for fallback
+                        self._poly_name_to_id[normalize_team(short_name)] = tid
+            logger.info(f"Team registry: {len(self._poly_teams)} teams from {len(events)} events")
         except Exception as e:
             logger.error(f"Failed to build team registry: {e}")
 
     def get_canonical_name(self, team_name: str) -> str:
         """
-        Look up the canonical Polymarket team name.
-        Returns the exact name from the SDK team
-        registry, or the input name if not found.
+        Look up the full canonical team name.
+        "Spurs" -> "San Antonio Spurs"
+        "San Antonio Spurs" -> "San Antonio Spurs"
+        Returns input unchanged if not in registry.
         """
         normalized = normalize_team(team_name)
         tid = self._poly_name_to_id.get(normalized)
         if tid and tid in self._poly_teams:
-            return self._poly_teams[tid]["name"]
+            return self._poly_teams[tid].get("full_name", self._poly_teams[tid]["name"])
         return team_name
 
     def get_team_by_id(self, team_id: int) -> Optional[dict]:
