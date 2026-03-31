@@ -105,11 +105,6 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
   const todayWins = tt.filter(t => parseFloat(t.pnl || 0) > 0).length
   const todayPnl = tt.reduce((s, t) => s + parseFloat(t.pnl || 0), 0)
 
-  const signals = (markets || [])
-    .filter(m => (m.current_edge || 0) > 0.02)
-    .map(m => ({ ...m, score: calcScore(m.current_edge, m.current_price_direction, m.current_net_buy_pressure) }))
-    .sort((a, b) => b.score - a.score)
-
   // Split by date
   const now = new Date()
   const todayStr = now.toISOString().split('T')[0]
@@ -122,9 +117,13 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
     .map(m => ({ ...m, score: calcScore(m.current_edge, m.current_price_direction, m.current_net_buy_pressure) }))
     .sort((a, b) => b.score - a.score)
 
-  // Upcoming (next 2 days) sorted by time
+  // Live signals — today's games with meaningful edge (no duplicates with today's table)
+  const signals = todaysGames.filter(m => (m.current_edge || 0) > 0.02)
+
+  // Upcoming (next 2 days) sorted by time with signal strength
   const upcomingGames = allGames
     .filter(m => m.game_start_time && !m.game_start_time.startsWith(todayStr) && m.game_start_time <= twoDaysOut + 'T23:59:59Z')
+    .map(m => ({ ...m, score: calcScore(m.current_edge, m.current_price_direction, m.current_net_buy_pressure) }))
     .sort((a, b) => (a.game_start_time || '').localeCompare(b.game_start_time || ''))
 
   return (
@@ -162,50 +161,15 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
       </div>
 
       {/* LIVE SIGNALS */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">
-          Live Signals
-          <span className="text-sm font-normal text-neutral ml-2">{signals.length} above 2c gap</span>
-        </h2>
-        {signals.length === 0 ? (
-          <div className="card text-neutral text-sm py-6 text-center">
-            No opportunities detected. Monitoring {sysConfig?.markets_matched_count || 0} markets.
-          </div>
-        ) : (
-          <div className="card p-0 overflow-hidden">
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Strength</th>
-                    <th>Game</th>
-                    <th>Score</th>
-                    <th className="text-right">Market Price</th>
-                    <th className="text-right">Fair Value</th>
-                    <th className="text-right">Gap</th>
-                    <th className="hidden md:table-cell">Trend</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {signals.slice(0, 10).map((m, i) => (
-                    <tr key={i}>
-                      <td><ScoreBadge score={m.score} /></td>
-                      <td>
-                        <MatchupDisplay homeTeam={m.home_team} awayTeam={m.away_team} homeColor={m.home_color} awayColor={m.away_color} sport={m.sport} size="sm" />
-                      </td>
-                      <td>{m.is_live && m.game_score ? <span className="font-semibold">{m.game_score}</span> : <span className="text-neutral">--</span>}</td>
-                      <td className="text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
-                      <td className="text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
-                      <td className="text-right"><EdgeBadge edge={m.current_edge} size="sm" /></td>
-                      <td className="hidden md:table-cell">{m.current_price_direction ? <DirectionArrow direction={m.current_price_direction} /> : <span className="text-neutral">--</span>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
+      {signals.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">
+            Live Signals
+            <span className="text-sm font-normal text-neutral ml-2">{signals.length} above 2c gap</span>
+          </h2>
+          <GamesTable games={signals} showScore />
+        </div>
+      )}
 
       {/* TODAY'S GAMES */}
       <div className="mb-8">
@@ -216,38 +180,7 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
         {todaysGames.length === 0 ? (
           <div className="card text-neutral text-sm py-6 text-center">No games loaded yet.</div>
         ) : (
-          <div className="card p-0 overflow-hidden">
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Game</th>
-                    <th>Score</th>
-                    <th className="text-right">Market Price</th>
-                    <th className="text-right">Fair Value</th>
-                    <th className="text-right">Gap</th>
-                    <th className="hidden md:table-cell">Trend</th>
-                    <th className="hidden md:table-cell">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todaysGames.map((m, i) => (
-                    <tr key={i}>
-                      <td>
-                        <MatchupDisplay homeTeam={m.home_team} awayTeam={m.away_team} homeColor={m.home_color} awayColor={m.away_color} sport={m.sport} size="sm" />
-                      </td>
-                      <td>{m.is_live && m.game_score ? <span className="font-semibold">{m.game_score}</span> : <span className="text-neutral">--</span>}</td>
-                      <td className="text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
-                      <td className="text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
-                      <td className="text-right">{m.current_edge ? <EdgeBadge edge={m.current_edge} size="sm" /> : <span className="text-neutral">--</span>}</td>
-                      <td className="hidden md:table-cell">{m.current_price_direction ? <DirectionArrow direction={m.current_price_direction} /> : <span className="text-neutral">--</span>}</td>
-                      <td className="hidden md:table-cell">{m.is_live ? <LiveGameState score={m.game_score} period={m.game_period} isLive /> : <span className="text-xs text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'TBD'}</span>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <GamesTable games={todaysGames} showTime />
         )}
       </div>
 
@@ -256,36 +189,9 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-3">
             Upcoming
-            <span className="text-sm font-normal text-neutral ml-2">{upcomingGames.length} games next 2 days</span>
+            <span className="text-sm font-normal text-neutral ml-2">{upcomingGames.length} next 2 days</span>
           </h2>
-          <div className="card p-0 overflow-hidden">
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Game</th>
-                    <th className="text-right">Market Price</th>
-                    <th className="text-right">Fair Value</th>
-                    <th className="text-right">Gap</th>
-                    <th className="hidden md:table-cell">Date</th>
-                    <th className="hidden md:table-cell">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {upcomingGames.map((m, i) => (
-                    <tr key={i}>
-                      <td><MatchupDisplay homeTeam={m.home_team} awayTeam={m.away_team} homeColor={m.home_color} awayColor={m.away_color} sport={m.sport} size="sm" /></td>
-                      <td className="text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
-                      <td className="text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
-                      <td className="text-right">{m.current_edge ? <EdgeBadge edge={m.current_edge} size="sm" /> : <span className="text-neutral">--</span>}</td>
-                      <td className="hidden md:table-cell text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) : ''}</td>
-                      <td className="hidden md:table-cell text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <GamesTable games={upcomingGames} showTime showDate />
         </div>
       )}
 
@@ -340,29 +246,66 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
         </div>
       )}
 
-      {/* TODAY + SYSTEM */}
-      <div className="border-t border-border pt-6">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1">
-            <p className="text-xs font-bold tracking-widest text-neutral uppercase mb-3">Today</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-neutral">Trades</span><span>{tt.length} executed &middot; {todayWins} won</span></div>
-              <div className="flex justify-between"><span className="text-neutral">P&L</span><span className={todayPnl >= 0 ? 'text-profit' : 'text-loss'}>{todayPnl >= 0 ? '+' : ''}{formatCurrency(todayPnl)}</span></div>
-              <div className="flex justify-between"><span className="text-neutral">Open</span><span>{openTrades.length} positions</span></div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-bold tracking-widest text-neutral uppercase mb-3">System</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center"><span className={`dot ${statusDot(sysConfig?.last_heartbeat, 180, 600)} mr-2`} /><span className="text-neutral w-16">Bot</span><span className="ml-auto">{isPaper ? 'Paper' : 'Live'} &middot; {timeAgo(sysConfig?.last_heartbeat)}</span></div>
-              <div className="flex items-center"><span className={`dot ${statusDot(sysConfig?.odds_api_last_poll, 300, 900)} mr-2`} /><span className="text-neutral w-16">Odds</span><span className="ml-auto">{timeAgo(sysConfig?.odds_api_last_poll)}</span></div>
-              <div className="flex items-center"><span className={`dot ${parseInt(sysConfig?.markets_unmatched_count || 0) <= 5 ? 'dot-green' : 'dot-red'} mr-2`} /><span className="text-neutral w-16">Match</span><span className="ml-auto">{sysConfig?.markets_matched_count || 0} matched</span></div>
-              <div className="flex items-center"><span className={`dot ${statusDot(sysConfig?.supabase_last_write, 60, 300)} mr-2`} /><span className="text-neutral w-16">Data</span><span className="ml-auto">{timeAgo(sysConfig?.supabase_last_write)}</span></div>
-            </div>
-          </div>
+      {/* TODAY + SYSTEM — same line, left and right justified */}
+      <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row gap-8">
+        <div className="text-sm space-y-1.5">
+          <p className="text-xs font-bold tracking-widest text-neutral uppercase mb-2">Today</p>
+          <p><span className="text-neutral">Trades</span> {tt.length} executed &middot; {todayWins} won</p>
+          <p><span className="text-neutral">P&L</span> <span className={todayPnl >= 0 ? 'text-profit' : 'text-loss'}>{todayPnl >= 0 ? '+' : ''}{formatCurrency(todayPnl)}</span></p>
+          <p><span className="text-neutral">Open</span> {openTrades.length} positions</p>
+        </div>
+        <div className="sm:ml-auto sm:text-right text-sm space-y-1.5">
+          <p className="text-xs font-bold tracking-widest text-neutral uppercase mb-2">System</p>
+          <p><span className={`dot ${statusDot(sysConfig?.last_heartbeat, 180, 600)} mr-1.5`} /><span className="text-neutral">Bot</span> {isPaper ? 'Paper' : 'Live'} &middot; {timeAgo(sysConfig?.last_heartbeat)}</p>
+          <p><span className={`dot ${statusDot(sysConfig?.odds_api_last_poll, 300, 900)} mr-1.5`} /><span className="text-neutral">Odds</span> {timeAgo(sysConfig?.odds_api_last_poll)}</p>
+          <p><span className={`dot ${parseInt(sysConfig?.markets_unmatched_count || 0) <= 5 ? 'dot-green' : 'dot-red'} mr-1.5`} /><span className="text-neutral">Match</span> {sysConfig?.markets_matched_count || 0} matched</p>
+          <p><span className={`dot ${statusDot(sysConfig?.supabase_last_write, 60, 300)} mr-1.5`} /><span className="text-neutral">Data</span> {timeAgo(sysConfig?.supabase_last_write)}</p>
         </div>
       </div>
     </Layout>
+  )
+}
+
+function GamesTable({ games, showScore, showTime, showDate }) {
+  if (!games || games.length === 0) return null
+  return (
+    <div className="card p-0 overflow-hidden">
+      <div className="table-scroll">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Strength</th>
+              <th>Game</th>
+              <th>{showScore ? 'Score' : 'Time'}</th>
+              <th className="text-right">Market<br/>Price</th>
+              <th className="text-right">Fair<br/>Value</th>
+              <th className="text-right">Gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {games.map((m, i) => (
+              <tr key={i}>
+                <td><ScoreBadge score={m.score} /></td>
+                <td><MatchupDisplay homeTeam={m.home_team} awayTeam={m.away_team} homeColor={m.home_color} awayColor={m.away_color} sport={m.sport} size="sm" /></td>
+                <td>
+                  {showScore && m.is_live && m.game_score ? (
+                    <LiveGameState score={m.game_score} period={m.game_period} isLive />
+                  ) : m.game_start_time ? (
+                    <span className="text-sm text-neutral">
+                      {showDate && new Date(m.game_start_time).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', '}
+                      {new Date(m.game_start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  ) : <span className="text-neutral">TBD</span>}
+                </td>
+                <td className="text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
+                <td className="text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
+                <td className="text-right">{m.current_edge ? <EdgeBadge edge={m.current_edge} size="sm" /> : <span className="text-neutral">--</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   )
 }
 
