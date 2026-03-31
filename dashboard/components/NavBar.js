@@ -7,17 +7,11 @@ import { formatCurrency, calcInvestorValue } from '../lib/calculations'
 import Icon from './Icon'
 
 const NAV_LINKS = [
-  { href: '/projections', label: 'Projections' },
-  { href: '/bands', label: 'Bands' },
-  { href: '/daily', label: 'Daily' },
-  { href: '/range', label: 'Range' },
-  { href: '/investors', label: 'Investors' },
-  { href: '/history', label: 'History' },
+  { href: '/', label: 'Today' },
   { href: '/performance', label: 'Performance' },
-  { href: '/sessions', label: 'Sessions' },
-  { href: '/markets', label: 'Markets' },
-  { href: '/mispricing', label: 'Mispricing' },
-  { href: '/teams', label: 'Teams' },
+  { href: '/analytics', label: 'Analytics' },
+  { href: '/research', label: 'Research' },
+  { href: '/investors', label: 'Investors' },
   { href: '/about', label: 'About' },
 ]
 
@@ -34,7 +28,7 @@ export default function NavBar() {
       try {
         const email = session.user.email
         const [invRes, cfgRes, snapRes] = await Promise.all([
-          supabase.from('investors').select('units_held').eq('email', email).single(),
+          supabase.from('investors').select('units_held').eq('email', email).maybeSingle(),
           supabase.from('bot_config').select('value').eq('key', 'total_units_outstanding'),
           supabase.from('daily_snapshots').select('wallet_value,date').order('date', { ascending: false }).limit(2),
         ])
@@ -58,9 +52,7 @@ export default function NavBar() {
           .reduce((s, e) => s + parseFloat(e.amount || 0), 0)
 
         setInvestorData({ units, totalUnits, todayValue, dailyPnl, totalInvested })
-      } catch (err) {
-        // Gracefully handle
-      }
+      } catch (err) {}
       setLoading(false)
     }
     load()
@@ -74,12 +66,12 @@ export default function NavBar() {
   return (
     <nav className="bg-surface border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <Link href="/" className="text-lg font-bold text-white min-h-[44px] flex items-center">OracleFarming</Link>
           <div className="hidden md:flex gap-1">
             {NAV_LINKS.map(l => (
               <Link key={l.href} href={l.href}
-                className={`px-2 py-1 text-sm rounded min-h-[44px] flex items-center ${router.pathname === l.href ? 'text-profit font-semibold' : 'text-neutral hover:text-white'}`}>
+                className={`px-3 py-1 text-sm rounded min-h-[44px] flex items-center ${router.pathname === l.href || (l.href !== '/' && router.pathname.startsWith(l.href)) ? 'text-profit font-semibold' : 'text-neutral hover:text-white'}`}>
                 {l.label}
               </Link>
             ))}
@@ -87,32 +79,24 @@ export default function NavBar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-3 text-sm">
+          <div className="hidden md:flex items-center gap-4 text-sm">
             {loading ? (
               <div className="flex gap-3">
-                <span className="skeleton h-4 w-16" />
                 <span className="skeleton h-4 w-16" />
                 <span className="skeleton h-4 w-16" />
               </div>
             ) : investorData ? (
               <>
-                <div className="text-center">
-                  <p className="text-xs text-neutral leading-none">Invested</p>
-                  <p className="font-semibold">{formatCurrency(investorData.totalInvested)}</p>
+                <div>
+                  <span className="text-xs text-neutral mr-1">Value</span>
+                  <span className="font-semibold">{formatCurrency(investorData.todayValue)}</span>
                 </div>
-                <span className="text-border">|</span>
-                <div className="text-center">
-                  <p className="text-xs text-neutral leading-none">Value</p>
-                  <p className="font-semibold">{formatCurrency(investorData.todayValue)}</p>
-                </div>
-                <span className="text-border">|</span>
-                <div className="text-center">
-                  <p className="text-xs text-neutral leading-none">Today</p>
-                  <p className={`font-bold ${investorData.dailyPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                <div>
+                  <span className="text-xs text-neutral mr-1">Today</span>
+                  <span className={`font-bold ${investorData.dailyPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                     {investorData.dailyPnl >= 0 ? '+' : ''}{formatCurrency(investorData.dailyPnl)}
-                  </p>
+                  </span>
                 </div>
-                <span className="text-border">|</span>
               </>
             ) : null}
           </div>
