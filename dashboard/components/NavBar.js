@@ -63,14 +63,14 @@ export default function NavBar() {
   const initial = (session?.user?.profile?.first_name || session?.user?.name || '?')[0]?.toUpperCase()
 
   return (
-    <nav className="bg-surface border-b border-border sticky top-0 z-50">
+    <nav className="bg-white border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-lg font-bold text-white min-h-[44px] flex items-center">OracleFarming</Link>
+          <Link href="/" className="text-lg font-bold text-gray-900 min-h-[44px] flex items-center">OracleFarming</Link>
           <div className="hidden md:flex gap-1">
             {NAV_LINKS.map(l => (
               <Link key={l.href} href={l.href}
-                className={`px-3 py-1 text-sm rounded min-h-[44px] flex items-center ${router.pathname === l.href || (l.href !== '/' && router.pathname.startsWith(l.href)) ? 'text-profit font-semibold' : 'text-neutral hover:text-white'}`}>
+                className={`px-3 py-1 text-sm rounded min-h-[44px] flex items-center ${router.pathname === l.href || (l.href !== '/' && router.pathname.startsWith(l.href)) ? 'text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-900'}`}>
                 {l.label}
               </Link>
             ))}
@@ -101,7 +101,7 @@ export default function NavBar() {
           </div>
 
           <Link href="/profile" className="flex items-center min-h-[44px] min-w-[44px] justify-center">
-            <div className="w-10 h-10 rounded-full border-2 border-border hover:border-profit transition overflow-hidden flex items-center justify-center bg-surface">
+            <div className="w-10 h-10 rounded-full border-2 border-gray-200 hover:border-profit transition overflow-hidden flex items-center justify-center bg-gray-100">
               {profilePhoto ? (
                 <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
               ) : (

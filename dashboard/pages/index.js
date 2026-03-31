@@ -179,18 +179,18 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
             <div className="hidden md:block table-scroll">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Game</th>
-                    <th className="text-right py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Market Price</th>
-                    <th className="text-right py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Fair Value</th>
-                    <th className="text-right py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Gap</th>
-                    <th className="text-left py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Trend</th>
-                    <th className="text-left py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Status</th>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left py-2 px-3 table-col-header">Game</th>
+                    <th className="text-right py-2 px-3 table-col-header">Market Price</th>
+                    <th className="text-right py-2 px-3 table-col-header">Fair Value</th>
+                    <th className="text-right py-2 px-3 table-col-header">Gap</th>
+                    <th className="text-left py-2 px-3 table-col-header">Trend</th>
+                    <th className="text-left py-2 px-3 table-col-header">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {todaysGames.map((m, i) => (
-                    <tr key={i} className="border-b border-border hover:bg-surface">
+                    <tr key={i} className="border-b border-gray-100 hover:bg-surface">
                       <td className="py-2.5 px-3">
                         <MatchupDisplay
                           homeTeam={m.home_team} awayTeam={m.away_team}
@@ -256,18 +256,18 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
           <div className="hidden md:block table-scroll">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Market</th>
-                  <th className="text-right py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">P&L</th>
-                  <th className="text-left py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Exit Type</th>
-                  <th className="text-left py-2 px-3 text-xs text-neutral font-normal uppercase tracking-wide">Date</th>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-2 px-3 table-col-header">Market</th>
+                  <th className="text-right py-2 px-3 table-col-header">P&L</th>
+                  <th className="text-left py-2 px-3 table-col-header">Exit Type</th>
+                  <th className="text-left py-2 px-3 table-col-header">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {recentTrades.map((t, i) => {
                   const pnl = parseFloat(t.pnl || 0)
                   return (
-                    <tr key={i} className="border-b border-border">
+                    <tr key={i} className="border-b border-gray-100">
                       <td className="py-2 px-3 text-sm">{t.market_slug}</td>
                       <td className={`py-2 px-3 text-right ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
                       <td className="py-2 px-3">{t.exit_type}</td>
