@@ -13,17 +13,16 @@ export default function MatchupDisplay({ homeTeam, awayTeam, homeColor, awayColo
 function Team({ name, color, record, sport, size }) {
   if (!name) return null
   const compact = size === 'sm'
-  // Very subtle team color background wash
-  const bg = color ? `${color}08` : 'transparent'
+  const bg = color ? `${color}25` : '#f3f4f6'
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 ${compact ? 'px-2 py-0.5 text-xs rounded' : 'px-2.5 py-1 text-sm rounded-md'}`}
+      className={`inline-flex items-center gap-1.5 ${compact ? 'px-2 py-1 text-xs rounded' : 'px-2.5 py-1.5 text-sm rounded-md'}`}
       style={{ backgroundColor: bg }}
     >
-      <SportIcon sport={sport} />
+      <span style={{ color: color || '#9ca3af' }}><SportIcon sport={sport} /></span>
       <span className="font-semibold text-gray-900">{name}</span>
-      {record && !compact && <span className="text-gray-400 text-xs">{record}</span>}
+      {record && !compact && <span className="text-gray-500 text-xs">{record}</span>}
     </span>
   )
 }

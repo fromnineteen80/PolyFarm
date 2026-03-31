@@ -13,7 +13,7 @@ html {
 }
 
 body {
-  background-color: #f5f0e8;
+  background-color: #faf9f7;
   color: #1a1a1a;
   font-family: 'Raleway', sans-serif;
 }
@@ -90,7 +90,7 @@ button, a, [role="button"] {
 
 .text-profit { color: #16a34a; }
 .text-loss { color: #dc2626; }
-.text-neutral { color: #9ca3af; }
+.text-neutral { color: #6b7280; }
 
 /* ─── Cards ─── */
 
@@ -118,27 +118,42 @@ button, a, [role="button"] {
 }
 
 /* ─── Table Standards ─── */
+/* ONE table design. Every table in the app uses these. */
 
-.table-header th,
-th.table-col-header {
+.data-table {
+  width: 100%;
+  font-size: 14px;
+  border-collapse: collapse;
+}
+
+.data-table thead th {
   font-size: 11px;
   font-weight: 600;
-  color: #9ca3af;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 14px;
+  border-bottom: 2px solid #e5e7eb;
   white-space: nowrap;
+  text-align: left;
 }
 
-.table-row td {
-  padding: 10px 12px;
+.data-table thead th.text-right {
+  text-align: right;
+}
+
+.data-table tbody td {
+  padding: 12px 14px;
   border-bottom: 1px solid #f3f4f6;
-  font-size: 14px;
+  vertical-align: middle;
 }
 
-.table-row:hover {
-  background-color: #faf8f4;
+.data-table tbody tr:hover {
+  background-color: #f5f4f2;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* ─── Strategy Colors ─── */

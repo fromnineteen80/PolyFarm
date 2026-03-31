@@ -157,10 +157,37 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
             No opportunities detected. Monitoring {sysConfig?.markets_matched_count || 0} markets.
           </div>
         ) : (
-          <div className="space-y-2">
-            {signals.slice(0, 10).map((m, i) => (
-              <SignalCard key={i} market={m} />
-            ))}
+          <div className="card p-0 overflow-hidden">
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Strength</th>
+                    <th>Game</th>
+                    <th>Score</th>
+                    <th className="text-right">Market Price</th>
+                    <th className="text-right">Fair Value</th>
+                    <th className="text-right">Gap</th>
+                    <th className="hidden md:table-cell">Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {signals.slice(0, 10).map((m, i) => (
+                    <tr key={i}>
+                      <td><ScoreBadge score={m.score} /></td>
+                      <td>
+                        <MatchupDisplay homeTeam={m.home_team} awayTeam={m.away_team} homeColor={m.home_color} awayColor={m.away_color} sport={m.sport} size="sm" />
+                      </td>
+                      <td>{m.is_live && m.game_score ? <span className="font-semibold">{m.game_score}</span> : <span className="text-neutral">--</span>}</td>
+                      <td className="text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
+                      <td className="text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
+                      <td className="text-right"><EdgeBadge edge={m.current_edge} size="sm" /></td>
+                      <td className="hidden md:table-cell">{m.current_price_direction ? <DirectionArrow direction={m.current_price_direction} /> : <span className="text-neutral">--</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -174,61 +201,38 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
         {todaysGames.length === 0 ? (
           <div className="card text-neutral text-sm py-6 text-center">No games loaded yet.</div>
         ) : (
-          <>
-            {/* Desktop table */}
-            <div className="hidden md:block table-scroll">
-              <table className="w-full text-sm">
+          <div className="card p-0 overflow-hidden">
+            <div className="table-scroll">
+              <table className="data-table">
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left py-2 px-3 table-col-header">Game</th>
-                    <th className="text-right py-2 px-3 table-col-header">Market Price</th>
-                    <th className="text-right py-2 px-3 table-col-header">Fair Value</th>
-                    <th className="text-right py-2 px-3 table-col-header">Gap</th>
-                    <th className="text-left py-2 px-3 table-col-header">Trend</th>
-                    <th className="text-left py-2 px-3 table-col-header">Status</th>
+                  <tr>
+                    <th>Game</th>
+                    <th>Score</th>
+                    <th className="text-right">Market Price</th>
+                    <th className="text-right">Fair Value</th>
+                    <th className="text-right">Gap</th>
+                    <th className="hidden md:table-cell">Trend</th>
+                    <th className="hidden md:table-cell">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {todaysGames.map((m, i) => (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-surface">
-                      <td className="py-2.5 px-3">
-                        <MatchupDisplay
-                          homeTeam={m.home_team} awayTeam={m.away_team}
-                          homeColor={m.home_color} awayColor={m.away_color}
-                          sport={m.sport} size="sm"
-                        />
+                    <tr key={i}>
+                      <td>
+                        <MatchupDisplay homeTeam={m.home_team} awayTeam={m.away_team} homeColor={m.home_color} awayColor={m.away_color} sport={m.sport} size="sm" />
                       </td>
-                      <td className="py-2.5 px-3 text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
-                      <td className="py-2.5 px-3 text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
-                      <td className="py-2.5 px-3 text-right">{m.current_edge ? <EdgeBadge edge={m.current_edge} size="sm" /> : <span className="text-neutral">--</span>}</td>
-                      <td className="py-2.5 px-3">{m.current_price_direction ? <DirectionArrow direction={m.current_price_direction} /> : <span className="text-neutral">--</span>}</td>
-                      <td className="py-2.5 px-3">{m.is_live ? <LiveGameState score={m.game_score} period={m.game_period} isLive /> : <span className="text-xs text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'TBD'}</span>}</td>
+                      <td>{m.is_live && m.game_score ? <span className="font-semibold">{m.game_score}</span> : <span className="text-neutral">--</span>}</td>
+                      <td className="text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
+                      <td className="text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
+                      <td className="text-right">{m.current_edge ? <EdgeBadge edge={m.current_edge} size="sm" /> : <span className="text-neutral">--</span>}</td>
+                      <td className="hidden md:table-cell">{m.current_price_direction ? <DirectionArrow direction={m.current_price_direction} /> : <span className="text-neutral">--</span>}</td>
+                      <td className="hidden md:table-cell">{m.is_live ? <LiveGameState score={m.game_score} period={m.game_period} isLive /> : <span className="text-xs text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'TBD'}</span>}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {/* Mobile cards */}
-            <div className="md:hidden space-y-2">
-              {todaysGames.map((m, i) => (
-                <div key={i} className="card py-3">
-                  <MatchupDisplay
-                    homeTeam={m.home_team} awayTeam={m.away_team}
-                    homeColor={m.home_color} awayColor={m.away_color}
-                    homeRecord={m.home_record} awayRecord={m.away_record}
-                    sport={m.sport} isLive={m.is_live}
-                    gameScore={m.game_score} gamePeriod={m.game_period}
-                    gameTime={m.game_start_time} size="sm"
-                  />
-                  <div className="flex flex-wrap gap-3 text-xs mt-2 pl-1">
-                    <span><span className="text-neutral">Market </span>{((m.yes_price || 0) * 100).toFixed(0)}c</span>
-                    <span><span className="text-neutral">Fair </span>{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</span>
-                    {m.current_edge && <span><span className="text-neutral">Gap </span><EdgeBadge edge={m.current_edge} size="sm" /></span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
+          </div>
         )}
       </div>
 
@@ -253,44 +257,32 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
       {recentTrades.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-3">Recent Trades</h2>
-          <div className="hidden md:block table-scroll">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left py-2 px-3 table-col-header">Market</th>
-                  <th className="text-right py-2 px-3 table-col-header">P&L</th>
-                  <th className="text-left py-2 px-3 table-col-header">Exit Type</th>
-                  <th className="text-left py-2 px-3 table-col-header">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTrades.map((t, i) => {
-                  const pnl = parseFloat(t.pnl || 0)
-                  return (
-                    <tr key={i} className="border-b border-gray-100">
-                      <td className="py-2 px-3 text-sm">{t.market_slug}</td>
-                      <td className={`py-2 px-3 text-right ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
-                      <td className="py-2 px-3">{t.exit_type}</td>
-                      <td className="py-2 px-3 text-neutral">{t.timestamp_exit?.split('T')[0]}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="md:hidden space-y-2">
-            {recentTrades.map((t, i) => {
-              const pnl = parseFloat(t.pnl || 0)
-              return (
-                <div key={i} className="card py-3 flex justify-between items-center">
-                  <div>
-                    <p className="text-sm">{t.market_slug}</p>
-                    <p className="text-xs text-neutral">{t.exit_type} &middot; {t.timestamp_exit?.split('T')[0]}</p>
-                  </div>
-                  <span className={`text-sm font-semibold ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</span>
-                </div>
-              )
-            })}
+          <div className="card p-0 overflow-hidden">
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Market</th>
+                    <th className="text-right">P&L</th>
+                    <th className="hidden md:table-cell">Exit Type</th>
+                    <th className="hidden md:table-cell">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentTrades.map((t, i) => {
+                    const pnl = parseFloat(t.pnl || 0)
+                    return (
+                      <tr key={i}>
+                        <td>{t.market_slug}</td>
+                        <td className={`text-right font-semibold ${pnl >= 0 ? 'text-profit' : 'text-loss'}`}>{pnl >= 0 ? '+' : ''}{formatCurrency(pnl)}</td>
+                        <td className="hidden md:table-cell">{t.exit_type}</td>
+                        <td className="hidden md:table-cell text-neutral">{t.timestamp_exit?.split('T')[0]}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -321,41 +313,3 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
   )
 }
 
-function SignalCard({ market: m }) {
-  const score = calcScore(m.current_edge, m.current_price_direction, m.current_net_buy_pressure)
-  return (
-    <div className="card py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <ScoreBadge score={score} />
-        <MatchupDisplay
-          homeTeam={m.home_team} awayTeam={m.away_team}
-          homeColor={m.home_color} awayColor={m.away_color}
-          homeRecord={m.home_record} awayRecord={m.away_record}
-          sport={m.sport} isLive={m.is_live}
-          gameScore={m.game_score} gamePeriod={m.game_period}
-          gameTime={m.game_start_time} size="sm"
-        />
-      </div>
-      <div className="flex flex-wrap gap-4 text-xs items-center">
-        <div className="text-center">
-          <p className="text-[10px] text-neutral uppercase">Market</p>
-          <p className="font-semibold">{((m.yes_price || 0) * 100).toFixed(0)}c</p>
-        </div>
-        <div className="text-center">
-          <p className="text-[10px] text-neutral uppercase">Fair Value</p>
-          <p className="font-semibold">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-[10px] text-neutral uppercase">Gap</p>
-          <EdgeBadge edge={m.current_edge} size="sm" />
-        </div>
-        {m.current_price_direction && (
-          <div className="text-center">
-            <p className="text-[10px] text-neutral uppercase">Trend</p>
-            <DirectionArrow direction={m.current_price_direction} />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
