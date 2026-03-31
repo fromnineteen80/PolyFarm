@@ -239,14 +239,21 @@ class MarketLoader:
         def full_team_name(t):
             safe = t.get("safeName", "")
             short = t.get("name", "")
-            if safe and short:
-                # Strip single trailing letter abbreviation
-                # e.g. "Los Angeles L" -> "Los Angeles"
-                # Used by Polymarket to distinguish Lakers/Clippers
-                import re
-                safe_clean = re.sub(r'\s+[A-Z]$', '', safe)
-                return f"{safe_clean} {short}"
-            return short or safe or ""
+            if not short:
+                return safe or ""
+            if not safe:
+                return short
+            # Strip single trailing letter abbreviation
+            # e.g. "Los Angeles L" -> "Los Angeles"
+            import re
+            safe_clean = re.sub(r'\s+[A-Z]$', '', safe)
+            # If short name is already in safeName, just use safeName
+            if short.lower() in safe_clean.lower():
+                return safe_clean
+            # If safeName is already in short name, just use short
+            if safe_clean.lower() in short.lower():
+                return short
+            return f"{safe_clean} {short}"
 
         for market in event.get("markets", []):
             mtype = market.get("marketType", "")
@@ -321,8 +328,20 @@ class MarketLoader:
 
     async def flush_to_supabase(self, odds_api=None, ws_markets=None):
         """Write all markets to Supabase so dashboard can read them."""
-        from data.database import upsert_market
+        from data.database import upsert_market, db_execute, _supabase
         markets = await self.registry.all_markets()
+        # Clean stale markets not in current registry
+        try:
+            current_slugs = [m.slug for m in markets]
+            if current_slugs:
+                await db_execute(
+                    lambda: _supabase.table("markets")
+                        .delete()
+                        .not_.in_("market_slug", current_slugs)
+                        .execute()
+                )
+        except Exception:
+            pass
         for m in markets:
             try:
                 data = {
