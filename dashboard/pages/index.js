@@ -110,7 +110,22 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
     .map(m => ({ ...m, score: calcScore(m.current_edge, m.current_price_direction, m.current_net_buy_pressure) }))
     .sort((a, b) => b.score - a.score)
 
-  const todaysGames = (markets || []).filter(m => !m.is_finished)
+  // Split by date
+  const now = new Date()
+  const todayStr = now.toISOString().split('T')[0]
+  const twoDaysOut = new Date(now.getTime() + 2 * 86400000).toISOString().split('T')[0]
+  const allGames = (markets || []).filter(m => !m.is_finished)
+
+  // Today's games sorted by trading priority (edge/signal strength)
+  const todaysGames = allGames
+    .filter(m => m.game_start_time && m.game_start_time.startsWith(todayStr))
+    .map(m => ({ ...m, score: calcScore(m.current_edge, m.current_price_direction, m.current_net_buy_pressure) }))
+    .sort((a, b) => b.score - a.score)
+
+  // Upcoming (next 2 days) sorted by time
+  const upcomingGames = allGames
+    .filter(m => m.game_start_time && !m.game_start_time.startsWith(todayStr) && m.game_start_time <= twoDaysOut + 'T23:59:59Z')
+    .sort((a, b) => (a.game_start_time || '').localeCompare(b.game_start_time || ''))
 
   return (
     <Layout>
@@ -235,6 +250,44 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
           </div>
         )}
       </div>
+
+      {/* UPCOMING GAMES */}
+      {upcomingGames.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">
+            Upcoming
+            <span className="text-sm font-normal text-neutral ml-2">{upcomingGames.length} games next 2 days</span>
+          </h2>
+          <div className="card p-0 overflow-hidden">
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Game</th>
+                    <th className="text-right">Market Price</th>
+                    <th className="text-right">Fair Value</th>
+                    <th className="text-right">Gap</th>
+                    <th className="hidden md:table-cell">Date</th>
+                    <th className="hidden md:table-cell">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {upcomingGames.map((m, i) => (
+                    <tr key={i}>
+                      <td><MatchupDisplay homeTeam={m.home_team} awayTeam={m.away_team} homeColor={m.home_color} awayColor={m.away_color} sport={m.sport} size="sm" /></td>
+                      <td className="text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
+                      <td className="text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
+                      <td className="text-right">{m.current_edge ? <EdgeBadge edge={m.current_edge} size="sm" /> : <span className="text-neutral">--</span>}</td>
+                      <td className="hidden md:table-cell text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) : ''}</td>
+                      <td className="hidden md:table-cell text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* OPEN POSITIONS */}
       {openTrades.length > 0 && (
