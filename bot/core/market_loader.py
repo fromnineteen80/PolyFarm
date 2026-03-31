@@ -19,22 +19,29 @@ MIN_MARKET_VOLUME = 0  # v2 doesn't return volume; allow all
 GATEWAY_URL = "https://gateway.polymarket.us"
 
 # Leagues to poll via v2 endpoint
+# Slugs come from Polymarket /v1/sports API
 TARGET_LEAGUES = [
     "nba", "nfl", "mlb", "nhl",
-    "ncaab", "ncaaf",
-    "epl", "mls",
+    "cbb", "cfb",
+    "epl", "mls", "ucl",
+    "lal", "bun", "sea",
 ]
 
-# Sport key mapping from league to our internal format
+# Sport key mapping from Polymarket league to internal format
+# (used by Odds API matching and config.py team lists)
 LEAGUE_TO_SPORT = {
     "nba": "basketball_nba",
-    "ncaab": "basketball_ncaab",
+    "cbb": "basketball_ncaab",
     "nfl": "americanfootball_nfl",
-    "ncaaf": "americanfootball_ncaaf",
+    "cfb": "americanfootball_ncaaf",
     "mlb": "baseball_mlb",
     "nhl": "icehockey_nhl",
     "epl": "soccer_epl",
     "mls": "soccer_usa_mls",
+    "ucl": "soccer_uefa_champs_league",
+    "lal": "soccer_spain_la_liga",
+    "bun": "soccer_germany_bundesliga",
+    "sea": "soccer_italy_serie_a",
 }
 
 
