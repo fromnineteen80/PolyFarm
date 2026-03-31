@@ -34,6 +34,16 @@ SPORT_KEYS_NON_SOCCER = [
     "icehockey_nhl",
 ]
 
+# Explicit soccer keys we need for our Polymarket leagues
+SOCCER_KEYS_EXPLICIT = [
+    "soccer_usa_mls",
+    "soccer_epl",
+    "soccer_uefa_champs_league",
+    "soccer_spain_la_liga",
+    "soccer_germany_bundesliga",
+    "soccer_italy_serie_a",
+]
+
 SOCCER_KEY_SUBSTRINGS = [
     "mls", "epl", "bundesliga", "la_liga",
     "serie_a", "ligue_1", "champions_league",
@@ -340,7 +350,15 @@ class OddsAPIClient:
     # ─────────────────────────────────────────
 
     def _all_sport_keys(self):
-        return SPORT_KEYS_NON_SOCCER + self._soccer_keys
+        # Combine non-soccer + explicit soccer + any discovered soccer
+        all_keys = list(SPORT_KEYS_NON_SOCCER)
+        for k in SOCCER_KEYS_EXPLICIT:
+            if k not in all_keys:
+                all_keys.append(k)
+        for k in self._soccer_keys:
+            if k not in all_keys:
+                all_keys.append(k)
+        return all_keys
 
     async def fetch_all_odds(self):
         total_updated = 0
@@ -444,6 +462,22 @@ class OddsAPIClient:
         elif isinstance(market_registry, dict):
             registry_items = market_registry
 
+        # Map Polymarket league to Odds API sport key prefixes
+        POLY_TO_ODDS_PREFIX = {
+            "nba": "basketball_nba",
+            "cbb": "basketball_ncaab",
+            "nfl": "americanfootball_nfl",
+            "cfb": "americanfootball_ncaaf",
+            "mlb": "baseball_mlb",
+            "nhl": "icehockey_nhl",
+            "mls": "soccer_usa_mls",
+            "epl": "soccer_epl",
+            "ucl": "soccer_uefa_champs_league",
+            "lal": "soccer_spain_la_liga",
+            "bun": "soccer_germany_bundesliga",
+            "sea": "soccer_italy_serie_a",
+        }
+
         for slug, market in registry_items.items():
             if slug in self._market_map:
                 continue
@@ -451,13 +485,16 @@ class OddsAPIClient:
             poly_home = getattr(market, 'home_team', '') or ''
             poly_away = getattr(market, 'away_team', '') or ''
             poly_start = getattr(market, 'game_start_time', '') or ''
+            poly_league = getattr(market, 'league', '') or ''
 
             if not poly_home or not poly_away:
                 unmatched += 1
                 continue
 
+            # Determine which Odds API sport key to match against
+            target_odds_key = POLY_TO_ODDS_PREFIX.get(poly_league)
+
             # Use canonical names from team registry
-            # if available, otherwise use as-is
             canon_home = self.get_canonical_name(poly_home)
             canon_away = self.get_canonical_name(poly_away)
             norm_home = normalize_team(canon_home)
@@ -468,6 +505,11 @@ class OddsAPIClient:
             best_reversed = False
 
             for event_id, odds in self._sharp_odds.items():
+                # Filter by sport — only compare within same sport
+                odds_sport_key = odds.get("sport_key", "")
+                if target_odds_key and odds_sport_key != target_odds_key:
+                    continue
+
                 odds_home = odds.get("home_team", "")
                 odds_away = odds.get("away_team", "")
                 odds_start = odds.get("commence_time", "")

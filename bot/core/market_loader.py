@@ -244,20 +244,21 @@ class MarketLoader:
         away = teams[1] if len(teams) > 1 else {}
 
         def full_team_name(t):
-            safe = t.get("safeName", "")
-            short = t.get("name", "")
+            safe = (t.get("safeName", "") or "").strip()
+            short = (t.get("name", "") or "").strip()
             if not short:
-                return safe or ""
+                return safe
             if not safe:
                 return short
-            # Strip single trailing letter abbreviation
-            # e.g. "Los Angeles L" -> "Los Angeles"
+            # If they're the same, just return one
+            if safe.lower() == short.lower():
+                return short
+            # Strip single trailing letter (e.g. "Los Angeles L" for Lakers)
             import re
-            safe_clean = re.sub(r'\s+[A-Z]$', '', safe)
-            # If short name is already in safeName, just use safeName
+            safe_clean = re.sub(r'\s+[A-Z]$', '', safe).strip()
+            # If one contains the other, use the longer one
             if short.lower() in safe_clean.lower():
                 return safe_clean
-            # If safeName is already in short name, just use short
             if safe_clean.lower() in short.lower():
                 return short
             return f"{safe_clean} {short}"
