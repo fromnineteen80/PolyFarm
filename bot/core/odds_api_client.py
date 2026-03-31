@@ -244,40 +244,56 @@ class OddsAPIClient:
 
     async def build_team_registry(self, poly_client):
         """
-        Build team name registry from Polymarket
-        events data. Each event has teams[] with
-        name (short like "Spurs") and safeName
-        (city like "San Antonio"). Full name is
-        safeName + " " + name = "San Antonio Spurs"
-        which matches The Odds API team names.
+        Build team name registry from Polymarket v2
+        league endpoints. Uses the same data source
+        as the market loader.
         """
         try:
-            # Load teams from active events
-            result = await poly_client.events.list({
-                "active": True,
-                "categories": "sports",
-                "limit": 100,
-            })
-            events = result.get("events", [])
-            for event in events:
-                for team in event.get("teams", []):
-                    tid = team.get("id")
-                    short_name = team.get("name", "")
-                    safe_name = team.get("safeName", "")
-                    if tid and short_name:
-                        full_name = f"{safe_name} {short_name}" if safe_name else short_name
-                        self._poly_teams[tid] = {
-                            "name": short_name,
-                            "full_name": full_name,
-                            "safeName": safe_name,
-                            "league": team.get("league", ""),
-                            "abbreviation": team.get("abbreviation", ""),
-                            "record": team.get("record", ""),
-                        }
-                        self._poly_name_to_id[normalize_team(full_name)] = tid
-                        # Also index by short name for fallback
-                        self._poly_name_to_id[normalize_team(short_name)] = tid
-            logger.info(f"Team registry: {len(self._poly_teams)} teams from {len(events)} events")
+            import httpx
+            async with httpx.AsyncClient(timeout=15) as c:
+                from core.market_loader import TARGET_LEAGUES
+                for league in TARGET_LEAGUES:
+                    try:
+                        r = await c.get(
+                            f"https://gateway.polymarket.us/v2/leagues/{league}/events",
+                            params={"limit": 100}
+                        )
+                        if r.status_code != 200:
+                            continue
+                        events = r.json().get("events", [])
+                        for event in events:
+                            for team in event.get("teams", []):
+                                tid = team.get("id")
+                                short_name = team.get("name", "")
+                                safe_name = team.get("safeName", "")
+                                if tid and short_name:
+                                    # Build full name same as market loader
+                                    if safe_name.lower() == short_name.lower():
+                                        full_name = short_name
+                                    else:
+                                        import re
+                                        safe_clean = re.sub(r'\s+[A-Z]$', '', safe_name).strip()
+                                        if short_name.lower() in safe_clean.lower():
+                                            full_name = safe_clean
+                                        elif safe_clean.lower() in short_name.lower():
+                                            full_name = short_name
+                                        elif safe_clean:
+                                            full_name = f"{safe_clean} {short_name}"
+                                        else:
+                                            full_name = short_name
+                                    self._poly_teams[tid] = {
+                                        "name": short_name,
+                                        "full_name": full_name,
+                                        "safeName": safe_name,
+                                        "league": team.get("league", ""),
+                                        "abbreviation": team.get("abbreviation", ""),
+                                        "record": team.get("record", ""),
+                                    }
+                                    self._poly_name_to_id[normalize_team(full_name)] = tid
+                                    self._poly_name_to_id[normalize_team(short_name)] = tid
+                    except Exception as e:
+                        logger.debug(f"Team registry league {league}: {e}")
+            logger.info(f"Team registry: {len(self._poly_teams)} teams from v2 league endpoints")
         except Exception as e:
             logger.error(f"Failed to build team registry: {e}")
 
