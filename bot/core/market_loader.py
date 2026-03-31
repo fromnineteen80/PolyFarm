@@ -258,7 +258,7 @@ class MarketLoader:
         for market in event.get("markets", []):
             mtype = market.get("marketType", "")
             stype = market.get("sportsMarketTypeV2", "")
-            if mtype != "moneyline" and "MONEYLINE" not in stype:
+            if mtype not in ("moneyline", "drawable_outcome") and "MONEYLINE" not in stype and "DRAWABLE" not in stype:
                 continue
             if not market.get("active"):
                 continue
@@ -311,7 +311,7 @@ class MarketLoader:
                 current_period=period if period else None,
                 time_elapsed=elapsed if elapsed else None,
                 game_start_time=mkt_start,
-                market_type="moneyline",
+                market_type=mtype or "moneyline",
                 series_slug=series_slug,
                 market_sides=market_sides,
             )
