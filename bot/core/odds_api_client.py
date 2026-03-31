@@ -465,6 +465,7 @@ class OddsAPIClient:
 
             best_event_id = None
             best_confidence = 0.0
+            best_reversed = False
 
             for event_id, odds in self._sharp_odds.items():
                 odds_home = odds.get("home_team", "")
@@ -489,29 +490,38 @@ class OddsAPIClient:
                         pass
 
                 # Exact match — standard orientation
+                # Poly home = Odds home
                 if norm_home == norm_odds_home and norm_away == norm_odds_away:
                     best_event_id = event_id
                     best_confidence = 1.0
+                    best_reversed = False
                     break
 
                 # Exact match — reversed orientation
+                # Poly home = Odds away (teams listed in opposite order)
                 if norm_home == norm_odds_away and norm_away == norm_odds_home:
                     best_event_id = event_id
                     best_confidence = 1.0
+                    best_reversed = True
                     break
 
                 # Partial match — one team matches exactly
-                if norm_home == norm_odds_home or norm_home == norm_odds_away:
+                if norm_home == norm_odds_home or norm_away == norm_odds_away:
                     if best_confidence < 0.8:
                         best_event_id = event_id
                         best_confidence = 0.8
-                elif norm_away == norm_odds_away or norm_away == norm_odds_home:
+                        best_reversed = False
+                elif norm_home == norm_odds_away or norm_away == norm_odds_home:
                     if best_confidence < 0.8:
                         best_event_id = event_id
                         best_confidence = 0.8
+                        best_reversed = True
 
             if best_confidence >= 0.8 and best_event_id:
-                self._market_map[slug] = best_event_id
+                self._market_map[slug] = {
+                    "event_id": best_event_id,
+                    "reversed": best_reversed,
+                }
                 matched += 1
                 method = "exact" if best_confidence >= 1.0 else "partial"
                 odds = self._sharp_odds[best_event_id]
@@ -549,23 +559,37 @@ class OddsAPIClient:
     # ─────────────────────────────────────────
 
     def get_fair_prob(self, polymarket_slug, team_side="home"):
-        event_id = self._market_map.get(polymarket_slug)
-        if not event_id:
+        mapping = self._market_map.get(polymarket_slug)
+        if not mapping:
             return None
+        event_id = mapping["event_id"]
+        reversed_orientation = mapping["reversed"]
         odds = self._sharp_odds.get(event_id)
         if not odds:
             return None
-        if team_side == "home":
-            return odds.get("consensus_home_prob")
-        elif team_side == "away":
-            return odds.get("consensus_away_prob")
-        return None
+        # If reversed, Poly's "home" is actually Odds API's "away"
+        if reversed_orientation:
+            if team_side == "home":
+                return odds.get("consensus_away_prob")
+            else:
+                return odds.get("consensus_home_prob")
+        else:
+            if team_side == "home":
+                return odds.get("consensus_home_prob")
+            else:
+                return odds.get("consensus_away_prob")
 
     def get_consensus_data(self, polymarket_slug):
-        event_id = self._market_map.get(polymarket_slug)
-        if not event_id:
+        mapping = self._market_map.get(polymarket_slug)
+        if not mapping:
             return None
-        return self._sharp_odds.get(event_id)
+        odds = self._sharp_odds.get(mapping["event_id"])
+        if not odds:
+            return None
+        # Add orientation info to returned data
+        result = dict(odds)
+        result["reversed"] = mapping["reversed"]
+        return result
 
     def is_matched(self, slug):
         return slug in self._market_map
@@ -598,7 +622,8 @@ class OddsAPIClient:
         composite_score = round(base_score + direction_score + pressure_score, 1)
 
         consensus = self.get_consensus_data(polymarket_slug)
-        event_id = self._market_map.get(polymarket_slug, "")
+        mapping = self._market_map.get(polymarket_slug, {})
+        event_id = mapping.get("event_id", "") if isinstance(mapping, dict) else ""
         books_used = consensus.get("bookmakers_used", []) if consensus else []
 
         return {
