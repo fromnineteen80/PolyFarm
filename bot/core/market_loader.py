@@ -168,7 +168,7 @@ class MarketLoader:
         slugs = []
         try:
             http = await self._get_http()
-            r = await http.get(f"{GATEWAY_URL}/v2/leagues/{league}/events")
+            r = await http.get(f"{GATEWAY_URL}/v2/leagues/{league}/events", params={"limit": 100})
             if r.status_code != 200:
                 logger.warning(f"v2 leagues/{league} returned {r.status_code}")
                 return slugs
