@@ -273,6 +273,508 @@ class Pipeline:
         logger.info(f"Step 3 complete: {len(mapped)} leagues mapped to Odds API keys: {mapped}")
         return True
 
+    # ─────────────────────────────────────────
+    # STEP 4: Load odds from The Odds API
+    # ─────────────────────────────────────────
+
+    async def step4_load_odds(self):
+        """For each mapped sport key, fetch consensus
+        odds and build the odds events store."""
+        self.odds_events = {}
+        odds_keys_to_poll = set(self.league_to_odds_key.values())
+
+        for key in odds_keys_to_poll:
+            await asyncio.sleep(0.5)  # rate limit
+            data = await self._get_odds(
+                f"/v4/sports/{key}/odds",
+                {"regions": "us", "markets": "h2h", "oddsFormat": "american"}
+            )
+            if not data or not isinstance(data, list):
+                continue
+
+            for event in data:
+                eid = event.get("id")
+                if not eid:
+                    continue
+                home = event.get("home_team", "")
+                away = event.get("away_team", "")
+                commence = event.get("commence_time", "")
+                bookmakers = event.get("bookmakers", [])
+
+                # Calculate consensus fair probability
+                home_prob, away_prob, draw_prob, books = self._consensus(bookmakers, home, away)
+                if home_prob is None:
+                    continue
+
+                self.odds_events[eid] = {
+                    "event_id": eid,
+                    "sport_key": key,
+                    "home_team": home,
+                    "away_team": away,
+                    "commence_time": commence,
+                    "consensus_home_prob": home_prob,
+                    "consensus_away_prob": away_prob,
+                    "consensus_draw_prob": draw_prob,
+                    "bookmakers_used": books,
+                    "bookmaker_count": len(books),
+                }
+
+        logger.info(f"Step 4 complete: {len(self.odds_events)} events with odds from {len(odds_keys_to_poll)} sport keys")
+        return True
+
+    def _american_to_implied(self, price: int) -> float:
+        if price == 0:
+            return 0.0
+        if price > 0:
+            return 100.0 / (price + 100.0)
+        return abs(price) / (abs(price) + 100.0)
+
+    def _consensus(self, bookmakers, home_team, away_team):
+        """Calculate vig-removed consensus from bookmakers."""
+        PREFERRED = {"draftkings", "fanduel", "betmgm", "caesars", "betrivers", "betonlineag"}
+        home_probs, away_probs, draw_probs = [], [], []
+        books_used = []
+        norm_home = normalize_team(home_team)
+        norm_away = normalize_team(away_team)
+
+        for bk in bookmakers:
+            h2h = next((m for m in bk.get("markets", []) if m.get("key") == "h2h"), None)
+            if not h2h:
+                continue
+            outcomes = h2h.get("outcomes", [])
+            home_price, away_price, draw_price = None, None, None
+            for o in outcomes:
+                name = o.get("name", "")
+                price = o.get("price", 0)
+                if name == "Draw":
+                    draw_price = price
+                elif normalize_team(name) == norm_home:
+                    home_price = price
+                elif normalize_team(name) == norm_away:
+                    away_price = price
+                else:
+                    if home_price is None and name != "Draw":
+                        home_price = price
+                    elif away_price is None and name != "Draw":
+                        away_price = price
+            if home_price is None or away_price is None:
+                continue
+            home_imp = self._american_to_implied(home_price)
+            away_imp = self._american_to_implied(away_price)
+            if draw_price:
+                draw_imp = self._american_to_implied(draw_price)
+                total = home_imp + away_imp + draw_imp
+            else:
+                draw_imp = 0
+                total = home_imp + away_imp
+            if total <= 0:
+                continue
+            home_probs.append(round(home_imp / total, 4))
+            away_probs.append(round(away_imp / total, 4))
+            if draw_price:
+                draw_probs.append(round(draw_imp / total, 4))
+            books_used.append(bk.get("key", ""))
+
+        if len(books_used) < 2:
+            return None, None, None, []
+
+        # Prefer sharp books if 2+ available
+        sharp = [i for i, k in enumerate(books_used) if k in PREFERRED]
+        if len(sharp) >= 2:
+            home_probs = [home_probs[i] for i in sharp]
+            away_probs = [away_probs[i] for i in sharp]
+            draw_probs = [draw_probs[i] for i in sharp] if draw_probs else []
+            books_used = [books_used[i] for i in sharp]
+
+        avg_home = round(sum(home_probs) / len(home_probs), 4)
+        avg_away = round(sum(away_probs) / len(away_probs), 4)
+        avg_draw = round(sum(draw_probs) / len(draw_probs), 4) if draw_probs else None
+
+        return avg_home, avg_away, avg_draw, books_used
+
+    # ─────────────────────────────────────────
+    # STEP 5: Match teams across APIs
+    # ─────────────────────────────────────────
+
+    async def step5_match_teams(self):
+        """Build a bridge between Polymarket team names
+        and Odds API team names. Both sources use
+        standard team names from the same leagues,
+        so exact match after normalization works."""
+        self.team_bridge = {}
+
+        # Collect all Odds API team names by sport key
+        odds_teams = {}  # {sport_key: set of normalized names}
+        for event in self.odds_events.values():
+            key = event["sport_key"]
+            if key not in odds_teams:
+                odds_teams[key] = set()
+            odds_teams[key].add(normalize_team(event["home_team"]))
+            odds_teams[key].add(normalize_team(event["away_team"]))
+
+        # For each Polymarket team, find the matching Odds API name
+        matched = 0
+        for tid, team in self.teams.items():
+            poly_league = team["league"]
+            odds_key = self.league_to_odds_key.get(poly_league)
+            if not odds_key:
+                continue
+
+            odds_names = odds_teams.get(odds_key, set())
+            norm_full = normalize_team(team["full_name"])
+            norm_short = normalize_team(team["name"])
+
+            # Try exact match on full name
+            if norm_full in odds_names:
+                self.team_bridge[norm_full] = norm_full
+                matched += 1
+                continue
+
+            # Try exact match on short name
+            if norm_short in odds_names:
+                self.team_bridge[norm_full] = norm_short
+                self.team_bridge[norm_short] = norm_short
+                matched += 1
+                continue
+
+            # Try partial match — if all words of one appear in the other
+            for odds_name in odds_names:
+                poly_words = set(norm_full.split())
+                odds_words = set(odds_name.split())
+                if poly_words and odds_words:
+                    if poly_words.issubset(odds_words) or odds_words.issubset(poly_words):
+                        self.team_bridge[norm_full] = odds_name
+                        self.team_bridge[norm_short] = odds_name
+                        matched += 1
+                        break
+
+        logger.info(f"Step 5 complete: {matched} teams matched across APIs out of {len(self.teams)}")
+        return True
+
+    # ─────────────────────────────────────────
+    # STEP 6: Load games from Polymarket
+    # ─────────────────────────────────────────
+
+    async def step6_load_games(self):
+        """Load all moneyline/drawable_outcome games
+        from each operational league. Uses team registry
+        for correct names."""
+        self.games = {}  # {slug: game_info}
+
+        for league in self.leagues:
+            slug = league["slug"]
+            data = await self._get_poly(
+                f"/v2/leagues/{slug}/events",
+                {"limit": 100}
+            )
+            if not data:
+                continue
+
+            for event in data.get("events", []):
+                if event.get("ended"):
+                    continue
+
+                teams = event.get("teams", [])
+                home_t = teams[0] if teams else {}
+                away_t = teams[1] if len(teams) > 1 else {}
+
+                for market in event.get("markets", []):
+                    mtype = market.get("marketType", "")
+                    stype = market.get("sportsMarketTypeV2", "")
+                    if mtype not in ("moneyline", "drawable_outcome") and "MONEYLINE" not in stype and "DRAWABLE" not in stype:
+                        continue
+                    if not market.get("active"):
+                        continue
+
+                    mslug = market.get("slug")
+                    if not mslug:
+                        continue
+
+                    # Get price from marketSides
+                    sides = market.get("marketSides", [])
+                    yes_price = 0.5
+                    for side in sides:
+                        if side.get("long"):
+                            try:
+                                yes_price = float(side.get("price", "0.5"))
+                            except (ValueError, TypeError):
+                                pass
+                            break
+
+                    home_name = build_full_name(home_t)
+                    away_name = build_full_name(away_t)
+
+                    self.games[mslug] = {
+                        "slug": mslug,
+                        "event_id": str(event.get("id", "")),
+                        "event_slug": event.get("slug", ""),
+                        "league": slug,
+                        "sport": league["sport"],
+                        "home_team": home_name,
+                        "away_team": away_name,
+                        "home_team_id": home_t.get("id", 0),
+                        "away_team_id": away_t.get("id", 0),
+                        "home_color": home_t.get("colorPrimary", ""),
+                        "away_color": away_t.get("colorPrimary", ""),
+                        "home_record": home_t.get("record", ""),
+                        "away_record": away_t.get("record", ""),
+                        "yes_price": yes_price,
+                        "is_live": event.get("live", False),
+                        "is_finished": event.get("ended", False),
+                        "game_score": event.get("score", "") or "",
+                        "game_period": event.get("period", "") or "",
+                        "game_elapsed": event.get("elapsed", "") or "",
+                        "game_start_time": market.get("gameStartTime", "") or event.get("startTime", ""),
+                        "series_slug": event.get("seriesSlug", ""),
+                        "market_type": mtype,
+                        "market_sides": sides,
+                    }
+
+        logger.info(f"Step 6 complete: {len(self.games)} games from {len(self.leagues)} leagues")
+        return True
+
+    # ─────────────────────────────────────────
+    # STEP 7: Match games
+    # ─────────────────────────────────────────
+
+    async def step7_match_games(self):
+        """Match Polymarket games to Odds API events
+        using the team bridge from Step 5."""
+        self.matched_games = {}
+        matched = 0
+        unmatched = 0
+
+        for slug, game in self.games.items():
+            poly_league = game["league"]
+            odds_key = self.league_to_odds_key.get(poly_league)
+            if not odds_key:
+                unmatched += 1
+                continue
+
+            norm_home = normalize_team(game["home_team"])
+            norm_away = normalize_team(game["away_team"])
+
+            # Resolve through team bridge
+            bridge_home = self.team_bridge.get(norm_home, norm_home)
+            bridge_away = self.team_bridge.get(norm_away, norm_away)
+
+            poly_start = game.get("game_start_time", "")
+
+            best_event_id = None
+            best_reversed = False
+
+            for eid, odds_event in self.odds_events.items():
+                if odds_event["sport_key"] != odds_key:
+                    continue
+
+                odds_home = normalize_team(odds_event["home_team"])
+                odds_away = normalize_team(odds_event["away_team"])
+                odds_start = odds_event.get("commence_time", "")
+
+                # Time proximity check
+                if poly_start and odds_start:
+                    try:
+                        pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00"))
+                        ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00"))
+                        if abs((pt - ot).total_seconds()) > 7200:
+                            continue
+                    except Exception:
+                        pass
+
+                # Exact match — standard orientation
+                if bridge_home == odds_home and bridge_away == odds_away:
+                    best_event_id = eid
+                    best_reversed = False
+                    break
+
+                # Exact match — reversed
+                if bridge_home == odds_away and bridge_away == odds_home:
+                    best_event_id = eid
+                    best_reversed = True
+                    break
+
+                # Partial — one team matches
+                if bridge_home == odds_home or bridge_home == odds_away:
+                    best_event_id = eid
+                    best_reversed = bridge_home == odds_away
+                elif bridge_away == odds_home or bridge_away == odds_away:
+                    best_event_id = eid
+                    best_reversed = bridge_away == odds_home
+
+            if best_event_id:
+                self.matched_games[slug] = {
+                    "event_id": best_event_id,
+                    "reversed": best_reversed,
+                }
+                matched += 1
+            else:
+                unmatched += 1
+
+        logger.info(f"Step 7 complete: {matched} matched, {unmatched} unmatched")
+        return True
+
+    # ─────────────────────────────────────────
+    # STEP 8: Calculate edge
+    # ─────────────────────────────────────────
+
+    def get_edge(self, slug: str) -> Optional[dict]:
+        """Get the edge for a matched game."""
+        match = self.matched_games.get(slug)
+        if not match:
+            return None
+        odds = self.odds_events.get(match["event_id"])
+        if not odds:
+            return None
+        game = self.games.get(slug)
+        if not game:
+            return None
+
+        # Get the correct probability based on orientation
+        if match["reversed"]:
+            sharp_prob = odds["consensus_away_prob"]
+        else:
+            sharp_prob = odds["consensus_home_prob"]
+
+        edge = round(sharp_prob - game["yes_price"], 4)
+
+        return {
+            "sharp_prob": sharp_prob,
+            "poly_price": game["yes_price"],
+            "edge": edge,
+            "books_used": odds["bookmakers_used"],
+            "reversed": match["reversed"],
+            "odds_event_id": match["event_id"],
+        }
+
+    # ─────────────────────────────────────────
+    # STEP 9: Write to Supabase
+    # ─────────────────────────────────────────
+
+    async def step9_write_to_supabase(self):
+        """Write all game data to Supabase markets table."""
+        from data.database import upsert_market, upsert_sharp_odds
+
+        # Write sharp odds
+        for eid, odds in self.odds_events.items():
+            try:
+                await upsert_sharp_odds({
+                    "odds_api_event_id": eid,
+                    "sport_key": odds["sport_key"],
+                    "home_team": odds["home_team"],
+                    "away_team": odds["away_team"],
+                    "commence_time": odds.get("commence_time"),
+                    "consensus_home_prob": odds["consensus_home_prob"],
+                    "consensus_away_prob": odds["consensus_away_prob"],
+                    "consensus_draw_prob": odds.get("consensus_draw_prob"),
+                    "bookmakers_used": odds["bookmakers_used"],
+                    "bookmaker_count": odds["bookmaker_count"],
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                })
+            except Exception as e:
+                logger.debug(f"Sharp odds write error: {e}")
+
+        # Write markets (games + edge data)
+        # First clean stale markets
+        current_slugs = list(self.games.keys())
+        try:
+            from data.database import db_execute, _supabase
+            if current_slugs:
+                await db_execute(
+                    lambda: _supabase.table("markets")
+                        .delete()
+                        .not_.in_("market_slug", current_slugs)
+                        .execute()
+                )
+        except Exception:
+            pass
+
+        for slug, game in self.games.items():
+            try:
+                data = {
+                    "market_slug": slug,
+                    "event_id": game["event_id"],
+                    "event_slug": game["event_slug"],
+                    "sport": game["sport"],
+                    "league": game["league"],
+                    "home_team": game["home_team"],
+                    "away_team": game["away_team"],
+                    "home_team_id": game["home_team_id"],
+                    "away_team_id": game["away_team_id"],
+                    "home_color": game["home_color"],
+                    "away_color": game["away_color"],
+                    "home_record": game["home_record"],
+                    "away_record": game["away_record"],
+                    "yes_price": game["yes_price"],
+                    "is_live": game["is_live"],
+                    "is_finished": game["is_finished"],
+                    "game_status": "live" if game["is_live"] else "finished" if game["is_finished"] else "upcoming",
+                    "game_score": game["game_score"] or None,
+                    "game_period": game["game_period"] or None,
+                    "game_elapsed": game["game_elapsed"] or None,
+                    "game_start_time": game["game_start_time"] or None,
+                    "market_type": game["market_type"],
+                    "series_slug": game["series_slug"],
+                }
+
+                # Add edge data if matched
+                edge_data = self.get_edge(slug)
+                if edge_data:
+                    data["current_sharp_prob"] = edge_data["sharp_prob"]
+                    data["current_edge"] = edge_data["edge"]
+                    data["odds_api_event_id"] = edge_data["odds_event_id"]
+                    data["match_confidence"] = 1.0
+
+                await upsert_market(data)
+            except Exception as e:
+                logger.error(f"Market write error {slug}: {e}")
+
+        logger.info(f"Step 9 complete: wrote {len(self.games)} markets to Supabase")
+        return True
+
+    # ─────────────────────────────────────────
+    # RUN FULL PIPELINE
+    # ─────────────────────────────────────────
+
+    async def run_startup(self):
+        """Run the full pipeline at startup."""
+        logger.info("Pipeline starting...")
+
+        if not await self.step1_discover_leagues():
+            return False
+        if not await self.step2_load_teams():
+            return False
+        if not await self.step3_discover_odds_keys():
+            return False
+        await asyncio.sleep(1)
+        if not await self.step4_load_odds():
+            return False
+        if not await self.step5_match_teams():
+            return False
+        if not await self.step6_load_games():
+            return False
+        if not await self.step7_match_games():
+            return False
+        await self.step9_write_to_supabase()
+
+        logger.info("Pipeline startup complete")
+        return True
+
+    async def run_refresh(self):
+        """Refresh pipeline — reload games and odds."""
+        await self.step4_load_odds()
+        await self.step6_load_games()
+        await self.step7_match_games()
+        await self.step9_write_to_supabase()
+
+    async def refresh_loop(self):
+        """Run refresh every 3 minutes."""
+        while True:
+            await asyncio.sleep(180)
+            try:
+                await self.run_refresh()
+            except Exception as e:
+                logger.error(f"Pipeline refresh error: {e}")
+
     async def close(self):
         if self._http and not self._http.is_closed:
             await self._http.aclose()
