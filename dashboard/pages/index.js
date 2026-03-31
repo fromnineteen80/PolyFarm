@@ -8,6 +8,7 @@ import SportIcon from '../components/SportIcon'
 import EdgeBadge from '../components/EdgeBadge'
 import DirectionArrow from '../components/DirectionArrow'
 import ScoreBadge from '../components/ScoreBadge'
+import MatchupDisplay from '../components/MatchupDisplay'
 import LiveGameState from '../components/LiveGameState'
 import { formatCurrency } from '../lib/calculations'
 import supabase from '../lib/supabase'
@@ -191,11 +192,11 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
                   {todaysGames.map((m, i) => (
                     <tr key={i} className="border-b border-border hover:bg-surface">
                       <td className="py-2.5 px-3">
-                        <div className="flex items-center gap-2">
-                          {m.home_color && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: m.home_color}} />}
-                          <span className="text-sm">{m.home_team} vs {m.away_team}</span>
-                          <SportIcon sport={m.sport} />
-                        </div>
+                        <MatchupDisplay
+                          homeTeam={m.home_team} awayTeam={m.away_team}
+                          homeColor={m.home_color} awayColor={m.away_color}
+                          sport={m.sport} size="sm"
+                        />
                       </td>
                       <td className="py-2.5 px-3 text-right">{((m.yes_price || 0) * 100).toFixed(0)}c</td>
                       <td className="py-2.5 px-3 text-right">{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</td>
@@ -211,16 +212,18 @@ export default function Today({ snapshot, openTrades: initialOpen, recentTrades,
             <div className="md:hidden space-y-2">
               {todaysGames.map((m, i) => (
                 <div key={i} className="card py-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    {m.home_color && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: m.home_color}} />}
-                    <span className="text-sm font-semibold">{m.home_team} vs {m.away_team}</span>
-                    <SportIcon sport={m.sport} />
-                  </div>
-                  <div className="flex flex-wrap gap-3 text-xs mt-2">
+                  <MatchupDisplay
+                    homeTeam={m.home_team} awayTeam={m.away_team}
+                    homeColor={m.home_color} awayColor={m.away_color}
+                    homeRecord={m.home_record} awayRecord={m.away_record}
+                    sport={m.sport} isLive={m.is_live}
+                    gameScore={m.game_score} gamePeriod={m.game_period}
+                    gameTime={m.game_start_time} size="sm"
+                  />
+                  <div className="flex flex-wrap gap-3 text-xs mt-2 pl-1">
                     <span><span className="text-neutral">Market </span>{((m.yes_price || 0) * 100).toFixed(0)}c</span>
                     <span><span className="text-neutral">Fair </span>{m.current_sharp_prob ? (m.current_sharp_prob * 100).toFixed(0) + 'c' : '--'}</span>
                     {m.current_edge && <span><span className="text-neutral">Gap </span><EdgeBadge edge={m.current_edge} size="sm" /></span>}
-                    {m.is_live ? <LiveGameState score={m.game_score} period={m.game_period} isLive /> : <span className="text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'TBD'}</span>}
                   </div>
                 </div>
               ))}
@@ -324,16 +327,14 @@ function SignalCard({ market: m }) {
     <div className="card py-3 flex flex-col sm:flex-row sm:items-center gap-3">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <ScoreBadge score={score} />
-        <div>
-          <div className="flex items-center gap-2">
-            {m.home_color && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: m.home_color}} />}
-            <span className="text-sm font-semibold">{m.home_team} vs {m.away_team}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <SportIcon sport={m.sport} showLabel />
-            {m.is_live ? <LiveGameState score={m.game_score} period={m.game_period} isLive /> : <span className="text-xs text-neutral">{m.game_start_time ? new Date(m.game_start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}</span>}
-          </div>
-        </div>
+        <MatchupDisplay
+          homeTeam={m.home_team} awayTeam={m.away_team}
+          homeColor={m.home_color} awayColor={m.away_color}
+          homeRecord={m.home_record} awayRecord={m.away_record}
+          sport={m.sport} isLive={m.is_live}
+          gameScore={m.game_score} gamePeriod={m.game_period}
+          gameTime={m.game_start_time} size="sm"
+        />
       </div>
       <div className="flex flex-wrap gap-4 text-xs items-center">
         <div className="text-center">
