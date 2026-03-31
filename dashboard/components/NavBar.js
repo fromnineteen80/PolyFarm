@@ -7,7 +7,6 @@ import { formatCurrency, calcInvestorValue } from '../lib/calculations'
 import Icon from './Icon'
 
 const NAV_LINKS = [
-  { href: '/', label: 'Today' },
   { href: '/performance', label: 'Performance' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/research', label: 'Research' },
@@ -79,23 +78,23 @@ export default function NavBar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-4 text-sm">
+          <div className="hidden md:flex items-center gap-3">
             {loading ? (
               <div className="flex gap-3">
-                <span className="skeleton h-4 w-16" />
-                <span className="skeleton h-4 w-16" />
+                <span className="skeleton h-6 w-14" />
+                <span className="skeleton h-6 w-14" />
               </div>
             ) : investorData ? (
               <>
-                <div>
-                  <span className="text-xs text-neutral mr-1">Value</span>
-                  <span className="font-semibold">{formatCurrency(investorData.todayValue)}</span>
+                <div className="text-right leading-tight">
+                  <p className="text-[10px] text-neutral uppercase tracking-wide">Value</p>
+                  <p className="text-xs font-semibold">{formatCurrency(investorData.todayValue)}</p>
                 </div>
-                <div>
-                  <span className="text-xs text-neutral mr-1">Today</span>
-                  <span className={`font-bold ${investorData.dailyPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
+                <div className="text-right leading-tight">
+                  <p className="text-[10px] text-neutral uppercase tracking-wide">Today</p>
+                  <p className={`text-xs font-bold ${investorData.dailyPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                     {investorData.dailyPnl >= 0 ? '+' : ''}{formatCurrency(investorData.dailyPnl)}
-                  </span>
+                  </p>
                 </div>
               </>
             ) : null}

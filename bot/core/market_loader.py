@@ -240,7 +240,12 @@ class MarketLoader:
             safe = t.get("safeName", "")
             short = t.get("name", "")
             if safe and short:
-                return f"{safe} {short}"
+                # Strip single trailing letter abbreviation
+                # e.g. "Los Angeles L" -> "Los Angeles"
+                # Used by Polymarket to distinguish Lakers/Clippers
+                import re
+                safe_clean = re.sub(r'\s+[A-Z]$', '', safe)
+                return f"{safe_clean} {short}"
             return short or safe or ""
 
         for market in event.get("markets", []):
