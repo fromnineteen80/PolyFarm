@@ -133,14 +133,27 @@ ucl → soccer_uefa_champs_league → soccer_uefa_champs_league
 2. `step2_load_teams()` — load team data from Polymarket per league
 3. `step3_discover_odds_keys()` — map leagues to Odds API sport keys
 4. `step4_load_odds()` — fetch odds from The Odds API for each sport key
-5. `step5_match_teams()` — **CURRENTLY USES FUZZY MATCHING. MUST BE REWRITTEN to use team_registry lookups by polymarket_id first, then name fallback within league scope**
-6. `step6_load_games()` — load game events from Polymarket
+5. `step5_match_teams()` — COMPLETE. Uses team_registry lookups by polymarket_id. No fuzzy matching. No fallback. Registry is the single source of truth.
+6. `step6_load_games()` — load game events from Polymarket. Stamps each game with `game_start_time_et` (Eastern) and `game_bucket`.
 7. `step7_match_games()` — match Polymarket games to Odds API events
 8. `step8_calculate_edge()` — compute edge = sharp fair prob - polymarket price
-9. `step9_write_to_supabase()` — write matched data to Supabase for dashboard
+9. `step9_write_to_supabase()` — write matched data to Supabase for dashboard. Includes ET times and game buckets.
+
+**Time handling:**
+- Both Polymarket v2 and Odds API return all times in UTC (Z suffix)
+- Pipeline converts all times to Eastern (`America/New_York`, handles EST/EDT automatically)
+- Every game gets `game_start_time` (raw UTC), `game_start_time_et` (Eastern), and `game_bucket`
+- Game buckets (based on Eastern time):
+  - `live` — game in progress (`event.live == true`)
+  - `today` — game starts between 12:01 AM and 11:59 PM ET today
+  - `upcoming` — game starts after today
+  - `historical` — game ended (`event.ended == true`)
+- Trade timestamps: `entered_at_utc`, `entered_at_et`, `exited_at_utc`, `exited_at_et`
+- Trade buckets: `live` (open position), `historical` (closed)
+- Supabase columns needed: `game_start_time_et` (text), `game_bucket` (text)
 
 **Other pipeline details:**
-- Has `TEAM_ALIASES` dict (old approach, should be replaced by registry)
+- `TEAM_ALIASES` dict removed (replaced by team_registry)
 - Has `normalize_team()` function used by registry index building
 - Has `build_full_name()` for Polymarket name dedup
 - `TARGET_SPORTS = {"Basketball", "Football", "Ice Hockey", "Baseball", "Soccer"}`
