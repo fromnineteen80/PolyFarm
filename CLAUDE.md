@@ -4,6 +4,62 @@
 
 ---
 
+## ARCHITECTURE
+
+```
+STARTUP (once)
+  Step 1: Discover Leagues ── Polymarket v2/sports ──── 11 leagues
+  Step 2: Load Teams ──────── Polymarket v2/events ──── 214 teams
+  Step 3: Map Odds Keys ───── Odds API /v4/sports ───── 10 mapped
+  Step 5: Match Teams ─────── Team Registry (929) ───── 204 matched, 0 unmatched
+
+REFRESH LOOP (every 60s)
+  Step 4: Load Odds ───── Odds API /v4/sports/{key}/odds (bookmaker consensus)
+  Step 6: Load Games ──── Polymarket v2 (ET times, buckets, outcome_prices)
+  Step 7: Match Games ─── Team bridge (matched / waiting for odds / broken)
+  Step 8: Load Scores ─── Odds API /v4/sports/{key}/scores (live + final)
+  Step 9: Write Supabase ─ markets table for dashboard
+  Subscribe Slugs ──────── Push matched slugs to Markets WebSocket
+
+REAL-TIME LAYER
+  Markets WebSocket ───── wss://api.polymarket.us/v1/ws/markets
+    streams: best bid/ask, current price, bid/ask depth, trade flow
+    feeds: price_queue → edge_detector, 30-min price history buffer
+
+  Private WebSocket ───── wss://api.polymarket.us/v1/ws/private
+    streams: order fills, position changes, balance updates
+    feeds: position_monitor, wallet
+
+EDGE DETECTION (per price tick from WebSocket)
+  1. Price >= 55c favorites floor
+  2. Game matched in pipeline (has sharp odds)
+  3. No existing position on this game
+  4. Band classification: A (8%+ at 70c+), B (5-8% at 60-70c), C (3-5% at 55-60c)
+  5. Composite edge signal: sharp_prob - poly_price + direction + pressure
+  6. Bid/ask depth >= 3 (liquidity check)
+  7. Odds freshness < 5 minutes
+  8. Sport concentration < 40%
+  9. Fee-adjusted net edge > threshold
+  → EdgeSignal → order_manager.enter_position()
+
+TRADE LIFECYCLE
+  Entry: order_manager places order (paper=simulated, live=SDK)
+    → Supabase: timestamp_entry_et, trade_bucket="live"
+  Monitor: position_monitor checks every 30s
+    → profit lock, trailing stop, stop loss, timeout, pre-resolution
+  Exit: IOC sell order or paper simulation
+    → Supabase: timestamp_exit_et, trade_bucket="historical", PnL
+  Settlement: outcome_prices=["1","0"], ep3_status="EXPIRED"
+
+DATA STORES
+  Supabase markets: game data + edge + scores + ET times + buckets
+  Supabase trades: entry/exit + ET timestamps + PnL + band + edge
+  Team Registry: 929 teams, 12 leagues, polymarket_id lookup only
+  Dashboard (Vercel): reads Supabase, no direct bot connection
+```
+
+---
+
 ## WHAT IS ORACLEFARMING
 
 An automated sports prediction market trading bot that:
