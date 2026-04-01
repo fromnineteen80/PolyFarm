@@ -31,12 +31,16 @@ EXIT_EMOJI = {
 
 class AlertManager:
 
+    BATCH_INTERVAL = 900  # 15 minutes
+
     def __init__(self):
         self._token = None
         self._chat_id = None
         self._enabled = False
         self._queue: asyncio.Queue = asyncio.Queue()
         self._session: aiohttp.ClientSession = None
+        self._trade_batch: list = []  # batched trade alerts
+        self._urgent_queue: asyncio.Queue = asyncio.Queue()  # sent immediately
 
     async def initialize(self):
         self._token = os.environ.get(
@@ -54,16 +58,67 @@ class AlertManager:
         self._session = aiohttp.ClientSession()
         self._enabled = True
         asyncio.create_task(self._sender_loop())
+        asyncio.create_task(self._batch_loop())
         logger.info("Telegram alerts initialized")
 
     async def _sender_loop(self):
+        """Send urgent messages immediately."""
         while True:
             try:
-                msg = await self._queue.get()
+                msg = await self._urgent_queue.get()
                 await self._send(msg)
-                await asyncio.sleep(1)  # max 1 message per second
+                await asyncio.sleep(2)
             except Exception as e:
                 logger.debug(f"Alert sender error: {e}")
+
+    async def _batch_loop(self):
+        """Send batched trade updates every 15 minutes."""
+        while True:
+            await asyncio.sleep(self.BATCH_INTERVAL)
+            if not self._trade_batch:
+                continue
+            batch = self._trade_batch.copy()
+            self._trade_batch.clear()
+
+            entries = [b for b in batch if b["type"] == "entry"]
+            exits = [b for b in batch if b["type"] == "exit"]
+
+            total_pnl = sum(b.get("pnl", 0) for b in exits)
+            wins = sum(1 for b in exits if b.get("pnl", 0) > 0)
+            losses = len(exits) - wins
+
+            lines = [f"-- 15-Minute Update --", ""]
+            if entries:
+                lines.append(f"Entered {len(entries)} trades")
+            if exits:
+                sign = "+" if total_pnl >= 0 else ""
+                lines.append(
+                    f"Closed {len(exits)} trades: "
+                    f"{wins}W / {losses}L | "
+                    f"P&L: {sign}${total_pnl:.2f}"
+                )
+            lines.append("")
+            for b in exits[-5:]:  # show last 5 exits
+                sign = "+" if b.get("pnl", 0) >= 0 else ""
+                lines.append(
+                    f"  {b.get('teams', '?')}: "
+                    f"{sign}${b.get('pnl', 0):.2f} "
+                    f"({b.get('exit_type', '?')})"
+                )
+            if len(exits) > 5:
+                lines.append(f"  ... and {len(exits) - 5} more")
+
+            try:
+                from data.database import get_bot_config
+                wallet = await get_bot_config("live_portfolio_value")
+            except Exception:
+                wallet = None
+
+            if wallet:
+                lines.append(f"\nWallet: ${float(wallet):.2f}")
+
+            msg = "\n".join(lines)
+            await self._send(msg)
 
     async def _send(self, text: str):
         if not self._enabled:
@@ -108,8 +163,9 @@ class AlertManager:
                     )
 
     def _enqueue(self, text: str):
+        """Send urgent messages immediately."""
         try:
-            self._queue.put_nowait(text)
+            self._urgent_queue.put_nowait(text)
         except asyncio.QueueFull:
             logger.debug("Alert queue full")
 
@@ -126,70 +182,28 @@ class AlertManager:
 
     async def send_entry(self, signal, fill_price,
                           strategy, paper):
-        mode = "PAPER" if paper else "LIVE"
-        band = getattr(signal, "band", "?")
-        label = f"BAND {band}"
-        if strategy == "exception":
-            label = "EX"
-        elif strategy == "fade":
-            label = "FADE"
-
-        profit_mode = "NORMAL"
-        loss_mode = "NORMAL"
-        wallet_val = 0.0
-        floor_val = 0.0
-        try:
-            from core.wallet import WalletManager
-            # signal may carry these via context
-        except Exception:
-            pass
-
-        msg = (
-            f"🟢 [{label}] {mode} ENTRY\n"
-            f"Sport: {signal.sport} | "
-            f"Type: {signal.market_type}\n"
-            f"{signal.teams}\n"
-            f"Entry: {fill_price:.4f} | "
-            f"Sharp: {signal.sharp_prob:.4f} | "
-            f"Edge: {signal.raw_edge:.4f}\n"
-            f"Net edge: {signal.net_edge_pct:.2%}\n"
-            f"Size: ${signal.position_usd:.2f} | "
-            f"Shares: {signal.shares}\n"
-            f"Exit target: {signal.exit_target:.4f} | "
-            f"Confidence: {signal.confidence:.0%}"
-        )
-        self._enqueue(msg)
+        self._trade_batch.append({
+            "type": "entry",
+            "teams": signal.teams,
+            "sport": signal.sport,
+            "band": getattr(signal, "band", "?"),
+            "price": fill_price,
+            "edge": signal.raw_edge,
+            "strategy": strategy,
+        })
 
     async def send_exit(self, position, exit_price,
                          exit_type, net_pnl,
                          duration_seconds,
                          wallet_value):
-        emoji = EXIT_EMOJI.get(exit_type, "📤")
-        # Match partial keys
-        if emoji == "📤":
-            for k, v in EXIT_EMOJI.items():
-                if k in exit_type:
-                    emoji = v
-                    break
-        mode = "PAPER" if position.paper_mode else "LIVE"
-        pnl_pct = (
-            net_pnl / (
-                position.entry_price * position.shares
-            ) * 100 if position.shares > 0 else 0
-        )
-        duration = self._fmt_duration(duration_seconds)
-        sign = "+" if net_pnl >= 0 else ""
-        msg = (
-            f"{emoji} {exit_type.upper()} {mode}\n"
-            f"{position.teams}\n"
-            f"Entry: {position.entry_price:.4f} → "
-            f"Exit: {exit_price:.4f}\n"
-            f"P&L: {sign}${net_pnl:.4f} "
-            f"({sign}{pnl_pct:.1f}%) | "
-            f"Hold: {duration}\n"
-            f"Wallet: ${wallet_value:.2f}"
-        )
-        self._enqueue(msg)
+        self._trade_batch.append({
+            "type": "exit",
+            "teams": position.teams,
+            "exit_type": exit_type,
+            "pnl": net_pnl,
+            "duration": duration_seconds,
+            "wallet": wallet_value,
+        })
 
     async def send_stop_loss(self, position,
                               current_gain, strategy):
