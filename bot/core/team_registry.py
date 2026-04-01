@@ -2409,6 +2409,576 @@ TEAM_REGISTRY = [
     # =========================================================
     # MLS
     # =========================================================
+    {
+        "canonical": "Atlanta United FC",
+        "mascot": "Atlanta United FC",
+        "city": "Atlanta",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#80000A",
+
+        # Polymarket
+        "polymarket_id": 2283,
+        "polymarket_abbreviation": "atl",
+        "polymarket_name": "Atlanta United FC",
+        "polymarket_safe_name": "Atlanta United FC",
+        "polymarket_names": ["Atlanta United FC", "ATL"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Atlanta United FC",
+    },
+    {
+        "canonical": "Austin FC",
+        "mascot": "Austin FC",
+        "city": "Austin",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#00B140",
+
+        # Polymarket
+        "polymarket_id": 2289,
+        "polymarket_abbreviation": "aus",
+        "polymarket_name": "Austin FC",
+        "polymarket_safe_name": "Austin FC",
+        "polymarket_names": ["Austin FC", "AUS"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Austin FC",
+    },
+    {
+        "canonical": "CF Montreal",
+        "mascot": "CF Montreal",
+        "city": "Montreal",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#06209A",
+
+        # Polymarket
+        "polymarket_id": 2270,
+        "polymarket_abbreviation": "mim",
+        "polymarket_name": "CF Montréal",
+        "polymarket_safe_name": "CF Montreal",
+        "polymarket_names": ["CF Montréal", "CF Montreal", "MIM"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "CF Montreal",
+    },
+    {
+        "canonical": "Charlotte FC",
+        "mascot": "Charlotte FC",
+        "city": "Charlotte",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#367EBB",
+
+        # Polymarket
+        "polymarket_id": 2290,
+        "polymarket_abbreviation": "clt",
+        "polymarket_name": "Charlotte FC",
+        "polymarket_safe_name": "Charlotte FC",
+        "polymarket_names": ["Charlotte FC", "CLT"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Charlotte FC",
+    },
+    {
+        "canonical": "Chicago Fire FC",
+        "mascot": "Fire",
+        "city": "Chicago",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#5FC1EA",
+
+        # Polymarket
+        "polymarket_id": 2263,
+        "polymarket_abbreviation": "chi",
+        "polymarket_name": "Chicago Fire FC",
+        "polymarket_safe_name": "Chicago Fire FC",
+        "polymarket_names": ["Chicago Fire FC", "Chicago Fire", "CHI"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Chicago Fire",
+    },
+    {
+        "canonical": "Colorado Rapids",
+        "mascot": "Rapids",
+        "city": "Colorado",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#960A2C",
+
+        # Polymarket
+        "polymarket_id": 2264,
+        "polymarket_abbreviation": "col",
+        "polymarket_name": "Colorado Rapids SC",
+        "polymarket_safe_name": "Colorado Rapids SC",
+        "polymarket_names": ["Colorado Rapids SC", "Colorado Rapids", "COL"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Colorado Rapids",
+    },
+    {
+        "canonical": "Columbus Crew",
+        "mascot": "Crew",
+        "city": "Columbus",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#2B2707",
+
+        # Polymarket
+        "polymarket_id": 2265,
+        "polymarket_abbreviation": "clb",
+        "polymarket_name": "Columbus Crew",
+        "polymarket_safe_name": "Columbus Crew",
+        "polymarket_names": ["Columbus Crew", "Columbus Crew SC", "CLB"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Columbus Crew SC",
+    },
+    {
+        "canonical": "D.C. United",
+        "mascot": "United",
+        "city": "Washington",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#EB0029",
+
+        # Polymarket
+        "polymarket_id": 2266,
+        "polymarket_abbreviation": "dcu",
+        "polymarket_name": "D.C. United SC",
+        "polymarket_safe_name": "D.C. United SC",
+        "polymarket_names": ["D.C. United SC", "D.C. United", "DCU"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "D.C. United",
+    },
+    {
+        "canonical": "FC Cincinnati",
+        "mascot": "FC Cincinnati",
+        "city": "Cincinnati",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#FE5000",
+
+        # Polymarket
+        "polymarket_id": 2286,
+        "polymarket_abbreviation": "fcc",
+        "polymarket_name": "FC Cincinnati",
+        "polymarket_safe_name": "FC Cincinnati",
+        "polymarket_names": ["FC Cincinnati", "FCC"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "FC Cincinnati",
+    },
+    {
+        "canonical": "FC Dallas",
+        "mascot": "FC Dallas",
+        "city": "Dallas",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#C6093B",
+
+        # Polymarket
+        "polymarket_id": 2267,
+        "polymarket_abbreviation": "dal",
+        "polymarket_name": "FC Dallas",
+        "polymarket_safe_name": "FC Dallas",
+        "polymarket_names": ["FC Dallas", "DAL"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "FC Dallas",
+    },
+    {
+        "canonical": "Houston Dynamo",
+        "mascot": "Dynamo",
+        "city": "Houston",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#FF6B00",
+
+        # Polymarket
+        "polymarket_id": 2268,
+        "polymarket_abbreviation": "hou",
+        "polymarket_name": "Houston Dynamo",
+        "polymarket_safe_name": "Houston Dynamo",
+        "polymarket_names": ["Houston Dynamo", "HOU"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Houston Dynamo",
+    },
+    {
+        "canonical": "Inter Miami CF",
+        "mascot": "Inter Miami CF",
+        "city": "Miami",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#EB84A9",
+
+        # Polymarket
+        "polymarket_id": 2287,
+        "polymarket_abbreviation": "mia",
+        "polymarket_name": "Inter Miami CF",
+        "polymarket_safe_name": "Inter Miami CF",
+        "polymarket_names": ["Inter Miami CF", "MIA"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Inter Miami CF",
+    },
+    {
+        "canonical": "LA Galaxy",
+        "mascot": "Galaxy",
+        "city": "Los Angeles",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#00245D",
+
+        # Polymarket
+        "polymarket_id": 2269,
+        "polymarket_abbreviation": "lag",
+        "polymarket_name": "Los Angeles Galaxy",
+        "polymarket_safe_name": "Los Angeles Galaxy",
+        "polymarket_names": ["Los Angeles Galaxy", "LA Galaxy", "LAG"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "LA Galaxy",
+    },
+    {
+        "canonical": "Los Angeles FC",
+        "mascot": "Los Angeles FC",
+        "city": "Los Angeles",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#C39E6D",
+
+        # Polymarket
+        "polymarket_id": 2285,
+        "polymarket_abbreviation": "laf",
+        "polymarket_name": "Los Angeles FC",
+        "polymarket_safe_name": "Los Angeles FC",
+        "polymarket_names": ["Los Angeles FC", "LAFC", "LAF"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Los Angeles FC",
+    },
+    {
+        "canonical": "Minnesota United FC",
+        "mascot": "Loons",
+        "city": "Minneapolis",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#8CD2F4",
+
+        # Polymarket
+        "polymarket_id": 2284,
+        "polymarket_abbreviation": "min",
+        "polymarket_name": "Minnesota United FC",
+        "polymarket_safe_name": "Minnesota United FC",
+        "polymarket_names": ["Minnesota United FC", "Minnesota United", "MIN"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Minnesota United FC",
+    },
+    {
+        "canonical": "Nashville SC",
+        "mascot": "Nashville SC",
+        "city": "Nashville",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#1F1646",
+
+        # Polymarket
+        "polymarket_id": 2288,
+        "polymarket_abbreviation": "nas",
+        "polymarket_name": "Nashville SC",
+        "polymarket_safe_name": "Nashville SC",
+        "polymarket_names": ["Nashville SC", "NAS"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Nashville SC",
+    },
+    {
+        "canonical": "New England Revolution",
+        "mascot": "Revolution",
+        "city": "Boston",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#CE0E2D",
+
+        # Polymarket
+        "polymarket_id": 2271,
+        "polymarket_abbreviation": "ner",
+        "polymarket_name": "New England Revolution",
+        "polymarket_safe_name": "New England Revolution",
+        "polymarket_names": ["New England Revolution", "NER"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "New England Revolution",
+    },
+    {
+        "canonical": "New York City FC",
+        "mascot": "New York City FC",
+        "city": "New York",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#6CACE4",
+
+        # Polymarket
+        "polymarket_id": 2272,
+        "polymarket_abbreviation": "nyc",
+        "polymarket_name": "New York City FC",
+        "polymarket_safe_name": "New York City FC",
+        "polymarket_names": ["New York City FC", "NYCFC", "NYC"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "New York City FC",
+    },
+    {
+        "canonical": "New York Red Bulls",
+        "mascot": "Red Bulls",
+        "city": "New York",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#ED1E36",
+
+        # Polymarket
+        "polymarket_id": 2273,
+        "polymarket_abbreviation": "nyr",
+        "polymarket_name": "New York Red Bulls",
+        "polymarket_safe_name": "New York Red Bulls",
+        "polymarket_names": ["New York Red Bulls", "NYRB", "NYR"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "New York Red Bulls",
+    },
+    {
+        "canonical": "Orlando City SC",
+        "mascot": "Lions",
+        "city": "Orlando",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#633492",
+
+        # Polymarket
+        "polymarket_id": 2274,
+        "polymarket_abbreviation": "orl",
+        "polymarket_name": "Orlando City SC",
+        "polymarket_safe_name": "Orlando City SC",
+        "polymarket_names": ["Orlando City SC", "Orlando City", "ORL"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Orlando City SC",
+    },
+    {
+        "canonical": "Philadelphia Union",
+        "mascot": "Union",
+        "city": "Philadelphia",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#3A8DDE",
+
+        # Polymarket
+        "polymarket_id": 2275,
+        "polymarket_abbreviation": "phi",
+        "polymarket_name": "Philadelphia Union",
+        "polymarket_safe_name": "Philadelphia Union",
+        "polymarket_names": ["Philadelphia Union", "PHI"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Philadelphia Union",
+    },
+    {
+        "canonical": "Portland Timbers",
+        "mascot": "Timbers",
+        "city": "Portland",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#00482B",
+
+        # Polymarket
+        "polymarket_id": 2276,
+        "polymarket_abbreviation": "por",
+        "polymarket_name": "Portland Timbers",
+        "polymarket_safe_name": "Portland Timbers",
+        "polymarket_names": ["Portland Timbers", "POR"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Portland Timbers",
+    },
+    {
+        "canonical": "Real Salt Lake",
+        "mascot": "Real Salt Lake",
+        "city": "Salt Lake City",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#B30838",
+
+        # Polymarket
+        "polymarket_id": 2277,
+        "polymarket_abbreviation": "rsl",
+        "polymarket_name": "Real Salt Lake",
+        "polymarket_safe_name": "Real Salt Lake",
+        "polymarket_names": ["Real Salt Lake", "RSL"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Real Salt Lake",
+    },
+    {
+        "canonical": "San Diego FC",
+        "mascot": "San Diego FC",
+        "city": "San Diego",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#071528",
+
+        # Polymarket
+        "polymarket_id": 2292,
+        "polymarket_abbreviation": "sdg",
+        "polymarket_name": "San Diego FC",
+        "polymarket_safe_name": "San Diego FC",
+        "polymarket_names": ["San Diego FC", "SDG"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "San Diego FC",
+    },
+    {
+        "canonical": "San Jose Earthquakes",
+        "mascot": "Earthquakes",
+        "city": "San Jose",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#003DA6",
+
+        # Polymarket
+        "polymarket_id": 2278,
+        "polymarket_abbreviation": "sje",
+        "polymarket_name": "San Jose Earthquakes",
+        "polymarket_safe_name": "San Jose Earthquakes",
+        "polymarket_names": ["San Jose Earthquakes", "SJE"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "San Jose Earthquakes",
+    },
+    {
+        "canonical": "Seattle Sounders FC",
+        "mascot": "Sounders",
+        "city": "Seattle",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#4FB84F",
+
+        # Polymarket
+        "polymarket_id": 2279,
+        "polymarket_abbreviation": "sea",
+        "polymarket_name": "Seattle Sounders FC",
+        "polymarket_safe_name": "Seattle Sounders FC",
+        "polymarket_names": ["Seattle Sounders FC", "Seattle Sounders", "SEA"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Seattle Sounders FC",
+    },
+    {
+        "canonical": "Sporting Kansas City",
+        "mascot": "Sporting Kansas City",
+        "city": "Kansas City",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#002F65",
+
+        # Polymarket
+        "polymarket_id": 2280,
+        "polymarket_abbreviation": "skc",
+        "polymarket_name": "Sporting Kansas City",
+        "polymarket_safe_name": "Sporting Kansas City",
+        "polymarket_names": ["Sporting Kansas City", "SKC"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Sporting Kansas City",
+    },
+    {
+        "canonical": "St. Louis City SC",
+        "mascot": "St. Louis City SC",
+        "city": "St. Louis",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#EC1458",
+
+        # Polymarket
+        "polymarket_id": 2291,
+        "polymarket_abbreviation": "stl",
+        "polymarket_name": "St. Louis City SC",
+        "polymarket_safe_name": "St. Louis City SC",
+        "polymarket_names": ["St. Louis City SC", "STL"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "St. Louis City SC",
+    },
+    {
+        "canonical": "Toronto FC",
+        "mascot": "Toronto FC",
+        "city": "Toronto",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#AA182C",
+
+        # Polymarket
+        "polymarket_id": 2281,
+        "polymarket_abbreviation": "tor",
+        "polymarket_name": "Toronto FC",
+        "polymarket_safe_name": "Toronto FC",
+        "polymarket_names": ["Toronto FC", "TOR"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Toronto FC",
+    },
+    {
+        "canonical": "Vancouver Whitecaps FC",
+        "mascot": "Whitecaps",
+        "city": "Vancouver",
+        "league": "mls",
+        "sport": "soccer_usa_mls",
+        "color": "#00245E",
+
+        # Polymarket
+        "polymarket_id": 2282,
+        "polymarket_abbreviation": "vwh",
+        "polymarket_name": "Vancouver Whitecaps FC",
+        "polymarket_safe_name": "Vancouver Whitecaps FC",
+        "polymarket_names": ["Vancouver Whitecaps FC", "Vancouver Whitecaps", "VWH"],
+
+        # Odds API
+        "odds_api_key": "soccer_usa_mls",
+        "odds_api_name": "Vancouver Whitecaps FC",
+    },
 
     # =========================================================
     # EPL
