@@ -20,10 +20,16 @@ An automated sports prediction market trading bot that:
 
 ### 1. Polymarket Public API (no auth needed)
 - Base URL: `https://gateway.polymarket.us`
+- v1 teams (master roster): `GET /v1/sports/teams?filters.league={slug}&limit=100&offset=0`
+  - Returns ALL teams for a league regardless of season. Paginate until all fetched.
+  - Used ONLY to build team_registry.py. Not referenced in bot code at runtime.
+  - Returns: id, name, safeName, abbreviation, colorPrimary (plus player props — filter by colorPrimary to get teams only)
+  - team.id is stable and identical across v1 and v2
 - v2 league events: `GET /v2/leagues/{slug}/events?limit=100`
 - v2 sports: `GET /v2/sports`
-- Returns: events with teams array (id, name, safeName, abbreviation, colorPrimary), markets array (slug, marketType, marketSides with prices), live scores, game state
-- League slugs: `nba`, `nhl`, `mlb`, `mls`, `epl`, `lal` (La Liga), `bun` (Bundesliga), `sea` (Serie A), `ucl`, `cbb`, `cfb`, `nfl`
+- v2 returns: events with teams array (id, name, safeName, abbreviation, colorPrimary), markets array (slug, marketType, marketSides with prices), live scores, game state
+- v2 is used at runtime for market discovery and live game state. Join on team.id to look up team_registry entries.
+- League slugs: `nba`, `nhl`, `mlb`, `nfl`, `mls`, `epl`, `lal` (La Liga), `bun` (Bundesliga), `sea` (Serie A), `ucl`, `cbb`, `cfb`
 
 ### 2. Polymarket Auth API (via SDK)
 - Package: `polymarket-us` Python SDK v0.1.2
@@ -36,6 +42,8 @@ An automated sports prediction market trading bot that:
 ### 3. The Odds API
 - Base URL: `https://api.the-odds-api.com/v4`
 - API key: `fbd86b881d7b58c956f0d45a25b16219`
+- Participants (master roster): `GET /v4/sports/{key}/participants?apiKey={KEY}`
+  - Returns ALL teams for a sport with exact `full_name` spellings. Used ONLY to build team_registry.py.
 - Odds: `GET /v4/sports/{key}/odds/?apiKey={KEY}&regions=us&markets=h2h&oddsFormat=american`
 - Sports list: `GET /v4/sports/?apiKey={KEY}`
 - Returns: events with `home_team`, `away_team` (strings, no numeric IDs), bookmakers array with American odds
