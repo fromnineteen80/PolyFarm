@@ -23,7 +23,6 @@ import re
 from datetime import datetime, timezone
 from typing import Optional
 import httpx
-import aiohttp
 from core.team_registry import lookup_by_polymarket_id
 
 logger = logging.getLogger("polyfarm.pipeline")
@@ -134,7 +133,6 @@ class Pipeline:
 
         # Internal
         self._http: Optional[httpx.AsyncClient] = None
-        self._aiohttp: Optional[aiohttp.ClientSession] = None
 
     async def _get_poly(self, path: str, params: dict = None):
         """GET from Polymarket public gateway."""
@@ -148,19 +146,16 @@ class Pipeline:
 
     async def _get_odds(self, path: str, params: dict = None):
         """GET from The Odds API."""
-        if self._aiohttp is None or self._aiohttp.closed:
-            self._aiohttp = aiohttp.ClientSession()
+        if self._http is None or self._http.is_closed:
+            self._http = httpx.AsyncClient(timeout=15)
         p = params or {}
         p["apiKey"] = self.odds_api_key
         try:
-            async with self._aiohttp.get(
-                f"{ODDS_API_BASE}{path}", params=p,
-                timeout=aiohttp.ClientTimeout(total=15)
-            ) as resp:
-                if resp.status == 200:
-                    return await resp.json()
-                logger.error(f"Odds API {path} returned {resp.status}")
-                return None
+            r = await self._http.get(f"{ODDS_API_BASE}{path}", params=p)
+            if r.status_code == 200:
+                return r.json()
+            logger.error(f"Odds API {path} returned {r.status_code}")
+            return None
         except Exception as e:
             logger.error(f"Odds API error: {e}")
             return None
@@ -899,5 +894,3 @@ class Pipeline:
     async def close(self):
         if self._http and not self._http.is_closed:
             await self._http.aclose()
-        if self._aiohttp and not self._aiohttp.closed:
-            await self._aiohttp.close()
