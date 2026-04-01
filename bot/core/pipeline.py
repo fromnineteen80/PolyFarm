@@ -467,6 +467,7 @@ class Pipeline:
                 continue
 
             # Try partial match — if all words of one appear in the other
+            found_partial = False
             for odds_name in odds_names:
                 poly_words = set(norm_full.split())
                 odds_words = set(odds_name.split())
@@ -475,7 +476,23 @@ class Pipeline:
                         self.team_bridge[norm_full] = odds_name
                         self.team_bridge[norm_short] = odds_name
                         matched += 1
+                        found_partial = True
                         break
+            if found_partial:
+                continue
+
+            # Try mascot-only match — for leagues like NHL where
+            # Polymarket uses abbreviations (FLA Panthers → Panthers)
+            # Match if the mascot (last word) is unique within this sport
+            mascot_full = norm_full.split()[-1] if norm_full else ""
+            mascot_short = norm_short.split()[-1] if norm_short else ""
+            mascot = mascot_short or mascot_full
+            if mascot:
+                mascot_matches = [n for n in odds_names if n.split()[-1] == mascot]
+                if len(mascot_matches) == 1:
+                    self.team_bridge[norm_full] = mascot_matches[0]
+                    self.team_bridge[norm_short] = mascot_matches[0]
+                    matched += 1
 
         logger.info(f"Step 5 complete: {matched} teams matched across APIs out of {len(self.teams)}")
         return True
