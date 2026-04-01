@@ -20,8 +20,9 @@ Step 11: Report (via alerts)
 import asyncio
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, time
 from typing import Optional
+from zoneinfo import ZoneInfo
 import httpx
 from core.team_registry import lookup_by_polymarket_id
 
@@ -32,6 +33,48 @@ ODDS_API_BASE = "https://api.the-odds-api.com"
 
 # Sports we trade — must match Polymarket v2/sports sport names
 TARGET_SPORTS = {"Basketball", "Football", "Ice Hockey", "Baseball", "Soccer"}
+
+# Eastern timezone (handles EST/EDT automatically)
+ET = ZoneInfo("America/New_York")
+
+
+def utc_to_et(utc_str: str) -> Optional[datetime]:
+    """Convert a UTC ISO string (with Z suffix) to Eastern datetime."""
+    if not utc_str:
+        return None
+    try:
+        dt = datetime.fromisoformat(utc_str.replace("Z", "+00:00"))
+        return dt.astimezone(ET)
+    except Exception:
+        return None
+
+
+def format_et(dt: Optional[datetime]) -> Optional[str]:
+    """Format an Eastern datetime as ISO string."""
+    if not dt:
+        return None
+    return dt.isoformat()
+
+
+def game_bucket(game_start_utc: str, is_live: bool, is_ended: bool) -> str:
+    """Determine game bucket based on Eastern time.
+    - live: game is in progress
+    - today: game starts between 12:01 AM and 11:59 PM ET today
+    - upcoming: game starts after today
+    """
+    if is_ended:
+        return "historical"
+    if is_live:
+        return "live"
+    et_dt = utc_to_et(game_start_utc)
+    if not et_dt:
+        return "upcoming"
+    now_et = datetime.now(ET)
+    today_start = datetime.combine(now_et.date(), time(0, 1), tzinfo=ET)
+    today_end = datetime.combine(now_et.date(), time(23, 59), tzinfo=ET)
+    if today_start <= et_dt <= today_end:
+        return "today"
+    return "upcoming"
 
 
 
@@ -553,6 +596,14 @@ class Pipeline:
                     "game_period": event.get("period", "") or "",
                     "game_elapsed": event.get("elapsed", "") or "",
                     "game_start_time": chosen_market.get("gameStartTime", "") or event.get("startTime", ""),
+                    "game_start_time_et": format_et(utc_to_et(
+                        chosen_market.get("gameStartTime", "") or event.get("startTime", "")
+                    )),
+                    "game_bucket": game_bucket(
+                        chosen_market.get("gameStartTime", "") or event.get("startTime", ""),
+                        event.get("live", False),
+                        event.get("ended", False),
+                    ),
                     "series_slug": event.get("seriesSlug", ""),
                     "market_type": chosen_market.get("marketType", ""),
                     "market_sides": sides,
@@ -823,11 +874,13 @@ class Pipeline:
                     "yes_price": game["yes_price"],
                     "is_live": game["is_live"],
                     "is_finished": game["is_finished"],
-                    "game_status": "live" if game["is_live"] else "finished" if game["is_finished"] else "upcoming",
+                    "game_status": game.get("game_bucket", "upcoming"),
                     "game_score": game["game_score"] or None,
                     "game_period": game["game_period"] or None,
                     "game_elapsed": game["game_elapsed"] or None,
                     "game_start_time": game["game_start_time"] or None,
+                    "game_start_time_et": game.get("game_start_time_et"),
+                    "game_bucket": game.get("game_bucket", "upcoming"),
                     "market_type": game["market_type"],
                     "series_slug": game["series_slug"],
                 }
