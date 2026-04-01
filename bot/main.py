@@ -536,8 +536,11 @@ async def game_complete_scanner(registry, position_monitor, alerts):
 
 
 async def midnight_scheduler(wallet, alerts, market_loader):
+    from zoneinfo import ZoneInfo
+    ET = ZoneInfo("America/New_York")
     while True:
-        now = datetime.now()
+        now = datetime.now(ET)
+        # Reset at 11:59 PM Eastern
         target = now.replace(hour=23, minute=59, second=0, microsecond=0)
         if now >= target:
             target += timedelta(days=1)
@@ -545,6 +548,7 @@ async def midnight_scheduler(wallet, alerts, market_loader):
         await asyncio.sleep(seconds_until)
         await write_end_of_day(wallet, alerts)
         await wallet.reset_daily()
+        logger.info("Daily reset complete — ready for tomorrow")
         await asyncio.sleep(70)
 
 

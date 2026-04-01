@@ -1,0 +1,19 @@
+[Unit]
+Description=OracleFarming Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/PolyFarm/bot
+ExecStart=/root/PolyFarm/bot/venv/bin/python3 main.py
+Restart=always
+RestartSec=30
+StandardOutput=append:/tmp/oraclefarming.log
+StandardError=append:/tmp/oraclefarming.log
+
+# Reset daily — wallet recalculates on startup
+# Midnight ET reset handled by midnight_scheduler in main.py
+
+[Install]
+WantedBy=multi-user.target

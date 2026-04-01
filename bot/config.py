@@ -84,7 +84,7 @@ CRYPTO_REPRICE_TIMEOUT_MINUTES = 5
 # ─────────────────────────────────────────────────────
 HARVEST_THRESHOLD = 0.06         # +6% daily gain — reduce size
 PROTECTION_THRESHOLD = 0.09      # +9% daily gain — tighten stops
-LOCK_THRESHOLD = 0.12            # +12% daily gain — STOP TRADING
+LOCK_THRESHOLD = 0.15            # +15% daily gain — STOP TRADING
 PORTFOLIO_TRAIL_REVERT = 0.04    # If was +9%, fell to +4%
 
 # ─────────────────────────────────────────────────────
