@@ -61,6 +61,7 @@ class AlertManager:
             try:
                 msg = await self._queue.get()
                 await self._send(msg)
+                await asyncio.sleep(1)  # max 1 message per second
             except Exception as e:
                 logger.debug(f"Alert sender error: {e}")
 

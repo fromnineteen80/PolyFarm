@@ -70,13 +70,13 @@ PROFIT_LOCK_BAND_B = 0.10
 PROFIT_LOCK_BAND_C = 0.08
 PROFIT_LOCK_OVERNIGHT = 0.15
 
-# Trailing stop
+# Trailing stop — let positions breathe
 TRAILING_STOP_ACTIVATE = 0.06   # Activates at +6% gain
 TRAILING_STOP_FLOOR = 0.50      # Floor = 50% of peak gain
 TRAILING_STOP_FLOOR_PROTECTION = 0.65  # In PROTECTION mode
 
-# Timeouts
-REPRICE_TIMEOUT_MINUTES = 30
+# Timeouts — give trades time to recover
+REPRICE_TIMEOUT_MINUTES = 120
 CRYPTO_REPRICE_TIMEOUT_MINUTES = 5
 
 # ─────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ CRYPTO_REPRICE_TIMEOUT_MINUTES = 5
 HARVEST_THRESHOLD = 0.08         # +8% daily gain
 PROTECTION_THRESHOLD = 0.12      # +12% daily gain
 LOCK_THRESHOLD = 0.17            # +17% daily gain
-PORTFOLIO_TRAIL_REVERT = 0.08    # If was +12%, fell to +8%
+PORTFOLIO_TRAIL_REVERT = 0.04    # If was +12%, fell to +4%
 
 # ─────────────────────────────────────────────────────
 # PORTFOLIO LOSS TIERS — checked every 10 seconds
@@ -108,8 +108,8 @@ EXCEPTION_REPRICE_PCT = 0.50
 EXCEPTION_PROFIT_LOCK = 0.08
 EXCEPTION_TRAILING_ACTIVATE = 0.04
 EXCEPTION_TRAILING_FLOOR = 0.50
-EXCEPTION_STOP_LOSS = -0.05
-EXCEPTION_TIMEOUT_MINUTES = 15
+EXCEPTION_STOP_LOSS = -0.15
+EXCEPTION_TIMEOUT_MINUTES = 120
 EXCEPTION_MAX_BID_ASK_SPREAD = 0.04
 
 # ─────────────────────────────────────────────────────
@@ -125,8 +125,8 @@ FADE_REPRICE_PCT = 0.50
 FADE_PROFIT_LOCK = 0.07
 FADE_TRAILING_ACTIVATE = 0.04
 FADE_TRAILING_FLOOR = 0.50
-FADE_STOP_LOSS = -0.05
-FADE_TIMEOUT_MINUTES = 20
+FADE_STOP_LOSS = -0.15
+FADE_TIMEOUT_MINUTES = 120
 FADE_MIN_VOLUME = 25000
 FADE_MAX_BID_ASK_SPREAD = 0.05
 
