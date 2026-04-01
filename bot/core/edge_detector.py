@@ -59,6 +59,7 @@ class EdgeDetector:
         self.position_monitor = position_monitor
         self.odds_api = None
         self.ws_markets = None
+        self.order_manager = None
         self.price_queue: asyncio.Queue = asyncio.Queue()
         self._paper_stats: dict = {"completed": 0, "win_rate": 0.0}
 
@@ -69,7 +70,9 @@ class EdgeDetector:
         while True:
             try:
                 event = await asyncio.wait_for(self.price_queue.get(), timeout=1.0)
-                await self.evaluate_signal(event)
+                signal = await self.evaluate_signal(event)
+                if signal and self.order_manager:
+                    await self.order_manager.enter_position(signal)
             except asyncio.TimeoutError:
                 continue
             except Exception as e:
@@ -85,7 +88,7 @@ class EdgeDetector:
             if isinstance(side, dict) and side.get("long"):
                 team_name = side.get("team", {}).get("name", "")
                 if team_name and market.home_team:
-                    from core.odds_api_client import normalize_team
+                    from core.pipeline import normalize_team
                     if normalize_team(team_name) == normalize_team(market.home_team):
                         return "home"
                     else:

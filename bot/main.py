@@ -128,6 +128,7 @@ async def main():
     edge_detector = EdgeDetector(
         registry, None, wallet, position_monitor
     )
+    edge_detector.order_manager = order_manager
     edge_detector.price_queue = price_queue
 
     terminal = TerminalDashboard(

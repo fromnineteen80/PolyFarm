@@ -387,6 +387,7 @@ class Pipeline:
                     "consensus_draw_prob": draw_prob,
                     "bookmakers_used": books,
                     "bookmaker_count": len(books),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
                 }
 
         logger.info(f"Step 4 complete: {len(self.odds_events)} events with odds from {len(odds_keys_to_poll)} sport keys")
