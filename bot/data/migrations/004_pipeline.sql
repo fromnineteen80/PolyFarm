@@ -24,6 +24,19 @@ CREATE INDEX IF NOT EXISTS idx_markets_game_bucket
 CREATE INDEX IF NOT EXISTS idx_markets_game_start_time_et
   ON markets(game_start_time_et);
 
+-- Polymarket outcome/settlement data
+ALTER TABLE markets
+  ADD COLUMN IF NOT EXISTS outcome_prices JSONB;
+
+ALTER TABLE markets
+  ADD COLUMN IF NOT EXISTS outcomes JSONB;
+
+ALTER TABLE markets
+  ADD COLUMN IF NOT EXISTS ep3_status TEXT;
+
+ALTER TABLE markets
+  ADD COLUMN IF NOT EXISTS market_closed BOOLEAN DEFAULT FALSE;
+
 -- Odds API scores (from /v4/sports/{key}/scores endpoint)
 ALTER TABLE markets
   ADD COLUMN IF NOT EXISTS odds_api_home_score TEXT;

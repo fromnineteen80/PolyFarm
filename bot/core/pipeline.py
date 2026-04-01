@@ -607,6 +607,10 @@ class Pipeline:
                     "series_slug": event.get("seriesSlug", ""),
                     "market_type": chosen_market.get("marketType", ""),
                     "market_sides": sides,
+                    "outcome_prices": chosen_market.get("outcomePrices", []),
+                    "outcomes": chosen_market.get("outcomes", []),
+                    "ep3_status": chosen_market.get("ep3Status", ""),
+                    "market_closed": chosen_market.get("closed", False),
                 }
                 seen_events.add(eid)
 
@@ -1035,6 +1039,13 @@ class Pipeline:
                     "market_type": game["market_type"],
                     "series_slug": game["series_slug"],
                 }
+
+                # Add outcome/settlement data
+                if game.get("outcome_prices"):
+                    data["outcome_prices"] = game["outcome_prices"]
+                    data["outcomes"] = game.get("outcomes", [])
+                    data["ep3_status"] = game.get("ep3_status", "")
+                    data["market_closed"] = game.get("market_closed", False)
 
                 # Add Odds API scores if available
                 if game.get("odds_api_home_score") is not None:
