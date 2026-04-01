@@ -327,17 +327,15 @@ class WalletManager:
         self.state.profit_mode = "LOCKED"
         self.state.session_locked = True
         self.state.entries_halted = True
-        logger.info(f"Session locked: {reason}")
+        self.state.new_entries_paused = True
+        logger.info(f"Daily target hit — no new trades. Open positions will close naturally.")
         if self._alerts:
             await self._alerts.send_session_locked(
                 reason,
                 self.state.daily_gain_pct,
                 self.state.live_portfolio_value
             )
-        if self._order_manager:
-            await self._order_manager.drain_all_positions(
-                "LOCK_AND_DRAIN"
-            )
+        # Don't drain — let open positions play out to settlement
 
     async def _floor_breach_protocol(self):
         self.state.entries_halted = True

@@ -292,10 +292,9 @@ class AlertManager:
                                    gain_pct,
                                    wallet_value):
         msg = (
-            f"🏆 SESSION LOCKED — {reason}\n"
-            f"Up {gain_pct:.1%} today.\n"
-            f"Exception and fade trades "
-            f"still active.\n"
+            f"Daily target hit! Up {gain_pct:.1%} today.\n"
+            f"No new trades. Open positions "
+            f"will close naturally.\n"
             f"Wallet: ${wallet_value:.2f}"
         )
         self._enqueue(msg)

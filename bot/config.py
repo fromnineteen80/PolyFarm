@@ -82,10 +82,10 @@ CRYPTO_REPRICE_TIMEOUT_MINUTES = 5
 # ─────────────────────────────────────────────────────
 # PORTFOLIO PROFIT TIERS — checked every 10 seconds
 # ─────────────────────────────────────────────────────
-HARVEST_THRESHOLD = 0.08         # +8% daily gain
-PROTECTION_THRESHOLD = 0.12      # +12% daily gain
-LOCK_THRESHOLD = 0.17            # +17% daily gain
-PORTFOLIO_TRAIL_REVERT = 0.04    # If was +12%, fell to +4%
+HARVEST_THRESHOLD = 0.06         # +6% daily gain — reduce size
+PROTECTION_THRESHOLD = 0.09      # +9% daily gain — tighten stops
+LOCK_THRESHOLD = 0.12            # +12% daily gain — STOP TRADING
+PORTFOLIO_TRAIL_REVERT = 0.04    # If was +9%, fell to +4%
 
 # ─────────────────────────────────────────────────────
 # PORTFOLIO LOSS TIERS — checked every 10 seconds
