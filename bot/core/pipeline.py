@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 from typing import Optional
 import httpx
 import aiohttp
+from core.team_registry import lookup_by_polymarket_id
 
 logger = logging.getLogger("polyfarm.pipeline")
 
@@ -33,22 +34,6 @@ ODDS_API_BASE = "https://api.the-odds-api.com"
 # Sports we trade — must match Polymarket v2/sports sport names
 TARGET_SPORTS = {"Basketball", "Football", "Ice Hockey", "Baseball", "Soccer"}
 
-# Known name differences between Polymarket and Odds API
-# {normalized_polymarket_name: normalized_odds_api_name}
-TEAM_ALIASES = {
-    "fc bayern munchen": "bayern munich",
-    "fc internazionale milano": "inter milan",
-    "sporting cp": "sporting lisbon",
-    "borussia monchengladbach": "borussia monchengladbach",  # accent handled by normalize
-    "bv borussia 09 dortmund": "borussia dortmund",
-    "sv werder bremen": "werder bremen",
-    "tsg 1899 hoffenheim": "tsg hoffenheim",
-    "1 fc heidenheim 1846": "1 fc heidenheim",
-    "1 fsv mainz 05": "fsv mainz 05",
-    "1 fc union berlin": "union berlin",
-    "fc st pauli 1910": "fc st pauli",
-    "bayer 04 leverkusen": "bayer leverkusen",
-}
 
 
 def normalize_team(name: str) -> str:
@@ -444,74 +429,48 @@ class Pipeline:
 
     async def step5_match_teams(self):
         """Build a bridge between Polymarket team names
-        and Odds API team names. Both sources use
-        standard team names from the same leagues,
-        so exact match after normalization works."""
+        and Odds API team names using the team registry.
+
+        For each Polymarket team from step 2, look up by
+        polymarket_id in the registry. The registry entry
+        contains the exact odds_api_name. No fuzzy matching."""
         self.team_bridge = {}
-
-        # Collect all Odds API team names by sport key
-        odds_teams = {}  # {sport_key: set of normalized names}
-        for event in self.odds_events.values():
-            key = event["sport_key"]
-            if key not in odds_teams:
-                odds_teams[key] = set()
-            odds_teams[key].add(normalize_team(event["home_team"]))
-            odds_teams[key].add(normalize_team(event["away_team"]))
-
-        # For each Polymarket team, find the matching Odds API name
         matched = 0
+        unmatched = []
+
         for tid, team in self.teams.items():
             poly_league = team["league"]
             odds_key = self.league_to_odds_key.get(poly_league)
             if not odds_key:
                 continue
 
-            odds_names = odds_teams.get(odds_key, set())
+            # Registry lookup by Polymarket team ID
+            entry = lookup_by_polymarket_id(tid)
+            if not entry:
+                unmatched.append(f"{team['full_name']} (id={tid}, league={poly_league})")
+                continue
+
+            odds_name = entry.get("odds_api_name", "")
+            if not odds_name:
+                unmatched.append(f"{team['full_name']} (id={tid}, league={poly_league}, no odds_api_name)")
+                continue
+
+            # Bridge: normalized Polymarket name -> normalized Odds API name
             norm_full = normalize_team(team["full_name"])
             norm_short = normalize_team(team["name"])
+            norm_odds = normalize_team(odds_name)
 
-            # Try exact match on full name
-            if norm_full in odds_names:
-                self.team_bridge[norm_full] = norm_full
-                matched += 1
-                continue
+            if norm_full:
+                self.team_bridge[norm_full] = norm_odds
+            if norm_short and norm_short != norm_full:
+                self.team_bridge[norm_short] = norm_odds
+            matched += 1
 
-            # Try exact match on short name
-            if norm_short in odds_names:
-                self.team_bridge[norm_full] = norm_short
-                self.team_bridge[norm_short] = norm_short
-                matched += 1
-                continue
+        if unmatched:
+            for name in unmatched:
+                logger.warning(f"Step 5 UNMATCHED: {name}")
 
-            # Try partial match — if all words of one appear in the other
-            found_partial = False
-            for odds_name in odds_names:
-                poly_words = set(norm_full.split())
-                odds_words = set(odds_name.split())
-                if poly_words and odds_words:
-                    if poly_words.issubset(odds_words) or odds_words.issubset(poly_words):
-                        self.team_bridge[norm_full] = odds_name
-                        self.team_bridge[norm_short] = odds_name
-                        matched += 1
-                        found_partial = True
-                        break
-            if found_partial:
-                continue
-
-            # Try mascot-only match — for leagues like NHL where
-            # Polymarket uses abbreviations (FLA Panthers → Panthers)
-            # Match if the mascot (last word) is unique within this sport
-            mascot_full = norm_full.split()[-1] if norm_full else ""
-            mascot_short = norm_short.split()[-1] if norm_short else ""
-            mascot = mascot_short or mascot_full
-            if mascot:
-                mascot_matches = [n for n in odds_names if n.split()[-1] == mascot]
-                if len(mascot_matches) == 1:
-                    self.team_bridge[norm_full] = mascot_matches[0]
-                    self.team_bridge[norm_short] = mascot_matches[0]
-                    matched += 1
-
-        logger.info(f"Step 5 complete: {matched} teams matched across APIs out of {len(self.teams)}")
+        logger.info(f"Step 5 complete: {matched} teams matched via registry, {len(unmatched)} unmatched")
         return True
 
     # ─────────────────────────────────────────
