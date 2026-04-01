@@ -9,28 +9,6 @@ No fuzzy matching. No guessing. If a team isn't in
 this registry, it doesn't get matched.
 """
 
-# ── Approved structure per team ──────────────────────
-#
-# {
-#     "canonical": "Juventus",
-#     "mascot": "Juventus",
-#     "city": "Turin",
-#     "league": "sea",
-#     "sport": "soccer_italy_serie_a",
-#     "color": "#000000",
-#
-#     # Polymarket
-#     "polymarket_id": 3421,
-#     "polymarket_abbreviation": "juv",
-#     "polymarket_name": "Juventus FC",
-#     "polymarket_safe_name": "Juventus",
-#     "polymarket_names": ["Juventus FC", "Juventus", "JUV"],
-#
-#     # Odds API
-#     "odds_api_key": "soccer_italy_serie_a",
-#     "odds_api_name": "Juventus",
-# }
-
 TEAM_REGISTRY = [
     # =========================================================
     # NBA
