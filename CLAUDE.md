@@ -120,8 +120,8 @@ Currently has 92 teams (NBA 30, NHL 32, MLB 30) in an **old flat structure** mis
 **The team registry is a PERMANENT ROSTER — every team that exists in every league, regardless of whether they have a game today or ever. Do NOT limit the registry to teams with current events. If a team exists in the league, it goes in the registry. Use known full league rosters as the source, NOT events endpoints.**
 
 **How to get API-specific data for each team:**
-- Polymarket team metadata (id, name, safeName, abbreviation, colorPrimary): extracted from team objects in `/v2/leagues/{slug}/events` responses. If a team has no current event, set polymarket_id to 0 and backfill later.
-- Odds API team names: `curl -s "https://api.the-odds-api.com/v4/sports/{key}/odds/?apiKey=fbd86b881d7b58c956f0d45a25b16219&regions=us&markets=h2h"` — extract `home_team` and `away_team` strings to confirm exact spelling.
+- Polymarket: use v2 endpoints only
+- Odds API: use v4 endpoints only
 
 **Lookup functions must be league-scoped** to prevent cross-league collisions:
 - "Kings" = Sacramento Kings (NBA) vs Los Angeles Kings (NHL)
