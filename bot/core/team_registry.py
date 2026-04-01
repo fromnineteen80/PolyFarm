@@ -4118,6 +4118,387 @@ TEAM_REGISTRY = [
     # Serie A
     # =========================================================
 
+    {
+        "canonical": "AC Milan",
+        "mascot": "AC Milan",
+        "city": "Milan",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#ef0000",
+
+        # Polymarket
+        "polymarket_id": 3423,
+        "polymarket_abbreviation": "mil",
+        "polymarket_name": "AC Milan",
+        "polymarket_safe_name": "AC Milan",
+        "polymarket_names": ["AC Milan", "MIL"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "AC Milan",
+    },
+    {
+        "canonical": "AS Roma",
+        "mascot": "AS Roma",
+        "city": "Rome",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#8E1F2F",
+
+        # Polymarket
+        "polymarket_id": 3420,
+        "polymarket_abbreviation": "rom",
+        "polymarket_name": "AS Roma",
+        "polymarket_safe_name": "AS Roma",
+        "polymarket_names": ["AS Roma", "ROM"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "AS Roma",
+    },
+    {
+        "canonical": "Atalanta",
+        "mascot": "Atalanta",
+        "city": "Bergamo",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#1E71B8",
+
+        # Polymarket
+        "polymarket_id": 3425,
+        "polymarket_abbreviation": "ata",
+        "polymarket_name": "Atalanta BC",
+        "polymarket_safe_name": "Atalanta BC",
+        "polymarket_names": ["Atalanta BC", "Atalanta", "ATA"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Atalanta BC",
+    },
+    {
+        "canonical": "Bologna",
+        "mascot": "Bologna",
+        "city": "Bologna",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#A21C26",
+
+        # Polymarket
+        "polymarket_id": 3426,
+        "polymarket_abbreviation": "bol",
+        "polymarket_name": "Bologna FC 1909",
+        "polymarket_safe_name": "Bologna FC 1909",
+        "polymarket_names": ["Bologna FC 1909", "Bologna", "BOL"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Bologna",
+    },
+    {
+        "canonical": "Cagliari",
+        "mascot": "Cagliari",
+        "city": "Cagliari",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#002350",
+
+        # Polymarket
+        "polymarket_id": 3434,
+        "polymarket_abbreviation": "cag",
+        "polymarket_name": "Cagliari Calcio",
+        "polymarket_safe_name": "Cagliari Calcio",
+        "polymarket_names": ["Cagliari Calcio", "Cagliari", "CAG"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Cagliari",
+    },
+    {
+        "canonical": "Como",
+        "mascot": "Como",
+        "city": "Como",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#114169",
+
+        # Polymarket
+        "polymarket_id": 3439,
+        "polymarket_abbreviation": "com",
+        "polymarket_name": "Como 1907",
+        "polymarket_safe_name": "Como 1907",
+        "polymarket_names": ["Como 1907", "Como", "COM"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Como",
+    },
+    {
+        "canonical": "Cremonese",
+        "mascot": "Cremonese",
+        "city": "Cremona",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#EB1722",
+
+        # Polymarket
+        "polymarket_id": 3437,
+        "polymarket_abbreviation": "cre",
+        "polymarket_name": "US Cremonese",
+        "polymarket_safe_name": "US Cremonese",
+        "polymarket_names": ["US Cremonese", "Cremonese", "CRE"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Cremonese",
+    },
+    {
+        "canonical": "Fiorentina",
+        "mascot": "Fiorentina",
+        "city": "Florence",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#482E92",
+
+        # Polymarket
+        "polymarket_id": 3424,
+        "polymarket_abbreviation": "fio",
+        "polymarket_name": "ACF Fiorentina",
+        "polymarket_safe_name": "ACF Fiorentina",
+        "polymarket_names": ["ACF Fiorentina", "Fiorentina", "FIO"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Fiorentina",
+    },
+    {
+        "canonical": "Genoa",
+        "mascot": "Genoa",
+        "city": "Genoa",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#AD1919",
+
+        # Polymarket
+        "polymarket_id": 3428,
+        "polymarket_abbreviation": "gen",
+        "polymarket_name": "Genoa CFC",
+        "polymarket_safe_name": "Genoa CFC",
+        "polymarket_names": ["Genoa CFC", "Genoa", "GEN"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Genoa",
+    },
+    {
+        "canonical": "Hellas Verona",
+        "mascot": "Hellas Verona",
+        "city": "Verona",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#005395",
+
+        # Polymarket
+        "polymarket_id": 3429,
+        "polymarket_abbreviation": "ver",
+        "polymarket_name": "Hellas Verona FC",
+        "polymarket_safe_name": "Hellas Verona",
+        "polymarket_names": ["Hellas Verona FC", "Hellas Verona", "VER"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Hellas Verona",
+    },
+    {
+        "canonical": "Inter Milan",
+        "mascot": "Inter Milan",
+        "city": "Milan",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#010E80",
+
+        # Polymarket
+        "polymarket_id": 3427,
+        "polymarket_abbreviation": "int",
+        "polymarket_name": "FC Internazionale Milano",
+        "polymarket_safe_name": "FC Internazionale Milano",
+        "polymarket_names": ["FC Internazionale Milano", "Inter Milan", "Internazionale", "INT"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Inter Milan",
+    },
+    {
+        "canonical": "Juventus",
+        "mascot": "Juventus",
+        "city": "Turin",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#000000",
+
+        # Polymarket
+        "polymarket_id": 3421,
+        "polymarket_abbreviation": "juv",
+        "polymarket_name": "Juventus FC",
+        "polymarket_safe_name": "Juventus",
+        "polymarket_names": ["Juventus FC", "Juventus", "JUV"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Juventus",
+    },
+    {
+        "canonical": "Lazio",
+        "mascot": "Lazio",
+        "city": "Rome",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#64BBDC",
+
+        # Polymarket
+        "polymarket_id": 3422,
+        "polymarket_abbreviation": "laz",
+        "polymarket_name": "SS Lazio",
+        "polymarket_safe_name": "SS Lazio",
+        "polymarket_names": ["SS Lazio", "Lazio", "LAZ"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Lazio",
+    },
+    {
+        "canonical": "Lecce",
+        "mascot": "Lecce",
+        "city": "Lecce",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#D7C900",
+
+        # Polymarket
+        "polymarket_id": 3438,
+        "polymarket_abbreviation": "lec",
+        "polymarket_name": "US Lecce",
+        "polymarket_safe_name": "US Lecce",
+        "polymarket_names": ["US Lecce", "Lecce", "LEC"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Lecce",
+    },
+    {
+        "canonical": "Napoli",
+        "mascot": "Napoli",
+        "city": "Naples",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#12A0D7",
+
+        # Polymarket
+        "polymarket_id": 3430,
+        "polymarket_abbreviation": "nap",
+        "polymarket_name": "SSC Napoli",
+        "polymarket_safe_name": "SSC Napoli",
+        "polymarket_names": ["SSC Napoli", "Napoli", "NAP"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Napoli",
+    },
+    {
+        "canonical": "Parma",
+        "mascot": "Parma",
+        "city": "Parma",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#1B4094",
+
+        # Polymarket
+        "polymarket_id": 3436,
+        "polymarket_abbreviation": "par",
+        "polymarket_name": "Parma Calcio 1913",
+        "polymarket_safe_name": "Parma Calcio 1913",
+        "polymarket_names": ["Parma Calcio 1913", "Parma", "PAR"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Parma",
+    },
+    {
+        "canonical": "Pisa",
+        "mascot": "Pisa",
+        "city": "Pisa",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#0072B4",
+
+        # Polymarket
+        "polymarket_id": 3435,
+        "polymarket_abbreviation": "pis",
+        "polymarket_name": "Pisa SC",
+        "polymarket_safe_name": "Pisa",
+        "polymarket_names": ["Pisa SC", "Pisa", "PIS"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Pisa",
+    },
+    {
+        "canonical": "Sassuolo",
+        "mascot": "Sassuolo",
+        "city": "Sassuolo",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#1EA351",
+
+        # Polymarket
+        "polymarket_id": 3433,
+        "polymarket_abbreviation": "sas",
+        "polymarket_name": "US Sassuolo Calcio",
+        "polymarket_safe_name": "US Sassuolo Calcio",
+        "polymarket_names": ["US Sassuolo Calcio", "Sassuolo", "SAS"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Sassuolo",
+    },
+    {
+        "canonical": "Torino",
+        "mascot": "Torino",
+        "city": "Turin",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#8A1E03",
+
+        # Polymarket
+        "polymarket_id": 3431,
+        "polymarket_abbreviation": "tor",
+        "polymarket_name": "Torino FC",
+        "polymarket_safe_name": "Torino",
+        "polymarket_names": ["Torino FC", "Torino", "TOR"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Torino",
+    },
+    {
+        "canonical": "Udinese",
+        "mascot": "Udinese",
+        "city": "Udine",
+        "league": "sea",
+        "sport": "soccer_italy_serie_a",
+        "color": "#000000",
+
+        # Polymarket
+        "polymarket_id": 3432,
+        "polymarket_abbreviation": "udi",
+        "polymarket_name": "Udinese Calcio",
+        "polymarket_safe_name": "Udinese Calcio",
+        "polymarket_names": ["Udinese Calcio", "Udinese", "UDI"],
+
+        # Odds API
+        "odds_api_key": "soccer_italy_serie_a",
+        "odds_api_name": "Udinese",
+    },
+
     # =========================================================
     # UCL
     # =========================================================
