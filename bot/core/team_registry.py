@@ -6598,6 +6598,481 @@ TEAM_REGISTRY = [
         "odds_api_key": "basketball_ncaab",
         "odds_api_name": "Iona Gaels",
     },
+    {
+        "canonical": "James Madison Dukes",
+        "mascot": "Dukes",
+        "city": "Harrisonburg",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#450084",
+
+        # Polymarket
+        "polymarket_id": 1785,
+        "polymarket_abbreviation": "jmad",
+        "polymarket_name": "James Madison Dukes",
+        "polymarket_safe_name": "James Madison Dukes",
+        "polymarket_names": ["James Madison Dukes", "JMAD"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "James Madison Dukes",
+    },
+    {
+        "canonical": "Kennesaw State Owls",
+        "mascot": "Owls",
+        "city": "Kennesaw",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#EAA612",
+
+        # Polymarket
+        "polymarket_id": 1701,
+        "polymarket_abbreviation": "kenest",
+        "polymarket_name": "Kennesaw State Owls",
+        "polymarket_safe_name": "Kennesaw State Owls",
+        "polymarket_names": ["Kennesaw State Owls", "Kennesaw St Owls", "KENEST"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Kennesaw St Owls",
+    },
+    {
+        "canonical": "Kent State Golden Flashes",
+        "mascot": "Golden Flashes",
+        "city": "Kent",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#003F8E",
+
+        # Polymarket
+        "polymarket_id": 1837,
+        "polymarket_abbreviation": "kentst",
+        "polymarket_name": "Kent State Golden Flashes",
+        "polymarket_safe_name": "Kent State Golden Flashes",
+        "polymarket_names": ["Kent State Golden Flashes", "KENTST"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Kent State Golden Flashes",
+    },
+    {
+        "canonical": "LIU Sharks",
+        "mascot": "Sharks",
+        "city": "Brooklyn",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#4FB5E5",
+
+        # Polymarket
+        "polymarket_id": 1886,
+        "polymarket_abbreviation": "liub",
+        "polymarket_name": "LIU Sharks",
+        "polymarket_safe_name": "Long Island University Sharks",
+        "polymarket_names": ["LIU Sharks", "Long Island University Sharks", "LIUB"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "LIU Sharks",
+    },
+    {
+        "canonical": "Liberty Flames",
+        "mascot": "Flames",
+        "city": "Lynchburg",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#C41230",
+
+        # Polymarket
+        "polymarket_id": 1743,
+        "polymarket_abbreviation": "librty",
+        "polymarket_name": "Liberty Flames",
+        "polymarket_safe_name": "Liberty Flames",
+        "polymarket_names": ["Liberty Flames", "LIBRTY"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Liberty Flames",
+    },
+    {
+        "canonical": "Lindenwood Lions",
+        "mascot": "Lions",
+        "city": "St. Charles",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#0070B9",
+
+        # Polymarket
+        "polymarket_id": 2013,
+        "polymarket_abbreviation": "jac",
+        "polymarket_name": "Lindenwood Lions",
+        "polymarket_safe_name": "Lindenwood Lions",
+        "polymarket_names": ["Lindenwood Lions", "JAC"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Lindenwood Lions",
+    },
+    {
+        "canonical": "Little Rock Trojans",
+        "mascot": "Trojans",
+        "city": "Little Rock",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#792A3F",
+
+        # Polymarket
+        "polymarket_id": 1980,
+        "polymarket_abbreviation": "arlr",
+        "polymarket_name": "Little Rock Trojans",
+        "polymarket_safe_name": "Little Rock Trojans",
+        "polymarket_names": ["Little Rock Trojans", "Arkansas-Little Rock Trojans", "ARLR"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Arkansas-Little Rock Trojans",
+    },
+    {
+        "canonical": "Louisiana-Monroe Warhawks",
+        "mascot": "Warhawks",
+        "city": "Monroe",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#862633",
+
+        # Polymarket
+        "polymarket_id": 1983,
+        "polymarket_abbreviation": "lamon",
+        "polymarket_name": "Louisiana-Monroe Warhawks",
+        "polymarket_safe_name": "UL Monroe Warhawks",
+        "polymarket_names": ["Louisiana-Monroe Warhawks", "UL Monroe Warhawks", "LAMON"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "UL Monroe Warhawks",
+    },
+    {
+        "canonical": "Loyola Chicago Ramblers",
+        "mascot": "Ramblers",
+        "city": "Chicago",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#8D0034",
+
+        # Polymarket
+        "polymarket_id": 1867,
+        "polymarket_abbreviation": "loych",
+        "polymarket_name": "Loyola Chicago Ramblers",
+        "polymarket_safe_name": "Loyola Chicago Ramblers",
+        "polymarket_names": ["Loyola Chicago Ramblers", "Loyola (Chi) Ramblers", "LOYCH"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Loyola (Chi) Ramblers",
+    },
+    {
+        "canonical": "Manhattan Jaspers",
+        "mascot": "Jaspers",
+        "city": "Riverdale",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#00703C",
+
+        # Polymarket
+        "polymarket_id": 1830,
+        "polymarket_abbreviation": "manh",
+        "polymarket_name": "Manhattan Jaspers",
+        "polymarket_safe_name": "Manhattan Jaspers",
+        "polymarket_names": ["Manhattan Jaspers", "MANH"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Manhattan Jaspers",
+    },
+    {
+        "canonical": "Marist Red Foxes",
+        "mascot": "Red Foxes",
+        "city": "Poughkeepsie",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#C8102E",
+
+        # Polymarket
+        "polymarket_id": 1835,
+        "polymarket_abbreviation": "marist",
+        "polymarket_name": "Marist Red Foxes",
+        "polymarket_safe_name": "Marist Red Foxes",
+        "polymarket_names": ["Marist Red Foxes", "MARIST"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Marist Red Foxes",
+    },
+    {
+        "canonical": "Maryland Eastern Shore Hawks",
+        "mascot": "Hawks",
+        "city": "Princess Anne",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#872743",
+
+        # Polymarket
+        "polymarket_id": 1852,
+        "polymarket_abbreviation": "mdes",
+        "polymarket_name": "Maryland Eastern Shore Hawks",
+        "polymarket_safe_name": "Maryland Eastern Shore Hawks",
+        "polymarket_names": ["Maryland Eastern Shore Hawks", "Maryland-Eastern Shore Hawks", "MDES"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Maryland-Eastern Shore Hawks",
+    },
+    {
+        "canonical": "Maryland Terrapins",
+        "mascot": "Terrapins",
+        "city": "College Park",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#E03A3E",
+
+        # Polymarket
+        "polymarket_id": 1751,
+        "polymarket_abbreviation": "mary",
+        "polymarket_name": "Maryland Terrapins",
+        "polymarket_safe_name": "Maryland Terrapins",
+        "polymarket_names": ["Maryland Terrapins", "MARY"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Maryland Terrapins",
+    },
+    {
+        "canonical": "UMass Lowell River Hawks",
+        "mascot": "River Hawks",
+        "city": "Lowell",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#0067B1",
+
+        # Polymarket
+        "polymarket_id": 1676,
+        "polymarket_abbreviation": "maslow",
+        "polymarket_name": "Massachusetts-Lowell River Hawks",
+        "polymarket_safe_name": "UMass Lowell River Hawks",
+        "polymarket_names": ["Massachusetts-Lowell River Hawks", "UMass Lowell River Hawks", "MASLOW"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "UMass Lowell River Hawks",
+    },
+    {
+        "canonical": "Mercer Bears",
+        "mascot": "Bears",
+        "city": "Macon",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#F76800",
+
+        # Polymarket
+        "polymarket_id": 1941,
+        "polymarket_abbreviation": "merc",
+        "polymarket_name": "Mercer Bears",
+        "polymarket_safe_name": "Mercer Bears",
+        "polymarket_names": ["Mercer Bears", "MERC"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Mercer Bears",
+    },
+    {
+        "canonical": "Miami (OH) RedHawks",
+        "mascot": "RedHawks",
+        "city": "Oxford",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#C41230",
+
+        # Polymarket
+        "polymarket_id": 1841,
+        "polymarket_abbreviation": "miaoh",
+        "polymarket_name": "Miami (OH) RedHawks",
+        "polymarket_safe_name": "Miami (OH) RedHawks",
+        "polymarket_names": ["Miami (OH) RedHawks", "MIAOH"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Miami (OH) RedHawks",
+    },
+    {
+        "canonical": "Miami Hurricanes",
+        "mascot": "Hurricanes",
+        "city": "Coral Gables",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#F47321",
+
+        # Polymarket
+        "polymarket_id": 1682,
+        "polymarket_abbreviation": "mia",
+        "polymarket_name": "Miami Hurricanes",
+        "polymarket_safe_name": "Miami Hurricanes",
+        "polymarket_names": ["Miami Hurricanes", "MIA"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Miami Hurricanes",
+    },
+    {
+        "canonical": "Michigan Wolverines",
+        "mascot": "Wolverines",
+        "city": "Ann Arbor",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#00426B",
+
+        # Polymarket
+        "polymarket_id": 1754,
+        "polymarket_abbreviation": "mich",
+        "polymarket_name": "Michigan Wolverines",
+        "polymarket_safe_name": "Michigan Wolverines",
+        "polymarket_names": ["Michigan Wolverines", "MICH"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Michigan Wolverines",
+    },
+    {
+        "canonical": "Montana Grizzlies",
+        "mascot": "Grizzlies",
+        "city": "Missoula",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#660033",
+
+        # Polymarket
+        "polymarket_id": 1727,
+        "polymarket_abbreviation": "mont",
+        "polymarket_name": "Montana Grizzlies",
+        "polymarket_safe_name": "Montana Grizzlies",
+        "polymarket_names": ["Montana Grizzlies", "MONT"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Montana Grizzlies",
+    },
+    {
+        "canonical": "Montana State Bobcats",
+        "mascot": "Bobcats",
+        "city": "Bozeman",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#0D2C6C",
+
+        # Polymarket
+        "polymarket_id": 1733,
+        "polymarket_abbreviation": "monst",
+        "polymarket_name": "Montana State Bobcats",
+        "polymarket_safe_name": "Montana State Bobcats",
+        "polymarket_names": ["Montana State Bobcats", "Montana St Bobcats", "MONST"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Montana St Bobcats",
+    },
+    {
+        "canonical": "Murray State Racers",
+        "mascot": "Racers",
+        "city": "Murray",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#002144",
+
+        # Polymarket
+        "polymarket_id": 1897,
+        "polymarket_abbreviation": "murst",
+        "polymarket_name": "Murray State Racers",
+        "polymarket_safe_name": "Murray State Racers",
+        "polymarket_names": ["Murray State Racers", "Murray St Racers", "MURST"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Murray St Racers",
+    },
+    {
+        "canonical": "Nevada Wolf Pack",
+        "mascot": "Wolf Pack",
+        "city": "Reno",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#003366",
+
+        # Polymarket
+        "polymarket_id": 1874,
+        "polymarket_abbreviation": "nevada",
+        "polymarket_name": "Nevada Wolf Pack",
+        "polymarket_safe_name": "Nevada Wolf Pack",
+        "polymarket_names": ["Nevada Wolf Pack", "NEVADA"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Nevada Wolf Pack",
+    },
+    {
+        "canonical": "New Orleans Privateers",
+        "mascot": "Privateers",
+        "city": "New Orleans",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#005CA6",
+
+        # Polymarket
+        "polymarket_id": 1954,
+        "polymarket_abbreviation": "no",
+        "polymarket_name": "New Orleans Privateers",
+        "polymarket_safe_name": "New Orleans Privateers",
+        "polymarket_names": ["New Orleans Privateers", "NO"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "New Orleans Privateers",
+    },
+    {
+        "canonical": "Norfolk State Spartans",
+        "mascot": "Spartans",
+        "city": "Norfolk",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#007A53",
+
+        # Polymarket
+        "polymarket_id": 1850,
+        "polymarket_abbreviation": "norfst",
+        "polymarket_name": "Norfolk State Spartans",
+        "polymarket_safe_name": "Norfolk State Spartans",
+        "polymarket_names": ["Norfolk State Spartans", "Norfolk St Spartans", "NORFST"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "Norfolk St Spartans",
+    },
+    {
+        "canonical": "North Carolina Central Eagles",
+        "mascot": "Eagles",
+        "city": "Durham",
+        "league": "cbb",
+        "sport": "basketball_ncaab",
+        "color": "#8B2331",
+
+        # Polymarket
+        "polymarket_id": 1855,
+        "polymarket_abbreviation": "ncc",
+        "polymarket_name": "North Carolina Central Eagles",
+        "polymarket_safe_name": "North Carolina Central Eagles",
+        "polymarket_names": ["North Carolina Central Eagles", "NCC"],
+
+        # Odds API
+        "odds_api_key": "basketball_ncaab",
+        "odds_api_name": "North Carolina Central Eagles",
+    },
 
     # =========================================================
     # CFB
