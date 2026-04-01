@@ -33,6 +33,23 @@ ODDS_API_BASE = "https://api.the-odds-api.com"
 # Sports we trade — must match Polymarket v2/sports sport names
 TARGET_SPORTS = {"Basketball", "Football", "Ice Hockey", "Baseball", "Soccer"}
 
+# Known name differences between Polymarket and Odds API
+# {normalized_polymarket_name: normalized_odds_api_name}
+TEAM_ALIASES = {
+    "fc bayern munchen": "bayern munich",
+    "fc internazionale milano": "inter milan",
+    "sporting cp": "sporting lisbon",
+    "borussia monchengladbach": "borussia monchengladbach",  # accent handled by normalize
+    "bv borussia 09 dortmund": "borussia dortmund",
+    "sv werder bremen": "werder bremen",
+    "tsg 1899 hoffenheim": "tsg hoffenheim",
+    "1 fc heidenheim 1846": "1 fc heidenheim",
+    "1 fsv mainz 05": "fsv mainz 05",
+    "1 fc union berlin": "union berlin",
+    "fc st pauli 1910": "fc st pauli",
+    "bayer 04 leverkusen": "bayer leverkusen",
+}
+
 
 def normalize_team(name: str) -> str:
     """Normalize team name for comparison.
