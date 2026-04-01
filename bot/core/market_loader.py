@@ -161,8 +161,8 @@ class MarketLoader:
                     if s not in new_slugs:
                         new_slugs.append(s)
 
-            if self.ws_manager and new_slugs:
-                await self.ws_manager.subscribe_markets(new_slugs)
+            # WebSocket subscriptions handled by pipeline
+            # (only matched games with odds data need price streams)
 
             count = await self.registry.count()
             logger.info(f"Market refresh: {count} active markets, {len(new_slugs)} slugs")
