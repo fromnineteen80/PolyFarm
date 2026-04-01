@@ -189,20 +189,31 @@ class WalletManager:
         if self.state.session_locked:
             return
         floor = self.state.floor_value
+        if floor <= 0:
+            return
         gap_pct = (total - floor) / floor
 
         if total <= floor:
             await self._floor_breach_protocol()
             return
 
+        # Only alert once per level — reset when gap recovers above 15%
         if gap_pct <= 0.05 and self._alerts:
-            await self._alerts.send_floor_critical(
-                total, floor, gap_pct
-            )
+            if not getattr(self, '_floor_critical_sent', False):
+                await self._alerts.send_floor_critical(
+                    total, floor, gap_pct
+                )
+                self._floor_critical_sent = True
+                self._floor_warning_sent = True
         elif gap_pct <= 0.10 and self._alerts:
-            await self._alerts.send_floor_warning(
-                total, floor, gap_pct
-            )
+            if not getattr(self, '_floor_warning_sent', False):
+                await self._alerts.send_floor_warning(
+                    total, floor, gap_pct
+                )
+                self._floor_warning_sent = True
+        elif gap_pct > 0.15:
+            self._floor_warning_sent = False
+            self._floor_critical_sent = False
 
     async def _check_profit_tiers(self):
         if self.state.session_locked:
