@@ -180,10 +180,13 @@ class EdgeDetector:
                 pass
 
         mapping_conf = 1.0
-        volume = market.volume
-        if volume < 20000:
+        # Use bid/ask depth from WebSocket as liquidity proxy
+        # v2 doesn't return volume; depth is a better real-time measure
+        bid_depth = event.get("bid_depth", 0) or 0
+        ask_depth = event.get("ask_depth", 0) or 0
+        if bid_depth < 3 and ask_depth < 3:
             return None
-        liquidity = 1.0 if volume > 50000 else 0.90
+        liquidity = 1.0 if (bid_depth >= 5 and ask_depth >= 5) else 0.90
         stability = 1.0
 
         confidence = (
