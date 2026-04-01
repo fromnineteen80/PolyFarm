@@ -2,24 +2,17 @@
 # OracleFarming Bot — Start
 # Run from anywhere: bash /root/PolyFarm/bot/start.sh
 
-set -e
-
 BOT_DIR="/root/PolyFarm/bot"
 LOG="/tmp/oraclefarming.log"
 
-cd "$BOT_DIR"
-
-# Pull latest code
-echo "Pulling latest code..."
-cd /root/PolyFarm && git pull origin main
-cd "$BOT_DIR"
+cd "$BOT_DIR" || exit 1
 
 # Stop any existing bot
 pkill -f "python3 main.py" 2>/dev/null && echo "Stopped existing bot" && sleep 2 || true
 
 # Activate virtual environment
 if [ ! -d "venv" ]; then
-    echo "Run setup.sh first"
+    echo "ERROR: Run setup.sh first"
     exit 1
 fi
 source venv/bin/activate
@@ -30,27 +23,31 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
-# Start bot with logging
+# Start bot
 echo "Starting OracleFarming bot..."
-echo "Log: $LOG"
 python3 main.py > "$LOG" 2>&1 &
-BOT_PID=$!
-echo "Bot PID: $BOT_PID"
+echo "PID: $!"
 
-# Wait for pipeline startup
-echo "Waiting for pipeline..."
-sleep 40
+# Wait for pipeline
+echo "Waiting for pipeline startup..."
+for i in $(seq 1 50); do
+    if grep -aq "Pipeline startup complete" "$LOG" 2>/dev/null; then
+        break
+    fi
+    sleep 1
+done
 
-# Show status
 echo ""
-echo "=== Pipeline Status ==="
-grep -a -E "(Step [0-9]|Pipeline|matched|WebSocket connected|Buying power)" "$LOG" 2>/dev/null || echo "No output yet — check: tail -f $LOG"
+echo "=== Status ==="
+grep -a -E "(Buying power|Step [0-9]|Pipeline|matched|WebSocket connected)" "$LOG" 2>/dev/null || echo "Still starting — run: tail -f $LOG"
+
+ERRORS=$(grep -ac "ERROR" "$LOG" 2>/dev/null || echo "0")
+if [ "$ERRORS" != "0" ]; then
+    echo ""
+    echo "=== $ERRORS Errors ==="
+    grep -a "ERROR" "$LOG" 2>/dev/null | head -5
+fi
+
 echo ""
-echo "=== Errors ==="
-grep -a -c "ERROR" "$LOG" 2>/dev/null | xargs -I{} echo "{} errors found"
-grep -a "ERROR" "$LOG" 2>/dev/null | head -5
-echo ""
-echo "=== Commands ==="
 echo "  tail -f $LOG"
-echo "  bash $BOT_DIR/stop.sh"
-echo "  bash $BOT_DIR/start.sh"
+echo "  bash /root/PolyFarm/bot/stop.sh"
