@@ -619,16 +619,37 @@ class Pipeline:
 
     async def step7_match_games(self):
         """Match Polymarket games to Odds API events
-        using the team bridge from Step 5."""
+        using the team bridge from Step 5.
+
+        Three outcomes per game:
+        - matched: both teams found in Odds API event, edge can be calculated
+        - waiting_for_odds: no Odds API event exists yet (normal for future games)
+        - unmatched: Odds API has events for this league but we couldn't
+          connect this game (broken — team bridge or time mismatch)
+        """
         self.matched_games = {}
         matched = 0
-        unmatched = 0
+        waiting_for_odds = 0
+        unmatched = []
+
+        # Build set of odds events by sport key for quick lookup
+        odds_by_sport = {}
+        for eid, ev in self.odds_events.items():
+            key = ev["sport_key"]
+            if key not in odds_by_sport:
+                odds_by_sport[key] = []
+            odds_by_sport[key].append((eid, ev))
 
         for slug, game in self.games.items():
             poly_league = game["league"]
             odds_key = self.league_to_odds_key.get(poly_league)
             if not odds_key:
-                unmatched += 1
+                waiting_for_odds += 1
+                continue
+
+            sport_events = odds_by_sport.get(odds_key, [])
+            if not sport_events:
+                waiting_for_odds += 1
                 continue
 
             norm_home = normalize_team(game["home_team"])
@@ -643,10 +664,7 @@ class Pipeline:
             best_event_id = None
             best_reversed = False
 
-            for eid, odds_event in self.odds_events.items():
-                if odds_event["sport_key"] != odds_key:
-                    continue
-
+            for eid, odds_event in sport_events:
                 odds_home = normalize_team(odds_event["home_team"])
                 odds_away = normalize_team(odds_event["away_team"])
                 odds_start = odds_event.get("commence_time", "")
@@ -688,9 +706,38 @@ class Pipeline:
                 }
                 matched += 1
             else:
-                unmatched += 1
+                # Odds exist for this league but we couldn't match this game.
+                # Check if the game time is beyond what the Odds API covers
+                # (bookmakers typically only post odds 1-2 days out)
+                has_nearby_odds = False
+                for eid, odds_event in sport_events:
+                    odds_start = odds_event.get("commence_time", "")
+                    if poly_start and odds_start:
+                        try:
+                            pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00"))
+                            ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00"))
+                            if abs((pt - ot).total_seconds()) <= 7200:
+                                has_nearby_odds = True
+                                break
+                        except Exception:
+                            pass
 
-        logger.info(f"Step 7 complete: {matched} matched, {unmatched} unmatched")
+                if has_nearby_odds:
+                    # Odds API has events around this time but we couldn't match — broken
+                    unmatched.append(
+                        f"{game['home_team']} vs {game['away_team']} ({poly_league}, {slug})")
+                else:
+                    # No odds near this game time — just not posted yet
+                    waiting_for_odds += 1
+
+        if unmatched:
+            for name in unmatched:
+                logger.warning(f"Step 7 UNMATCHED: {name}")
+
+        logger.info(
+            f"Step 7 complete: {matched} matched, "
+            f"{waiting_for_odds} waiting for odds, "
+            f"{len(unmatched)} unmatched (broken)")
         return True
 
     # ─────────────────────────────────────────
