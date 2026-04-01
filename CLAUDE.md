@@ -99,37 +99,19 @@ ucl → soccer_uefa_champs_league → soccer_uefa_champs_league
 
 ## WHAT EXISTS AND ITS STATUS
 
-### `bot/core/team_registry.py` — NEEDS FULL REWRITE
-Currently has 92 teams (NBA 30, NHL 32, MLB 30) in an **old flat structure** missing `polymarket_id`, `polymarket_name`, `polymarket_safe_name`, `polymarket_abbreviation`. Needs to be rewritten with the approved structure below, and needs ALL remaining leagues added: MLS (30), EPL (20), La Liga (20), Bundesliga (18), Serie A (20), CBB (all D1), CFB (all D1).
+### `bot/core/team_registry.py` — COMPLETE
+929 teams across 12 leagues: NBA (30), NHL (32), MLB (30), NFL (32), MLS (30), EPL (20), La Liga (20), Bundesliga (18), Serie A (20), UCL (60), CBB (365), CFB (272). All Polymarket fields sourced from v1/sports/teams endpoint. All Odds API names sourced from v4/sports/{key}/participants endpoint. Zero fuzzy matching. Zero assumptions.
 
-**The approved structure per team:**
-```python
-{
-    "canonical": "Juventus",
-    "mascot": "Juventus",
-    "city": "Turin",
-    "league": "sea",
-    "sport": "soccer_italy_serie_a",
-    "color": "#000000",
+**Lookup functions are league-scoped** and index by:
+- `polymarket_id` first (primary, unique, never ambiguous)
+- `(league, normalized_name)` fallback for both Polymarket and Odds API names
 
-    # Polymarket
-    "polymarket_id": 3421,
-    "polymarket_abbreviation": "juv",
-    "polymarket_name": "Juventus FC",          # their 'name' field
-    "polymarket_safe_name": "Juventus",        # their 'safeName' field
-    "polymarket_names": ["Juventus FC", "Juventus", "JUV"],  # all possible forms
-
-    # Odds API
-    "odds_api_key": "soccer_italy_serie_a",
-    "odds_api_name": "Juventus",
-}
-```
-
-**The team registry is a PERMANENT ROSTER — every team that exists in every league, regardless of whether they have a game today or ever. Do NOT limit the registry to teams with current events. If a team exists in the league, it goes in the registry. Use known full league rosters as the source, NOT events endpoints.**
+**The team registry is a PERMANENT ROSTER — every team that exists in every league, regardless of whether they have a game today or ever. Do NOT limit the registry to teams with current events. If a team exists in the league, it goes in the registry.**
 
 **How to get API-specific data for each team:**
-- Polymarket: use v2 endpoints only
-- Odds API: use v4 endpoints only
+- Polymarket: use v1 teams endpoint (`GET /v1/sports/teams?filters.league={slug}&limit=100&offset=0`)
+- Odds API: use v4 participants endpoint (`GET /v4/sports/{key}/participants?apiKey={KEY}`)
+- v1 is used ONLY for building the registry. It is NOT referenced in bot code at runtime.
 
 **Lookup functions must be league-scoped** to prevent cross-league collisions:
 - "Kings" = Sacramento Kings (NBA) vs Los Angeles Kings (NHL)
@@ -231,9 +213,9 @@ WalletManager with profit/loss tiers. Paper mode: $700 total, $350 per investor.
 
 ## STEP-BY-STEP EXECUTION ORDER
 
-**Step 1:** Rewrite `team_registry.py` with approved structure for NBA (30), NHL (32), MLB (30), MLS (30), EPL (20), La Liga (20), Bundesliga (18), Serie A (20). Use known full league rosters. Verify Odds API names with curl. Commit and push to main.
+**Step 1:** COMPLETE. Rewrote `team_registry.py` with approved structure for NBA (30), NHL (32), MLB (30), NFL (32), MLS (30), EPL (20), La Liga (20), Bundesliga (18), Serie A (20), UCL (60). All Polymarket fields from v1, all Odds API names from v4 participants.
 
-**Step 2:** Add all D1 college teams (CBB + CFB) to registry. Commit and push to main.
+**Step 2:** COMPLETE. Added all D1 college teams: CBB (365) and CFB (272). Total registry: 929 teams.
 
 **Step 3:** Update `pipeline.py` Step 5 (`step5_match_teams()`) to use registry lookups by `polymarket_id` first, name fallback within league scope. Remove old `TEAM_ALIASES` dict. Commit and push to main.
 
