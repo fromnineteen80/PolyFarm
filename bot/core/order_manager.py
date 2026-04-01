@@ -3,6 +3,9 @@ import logging
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from typing import Optional
+from zoneinfo import ZoneInfo
+
+ET = ZoneInfo("America/New_York")
 from config import (
     PAPER_MODE,
     TAKER_FEE_RATE, MAKER_REBATE_RATE,
@@ -756,10 +759,11 @@ class OrderManager:
             - position.entry_time
         ).total_seconds())
 
+        exit_utc = datetime.now(timezone.utc)
         await update_trade(position.trade_id, {
-            "timestamp_exit": datetime.now(
-                timezone.utc
-            ).isoformat(),
+            "timestamp_exit": exit_utc.isoformat(),
+            "timestamp_exit_et": exit_utc.astimezone(ET).isoformat(),
+            "trade_bucket": "historical",
             "exit_price": exit_price,
             "exit_type": exit_type,
             "pnl": net_pnl,
@@ -977,10 +981,11 @@ class OrderManager:
                              position_type: str,
                              fade_team: Optional[str],
                              paper_mode: bool) -> dict:
+        now_utc = datetime.now(timezone.utc)
         return {
-            "timestamp_entry": datetime.now(
-                timezone.utc
-            ).isoformat(),
+            "timestamp_entry": now_utc.isoformat(),
+            "timestamp_entry_et": now_utc.astimezone(ET).isoformat(),
+            "trade_bucket": "live",
             "market_slug": signal.slug,
             "sport": signal.sport,
             "teams": signal.teams,
