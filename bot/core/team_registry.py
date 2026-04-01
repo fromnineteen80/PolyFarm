@@ -3368,6 +3368,406 @@ TEAM_REGISTRY = [
     # La Liga
     # =========================================================
 
+    {
+        "canonical": "Alavés",
+        "mascot": "Alavés",
+        "city": "Vitoria-Gasteiz",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#0761AF",
+
+        # Polymarket
+        "polymarket_id": 3455,
+        "polymarket_abbreviation": "ala",
+        "polymarket_name": "Deportivo Alavés",
+        "polymarket_safe_name": "Deportivo Alavés",
+        "polymarket_names": ["Deportivo Alavés", "Alavés", "ALA"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Alavés",
+    },
+
+    {
+        "canonical": "Athletic Bilbao",
+        "mascot": "Athletic Bilbao",
+        "city": "Bilbao",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#E91D1E",
+
+        # Polymarket
+        "polymarket_id": 3445,
+        "polymarket_abbreviation": "ath",
+        "polymarket_name": "Athletic Club",
+        "polymarket_safe_name": "Athletic Club",
+        "polymarket_names": ["Athletic Club", "Athletic Bilbao", "ATH"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Athletic Bilbao",
+    },
+
+    {
+        "canonical": "Atletico Madrid",
+        "mascot": "Atletico Madrid",
+        "city": "Madrid",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#CB3524",
+
+        # Polymarket
+        "polymarket_id": 3440,
+        "polymarket_abbreviation": "atm",
+        "polymarket_name": "Club Atlético de Madrid",
+        "polymarket_safe_name": "Club Atlético de Madrid",
+        "polymarket_names": ["Club Atlético de Madrid", "Atletico Madrid", "Atlético Madrid", "ATM"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Atlético Madrid",
+    },
+
+    {
+        "canonical": "Barcelona",
+        "mascot": "Barcelona",
+        "city": "Barcelona",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#004D98",
+
+        # Polymarket
+        "polymarket_id": 3441,
+        "polymarket_abbreviation": "fcb",
+        "polymarket_name": "FC Barcelona",
+        "polymarket_safe_name": "FC Barcelona",
+        "polymarket_names": ["FC Barcelona", "Barcelona", "FCB"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Barcelona",
+    },
+
+    {
+        "canonical": "CA Osasuna",
+        "mascot": "CA Osasuna",
+        "city": "Pamplona",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#0A346F",
+
+        # Polymarket
+        "polymarket_id": 3454,
+        "polymarket_abbreviation": "osa",
+        "polymarket_name": "CA Osasuna",
+        "polymarket_safe_name": "CA Osasuna",
+        "polymarket_names": ["CA Osasuna", "Osasuna", "OSA"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "CA Osasuna",
+    },
+
+    {
+        "canonical": "Celta Vigo",
+        "mascot": "Celta Vigo",
+        "city": "Vigo",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#578FB7",
+
+        # Polymarket
+        "polymarket_id": 3449,
+        "polymarket_abbreviation": "cel",
+        "polymarket_name": "RC Celta de Vigo",
+        "polymarket_safe_name": "RC Celta de Vigo",
+        "polymarket_names": ["RC Celta de Vigo", "Celta Vigo", "CEL"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Celta Vigo",
+    },
+
+    {
+        "canonical": "Elche CF",
+        "mascot": "Elche CF",
+        "city": "Elche",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#05642C",
+
+        # Polymarket
+        "polymarket_id": 3458,
+        "polymarket_abbreviation": "elc",
+        "polymarket_name": "Elche CF",
+        "polymarket_safe_name": "Elche",
+        "polymarket_names": ["Elche CF", "Elche", "ELC"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Elche CF",
+    },
+
+    {
+        "canonical": "Espanyol",
+        "mascot": "Espanyol",
+        "city": "Barcelona",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#007CC4",
+
+        # Polymarket
+        "polymarket_id": 3450,
+        "polymarket_abbreviation": "esp",
+        "polymarket_name": "RCD Espanyol de Barcelona",
+        "polymarket_safe_name": "RCD Espanyol de Barcelona",
+        "polymarket_names": ["RCD Espanyol de Barcelona", "Espanyol", "ESP"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Espanyol",
+    },
+
+    {
+        "canonical": "Getafe",
+        "mascot": "Getafe",
+        "city": "Getafe",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#005999",
+
+        # Polymarket
+        "polymarket_id": 3446,
+        "polymarket_abbreviation": "get",
+        "polymarket_name": "Getafe CF",
+        "polymarket_safe_name": "Getafe",
+        "polymarket_names": ["Getafe CF", "Getafe", "GET"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Getafe",
+    },
+
+    {
+        "canonical": "Girona",
+        "mascot": "Girona",
+        "city": "Girona",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#CD2534",
+
+        # Polymarket
+        "polymarket_id": 3456,
+        "polymarket_abbreviation": "gir",
+        "polymarket_name": "Girona FC",
+        "polymarket_safe_name": "Girona",
+        "polymarket_names": ["Girona FC", "Girona", "GIR"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Girona",
+    },
+
+    {
+        "canonical": "Levante",
+        "mascot": "Levante",
+        "city": "Valencia",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#B3013D",
+
+        # Polymarket
+        "polymarket_id": 3447,
+        "polymarket_abbreviation": "lev",
+        "polymarket_name": "Levante UD",
+        "polymarket_safe_name": "Levante UD",
+        "polymarket_names": ["Levante UD", "Levante", "LEV"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Levante",
+    },
+
+    {
+        "canonical": "Mallorca",
+        "mascot": "Mallorca",
+        "city": "Palma",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#E20613",
+
+        # Polymarket
+        "polymarket_id": 3457,
+        "polymarket_abbreviation": "mall",
+        "polymarket_name": "RCD Mallorca",
+        "polymarket_safe_name": "RCD Mallorca",
+        "polymarket_names": ["RCD Mallorca", "Mallorca", "MALL"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Mallorca",
+    },
+
+    {
+        "canonical": "Rayo Vallecano",
+        "mascot": "Rayo Vallecano",
+        "city": "Madrid",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#E32D25",
+
+        # Polymarket
+        "polymarket_id": 3448,
+        "polymarket_abbreviation": "ray",
+        "polymarket_name": "Rayo Vallecano de Madrid",
+        "polymarket_safe_name": "Rayo Vallecano de Madrid",
+        "polymarket_names": ["Rayo Vallecano de Madrid", "Rayo Vallecano", "RAY"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Rayo Vallecano",
+    },
+
+    {
+        "canonical": "Real Betis",
+        "mascot": "Real Betis",
+        "city": "Seville",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#0BB363",
+
+        # Polymarket
+        "polymarket_id": 3451,
+        "polymarket_abbreviation": "bet",
+        "polymarket_name": "Real Betis Balompié",
+        "polymarket_safe_name": "Real Betis Balompié",
+        "polymarket_names": ["Real Betis Balompié", "Real Betis", "BET"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Real Betis",
+    },
+
+    {
+        "canonical": "Real Madrid",
+        "mascot": "Real Madrid",
+        "city": "Madrid",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#00529F",
+
+        # Polymarket
+        "polymarket_id": 3442,
+        "polymarket_abbreviation": "rma",
+        "polymarket_name": "Real Madrid CF",
+        "polymarket_safe_name": "Real Madrid",
+        "polymarket_names": ["Real Madrid CF", "Real Madrid", "RMA"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Real Madrid",
+    },
+
+    {
+        "canonical": "Real Oviedo",
+        "mascot": "Real Oviedo",
+        "city": "Oviedo",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#004393",
+
+        # Polymarket
+        "polymarket_id": 3459,
+        "polymarket_abbreviation": "ovi",
+        "polymarket_name": "Real Oviedo",
+        "polymarket_safe_name": "Real Oviedo",
+        "polymarket_names": ["Real Oviedo", "Oviedo", "OVI"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Oviedo",
+    },
+
+    {
+        "canonical": "Real Sociedad",
+        "mascot": "Real Sociedad",
+        "city": "San Sebastián",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#0067B1",
+
+        # Polymarket
+        "polymarket_id": 3452,
+        "polymarket_abbreviation": "rso",
+        "polymarket_name": "Real Sociedad de Fútbol",
+        "polymarket_safe_name": "Real Sociedad de Fútbol",
+        "polymarket_names": ["Real Sociedad de Fútbol", "Real Sociedad", "RSO"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Real Sociedad",
+    },
+
+    {
+        "canonical": "Sevilla",
+        "mascot": "Sevilla",
+        "city": "Seville",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#E72227",
+
+        # Polymarket
+        "polymarket_id": 3443,
+        "polymarket_abbreviation": "sev",
+        "polymarket_name": "Sevilla FC",
+        "polymarket_safe_name": "Sevilla",
+        "polymarket_names": ["Sevilla FC", "Sevilla", "SEV"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Sevilla",
+    },
+
+    {
+        "canonical": "Valencia",
+        "mascot": "Valencia",
+        "city": "Valencia",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#FF671F",
+
+        # Polymarket
+        "polymarket_id": 3444,
+        "polymarket_abbreviation": "val",
+        "polymarket_name": "Valencia CF",
+        "polymarket_safe_name": "Valencia",
+        "polymarket_names": ["Valencia CF", "Valencia", "VAL"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Valencia",
+    },
+
+    {
+        "canonical": "Villarreal",
+        "mascot": "Villarreal",
+        "city": "Villarreal",
+        "league": "lal",
+        "sport": "soccer_spain_la_liga",
+        "color": "#005187",
+
+        # Polymarket
+        "polymarket_id": 3453,
+        "polymarket_abbreviation": "vil",
+        "polymarket_name": "Villarreal CF",
+        "polymarket_safe_name": "Villarreal",
+        "polymarket_names": ["Villarreal CF", "Villarreal", "VIL"],
+
+        # Odds API
+        "odds_api_key": "soccer_spain_la_liga",
+        "odds_api_name": "Villarreal",
+    },
+
     # =========================================================
     # Bundesliga
     # =========================================================
