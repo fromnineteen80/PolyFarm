@@ -52,6 +52,10 @@ ALTER TABLE markets
 
 -- ─── TRADES TABLE ────────────────────────────
 
+-- game_id column (may be missing if 001 was applied before it was added)
+ALTER TABLE trades
+  ADD COLUMN IF NOT EXISTS game_id TEXT;
+
 -- Eastern time for trade entry
 ALTER TABLE trades
   ADD COLUMN IF NOT EXISTS timestamp_entry_et TEXT;
