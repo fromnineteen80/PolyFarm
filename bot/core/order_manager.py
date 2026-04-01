@@ -137,7 +137,7 @@ class OrderManager:
             stats = await self._get_paper_stats()
             await set_bot_config(
                 "paper_trades_completed",
-                str(stats["completed"])
+                str(stats["count"])
             )
             await set_bot_config(
                 "paper_win_rate",

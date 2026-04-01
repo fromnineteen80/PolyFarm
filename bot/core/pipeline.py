@@ -687,12 +687,15 @@ class Pipeline:
                 odds_away = normalize_team(odds_event["away_team"])
                 odds_start = odds_event.get("commence_time", "")
 
-                # Time proximity check
+                # Time proximity: same calendar day (ET) or within 12 hours
                 if poly_start and odds_start:
                     try:
                         pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00"))
                         ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00"))
-                        if abs((pt - ot).total_seconds()) > 10800:
+                        pt_et = pt.astimezone(ET)
+                        ot_et = ot.astimezone(ET)
+                        # Same day in ET, or within 12 hours (handles midnight crossover)
+                        if pt_et.date() != ot_et.date() and abs((pt - ot).total_seconds()) > 43200:
                             continue
                     except Exception:
                         pass
@@ -734,7 +737,9 @@ class Pipeline:
                         try:
                             pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00"))
                             ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00"))
-                            if abs((pt - ot).total_seconds()) <= 10800:
+                            pt_et = pt.astimezone(ET)
+                            ot_et = ot.astimezone(ET)
+                            if pt_et.date() == ot_et.date() or abs((pt - ot).total_seconds()) <= 43200:
                                 has_nearby_odds = True
                                 break
                         except Exception:
