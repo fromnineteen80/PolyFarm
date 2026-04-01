@@ -6,27 +6,37 @@ from datetime import datetime, timezone
 
 logger = logging.getLogger("polyfarm.alerts")
 
-EXIT_EMOJI = {
-    "reprice": "✅",
-    "exception_reprice": "✅",
-    "fade_reprice": "✅",
-    "profit_lock": "🔒",
-    "trailing_stop": "🛡️",
-    "timeout": "⏱️",
-    "resolution": "🏁",
-    "pre_resolution": "🏁",
-    "stop_loss": "🛑",
-    "exception_stop_loss": "🛑",
-    "fade_stop_loss": "🛑",
-    "drain": "💧",
-    "drain_LOCK_AND_DRAIN": "💧",
-    "drain_SHUTDOWN": "💧",
-    "emergency": "🚨",
-    "emergency_DAILY_HALT": "🚨",
-    "emergency_FLOOR_BREACH": "🚨",
-    "fade_deficit_closed": "⚠️",
-    "overnight_reeval": "🌙",
+# Human-readable exit reason labels
+EXIT_LABEL = {
+    "reprice": "sold at target",
+    "exception_reprice": "sold at target",
+    "fade_reprice": "sold at target",
+    "profit_lock": "target hit",
+    "trailing_stop": "locked in gains",
+    "timeout": "held too long",
+    "resolution": "game over",
+    "pre_resolution": "game ending",
+    "stop_loss": "cut losses",
+    "exception_stop_loss": "cut losses",
+    "fade_stop_loss": "cut losses",
+    "drain": "closing out",
+    "drain_LOCK_AND_DRAIN": "closing out",
+    "drain_SHUTDOWN": "shutting down",
+    "emergency": "emergency exit",
+    "emergency_DAILY_HALT": "daily limit hit",
+    "emergency_FLOOR_BREACH": "floor breached",
+    "fade_deficit_closed": "fade recovered",
+    "overnight_reeval": "overnight review",
 }
+
+def _exit_label(exit_type: str) -> str:
+    label = EXIT_LABEL.get(exit_type)
+    if label:
+        return label
+    for k, v in EXIT_LABEL.items():
+        if k in exit_type:
+            return v
+    return exit_type
 
 
 class AlertManager:
@@ -103,7 +113,7 @@ class AlertManager:
                 lines.append(
                     f"  {b.get('teams', '?')}: "
                     f"{sign}${b.get('pnl', 0):.2f} "
-                    f"({b.get('exit_type', '?')})"
+                    f"({_exit_label(b.get('exit_type', '?'))})"
                 )
             if len(exits) > 5:
                 lines.append(f"  ... and {len(exits) - 5} more")
