@@ -1011,6 +1011,10 @@ class OrderManager:
             ),
             "fade_team": fade_team,
             "game_id": getattr(signal, "game_id", None),
+            "price_direction_at_entry": getattr(signal, "price_direction", "stable"),
+            "price_velocity_at_entry": getattr(signal, "price_velocity", 0.0),
+            "net_buy_pressure_at_entry": getattr(signal, "net_buy_pressure", 1.0),
+            "odds_api_event_id": getattr(signal, "odds_api_event_id", ""),
         }
 
     def _is_game_tied(self, score: str) -> bool:

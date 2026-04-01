@@ -353,8 +353,8 @@ class AlertManager:
             f"{emoji} PRE-GAME INTEL",
             f"{game.home_team} vs {game.away_team}",
             f"Sport: {game.sport} | "
-            f"Start: {game.start_time}",
-            f"Volume: ${game.volume:,.0f}",
+            f"Start: {game.game_start_time}",
+            f"Price: {game.yes_price:.2f}",
             "",
         ]
 

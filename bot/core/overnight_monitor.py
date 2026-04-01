@@ -67,7 +67,7 @@ class OvernightMonitor:
                 continue
             try:
                 start = datetime.fromisoformat(
-                    market.start_time.replace(
+                    market.game_start_time.replace(
                         "Z", "+00:00"
                     )
                 )
@@ -80,8 +80,7 @@ class OvernightMonitor:
 
             if market.yes_price < FAVORITES_FLOOR:
                 continue
-            if market.volume < OVERNIGHT_MIN_VOLUME:
-                continue
+            # volume not available from v2 — skip volume gate
 
             if not self.mapper or not hasattr(self.mapper, 'is_matched'):
                 continue

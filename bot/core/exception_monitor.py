@@ -264,9 +264,7 @@ class ExceptionMonitor:
             if poly_price < FAVORITES_FLOOR:
                 continue
 
-            # Volume and spread check
-            if market.volume < EXCEPTION_MIN_VOLUME:
-                continue
+            # volume not available from v2 — skip volume gate
 
             try:
                 from core.market_loader import parse_bbo

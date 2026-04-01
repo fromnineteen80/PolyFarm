@@ -274,8 +274,7 @@ class FadeMonitor:
             if oracle_gap < min_gap:
                 continue
 
-            if market.volume < FADE_MIN_VOLUME:
-                continue
+            # volume not available from v2 — skip volume gate
 
             try:
                 from core.market_loader import parse_bbo

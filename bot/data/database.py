@@ -155,7 +155,7 @@ async def get_paper_trade_stats() -> dict:
     trades = result.data or []
     if not trades:
         return {"count": 0, "win_rate": 0.0}
-    wins = sum(1 for t in trades if t["pnl"] > 0)
+    wins = sum(1 for t in trades if (t.get("pnl") or 0) > 0)
     return {
         "count": len(trades),
         "win_rate": wins / len(trades)

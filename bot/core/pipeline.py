@@ -172,9 +172,17 @@ class Pipeline:
         # {normalized_polymarket_name: normalized_odds_api_name}
         self.team_bridge: dict = {}
 
-        # Step 6+7 output: matched games
+        # Step 6 output: games
+        # {polymarket_slug: {home_team, away_team, yes_price, ...}}
+        self.games: dict = {}
+
+        # Step 7 output: matched games
         # {polymarket_slug: {odds_event_id, reversed, ...}}
         self.matched_games: dict = {}
+
+        # Step 8 output: scores
+        # {odds_api_event_id: {home_score, away_score, completed, ...}}
+        self.scores: dict = {}
 
         # Internal
         self._http: Optional[httpx.AsyncClient] = None
