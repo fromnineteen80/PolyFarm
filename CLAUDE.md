@@ -31,10 +31,10 @@ REAL-TIME LAYER
     feeds: position_monitor, wallet
 
 EDGE DETECTION (per price tick from WebSocket)
-  1. Price >= 55c favorites floor
+  1. Price >= 15c (excludes extreme longshots only)
   2. Game matched in pipeline (has sharp odds)
   3. No existing position on this game
-  4. Band classification: A (8%+ at 70c+), B (5-8% at 60-70c), C (3-5% at 55-60c)
+  4. Band classification: A (4%+ at 50c+), B (3%+ at 35-50c), C (2%+ at 20-35c)
   5. Composite edge signal: sharp_prob - poly_price + direction + pressure
   6. Bid/ask depth >= 3 (liquidity check)
   7. Odds freshness < 5 minutes
@@ -62,11 +62,11 @@ DATA STORES
 
 ## WHAT IS ORACLEFARMING
 
-An automated sports prediction market trading bot that:
+A high-volume automated sports prediction market trading bot that:
 1. Monitors moneyline markets on **Polymarket US** across NBA, NHL, MLB, CBB, CFB, NFL, EPL, MLS, La Liga, Bundesliga, Serie A, UCL
-2. Compares Polymarket crowd prices against US bookmaker consensus from **The Odds API** (DraftKings, FanDuel, BetMGM, Bovada, BetRivers, Fanatics, MyBookie)
-3. Calculates edge (sharp fair probability minus Polymarket price)
-4. Executes paper trades when edge exceeds band thresholds
+2. Compares real-time Polymarket CLOB prices (via WebSocket) against US bookmaker consensus from **The Odds API** (DraftKings, FanDuel, BetMGM, Bovada, BetRivers, Fanatics, MyBookie)
+3. Farms small, consistent misprices across the entire price range — no arbitrary price floor
+4. Fee-adjusted edge thresholds: Band A (4%+ at 50c+), Band B (3%+ at 35-50c), Band C (2%+ at 20-35c)
 5. Paper mode: $700 total seed ($350 per investor), 300 minimum trades at 70%+ win rate before going live
 6. Runs on DigitalOcean server 24/7, Next.js dashboard deployed on Vercel
 
@@ -252,11 +252,13 @@ Still has `flush_to_supabase()` and `flush_loop()` which write to the markets Su
 ### `bot/core/odds_api_client.py` — OLD, BEING REPLACED BY PIPELINE
 Has `OddsAPIClient` with team matching, edge signals, `_market_map` for orientation tracking ({event_id, reversed} for knowing if YES = home or away). Being replaced by pipeline steps 4-5-8.
 
-### `bot/core/edge_detector.py` — DO NOT MODIFY
-Uses `self.odds_api.get_edge_signal()` for composite evaluation. Band thresholds:
-- Prime (A): 8%+ edge at 70c+
-- Standard (B): 5-8% at 60-70c
-- Value (C): 3-5% at 55-60c
+### `bot/core/edge_detector.py` — COMPLETE
+Wired to pipeline and order_manager. Uses `self.odds_api.get_edge_signal()` for composite evaluation. Fee-adjusted band thresholds for high-volume farming:
+- Band A: 4%+ edge at 50c+ (position: 4% of capital)
+- Band B: 3%+ edge at 35-50c (position: 2.5% of capital)
+- Band C: 2%+ edge at 20-35c (position: 1.5% of capital)
+- No price floor — trades both favorites and underdogs
+- Liquidity gate: bid/ask depth >= 3 (from WebSocket, not volume)
 Direction modifiers adjust entry requirements. Size multiplier: falling+strong_sell=1.15x, rising+heavy_buy=0.85x.
 
 ### `bot/core/ws_markets.py` — DO NOT MODIFY
@@ -309,7 +311,7 @@ WalletManager with profit/loss tiers. Paper mode: $700 total, $350 per investor.
 
 ## CRITICAL RULES
 - Do NOT use fuzzy matching anywhere. Registry is the single source of truth.
-- Do NOT modify: dashboard files, edge_detector.py, ws_markets.py, ws_private.py, wallet.py, CSS, or any frontend files
+- Do NOT modify: dashboard files, wallet.py, CSS, or any frontend files
 - Do NOT add emojis anywhere
 - Do NOT use the old `market_loader.py` or `odds_api_client.py` patterns
 - Do NOT make assumptions about team names — verify against the actual APIs by curling them
