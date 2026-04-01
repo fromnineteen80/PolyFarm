@@ -1797,6 +1797,615 @@ TEAM_REGISTRY = [
     # NFL
     # =========================================================
 
+    {
+        "canonical": "Arizona Cardinals",
+        "mascot": "Cardinals",
+        "city": "Arizona",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#a12d48",
+
+        # Polymarket
+        "polymarket_id": 48,
+        "polymarket_abbreviation": "ari",
+        "polymarket_name": "Arizona Cardinals",
+        "polymarket_safe_name": "Arizona",
+        "polymarket_names": ["Arizona Cardinals", "Arizona", "ARI"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Arizona Cardinals",
+    },
+    {
+        "canonical": "Atlanta Falcons",
+        "mascot": "Falcons",
+        "city": "Atlanta",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#b31f37",
+
+        # Polymarket
+        "polymarket_id": 49,
+        "polymarket_abbreviation": "atl",
+        "polymarket_name": "Atlanta Falcons",
+        "polymarket_safe_name": "Atlanta",
+        "polymarket_names": ["Atlanta Falcons", "Atlanta", "ATL"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Atlanta Falcons",
+    },
+    {
+        "canonical": "Baltimore Ravens",
+        "mascot": "Ravens",
+        "city": "Baltimore",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#5340bb",
+
+        # Polymarket
+        "polymarket_id": 50,
+        "polymarket_abbreviation": "bal",
+        "polymarket_name": "Baltimore Ravens",
+        "polymarket_safe_name": "Baltimore",
+        "polymarket_names": ["Baltimore Ravens", "Baltimore", "BAL"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Baltimore Ravens",
+    },
+    {
+        "canonical": "Buffalo Bills",
+        "mascot": "Bills",
+        "city": "Buffalo",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#1e57cc",
+
+        # Polymarket
+        "polymarket_id": 51,
+        "polymarket_abbreviation": "buf",
+        "polymarket_name": "Buffalo Bills",
+        "polymarket_safe_name": "Buffalo",
+        "polymarket_names": ["Buffalo Bills", "Buffalo", "BUF"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Buffalo Bills",
+    },
+    {
+        "canonical": "Carolina Panthers",
+        "mascot": "Panthers",
+        "city": "Carolina",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#0994d6",
+
+        # Polymarket
+        "polymarket_id": 52,
+        "polymarket_abbreviation": "car",
+        "polymarket_name": "Carolina Panthers",
+        "polymarket_safe_name": "Carolina",
+        "polymarket_names": ["Carolina Panthers", "Carolina", "CAR"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Carolina Panthers",
+    },
+    {
+        "canonical": "Chicago Bears",
+        "mascot": "Bears",
+        "city": "Chicago",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#1f3f97",
+
+        # Polymarket
+        "polymarket_id": 53,
+        "polymarket_abbreviation": "chi",
+        "polymarket_name": "Chicago Bears",
+        "polymarket_safe_name": "Chicago",
+        "polymarket_names": ["Chicago Bears", "Chicago", "CHI"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Chicago Bears",
+    },
+    {
+        "canonical": "Cincinnati Bengals",
+        "mascot": "Bengals",
+        "city": "Cincinnati",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#fb4e06",
+
+        # Polymarket
+        "polymarket_id": 54,
+        "polymarket_abbreviation": "cin",
+        "polymarket_name": "Cincinnati Bengals",
+        "polymarket_safe_name": "Cincinnati",
+        "polymarket_names": ["Cincinnati Bengals", "Cincinnati", "CIN"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Cincinnati Bengals",
+    },
+    {
+        "canonical": "Cleveland Browns",
+        "mascot": "Browns",
+        "city": "Cleveland",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#f73802",
+
+        # Polymarket
+        "polymarket_id": 55,
+        "polymarket_abbreviation": "cle",
+        "polymarket_name": "Cleveland Browns",
+        "polymarket_safe_name": "Cleveland",
+        "polymarket_names": ["Cleveland Browns", "Cleveland", "CLE"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Cleveland Browns",
+    },
+    {
+        "canonical": "Dallas Cowboys",
+        "mascot": "Cowboys",
+        "city": "Dallas",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#0c489e",
+
+        # Polymarket
+        "polymarket_id": 56,
+        "polymarket_abbreviation": "dal",
+        "polymarket_name": "Dallas Cowboys",
+        "polymarket_safe_name": "Dallas",
+        "polymarket_names": ["Dallas Cowboys", "Dallas", "DAL"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Dallas Cowboys",
+    },
+    {
+        "canonical": "Denver Broncos",
+        "mascot": "Broncos",
+        "city": "Denver",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#f34c10",
+
+        # Polymarket
+        "polymarket_id": 57,
+        "polymarket_abbreviation": "den",
+        "polymarket_name": "Denver Broncos",
+        "polymarket_safe_name": "Denver",
+        "polymarket_names": ["Denver Broncos", "Denver", "DEN"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Denver Broncos",
+    },
+    {
+        "canonical": "Detroit Lions",
+        "mascot": "Lions",
+        "city": "Detroit",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#1290d7",
+
+        # Polymarket
+        "polymarket_id": 58,
+        "polymarket_abbreviation": "det",
+        "polymarket_name": "Detroit Lions",
+        "polymarket_safe_name": "Detroit",
+        "polymarket_names": ["Detroit Lions", "Detroit", "DET"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Detroit Lions",
+    },
+    {
+        "canonical": "Green Bay Packers",
+        "mascot": "Packers",
+        "city": "Green Bay",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#306456",
+
+        # Polymarket
+        "polymarket_id": 59,
+        "polymarket_abbreviation": "gb",
+        "polymarket_name": "Green Bay Packers",
+        "polymarket_safe_name": "Green Bay",
+        "polymarket_names": ["Green Bay Packers", "Green Bay", "GB"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Green Bay Packers",
+    },
+    {
+        "canonical": "Houston Texans",
+        "mascot": "Texans",
+        "city": "Houston",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#1f3f97",
+
+        # Polymarket
+        "polymarket_id": 60,
+        "polymarket_abbreviation": "hou",
+        "polymarket_name": "Houston Texans",
+        "polymarket_safe_name": "Houston",
+        "polymarket_names": ["Houston Texans", "Houston", "HOU"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Houston Texans",
+    },
+    {
+        "canonical": "Indianapolis Colts",
+        "mascot": "Colts",
+        "city": "Indianapolis",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#0e56a3",
+
+        # Polymarket
+        "polymarket_id": 61,
+        "polymarket_abbreviation": "ind",
+        "polymarket_name": "Indianapolis Colts",
+        "polymarket_safe_name": "Indianapolis",
+        "polymarket_names": ["Indianapolis Colts", "Indianapolis", "IND"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Indianapolis Colts",
+    },
+    {
+        "canonical": "Jacksonville Jaguars",
+        "mascot": "Jaguars",
+        "city": "Jacksonville",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#158bb6",
+
+        # Polymarket
+        "polymarket_id": 62,
+        "polymarket_abbreviation": "jax",
+        "polymarket_name": "Jacksonville Jaguars",
+        "polymarket_safe_name": "Jacksonville",
+        "polymarket_names": ["Jacksonville Jaguars", "Jacksonville", "JAX"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Jacksonville Jaguars",
+    },
+    {
+        "canonical": "Kansas City Chiefs",
+        "mascot": "Chiefs",
+        "city": "Kansas City",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#db1619",
+
+        # Polymarket
+        "polymarket_id": 63,
+        "polymarket_abbreviation": "kc",
+        "polymarket_name": "Kansas City Chiefs",
+        "polymarket_safe_name": "Kansas City",
+        "polymarket_names": ["Kansas City Chiefs", "Kansas City", "KC"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Kansas City Chiefs",
+    },
+    {
+        "canonical": "Las Vegas Raiders",
+        "mascot": "Raiders",
+        "city": "Las Vegas",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#6e7881",
+
+        # Polymarket
+        "polymarket_id": 66,
+        "polymarket_abbreviation": "lv",
+        "polymarket_name": "Las Vegas Raiders",
+        "polymarket_safe_name": "Las Vegas",
+        "polymarket_names": ["Las Vegas Raiders", "Las Vegas", "LV"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Las Vegas Raiders",
+    },
+    {
+        "canonical": "Los Angeles Chargers",
+        "mascot": "Chargers",
+        "city": "Los Angeles",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#007cc5",
+
+        # Polymarket
+        "polymarket_id": 65,
+        "polymarket_abbreviation": "lac",
+        "polymarket_name": "Los Angeles Chargers",
+        "polymarket_safe_name": "Los Angeles C",
+        "polymarket_names": ["Los Angeles Chargers", "Los Angeles C", "LAC"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Los Angeles Chargers",
+    },
+    {
+        "canonical": "Los Angeles Rams",
+        "mascot": "Rams",
+        "city": "Los Angeles",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#155eab",
+
+        # Polymarket
+        "polymarket_id": 64,
+        "polymarket_abbreviation": "lar",
+        "polymarket_name": "Los Angeles Rams",
+        "polymarket_safe_name": "Los Angeles R",
+        "polymarket_names": ["Los Angeles Rams", "Los Angeles R", "LAR"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Los Angeles Rams",
+    },
+    {
+        "canonical": "Miami Dolphins",
+        "mascot": "Dolphins",
+        "city": "Miami",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#008991",
+
+        # Polymarket
+        "polymarket_id": 67,
+        "polymarket_abbreviation": "mia",
+        "polymarket_name": "Miami Dolphins",
+        "polymarket_safe_name": "Miami",
+        "polymarket_names": ["Miami Dolphins", "Miami", "MIA"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Miami Dolphins",
+    },
+    {
+        "canonical": "Minnesota Vikings",
+        "mascot": "Vikings",
+        "city": "Minnesota",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#623599",
+
+        # Polymarket
+        "polymarket_id": 68,
+        "polymarket_abbreviation": "min",
+        "polymarket_name": "Minnesota Vikings",
+        "polymarket_safe_name": "Minnesota",
+        "polymarket_names": ["Minnesota Vikings", "Minnesota", "MIN"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Minnesota Vikings",
+    },
+    {
+        "canonical": "New England Patriots",
+        "mascot": "Patriots",
+        "city": "New England",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#c60c30",
+
+        # Polymarket
+        "polymarket_id": 69,
+        "polymarket_abbreviation": "ne",
+        "polymarket_name": "New England Patriots",
+        "polymarket_safe_name": "New England",
+        "polymarket_names": ["New England Patriots", "New England", "NE"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "New England Patriots",
+    },
+    {
+        "canonical": "New Orleans Saints",
+        "mascot": "Saints",
+        "city": "New Orleans",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#cda96f",
+
+        # Polymarket
+        "polymarket_id": 70,
+        "polymarket_abbreviation": "no",
+        "polymarket_name": "New Orleans Saints",
+        "polymarket_safe_name": "New Orleans",
+        "polymarket_names": ["New Orleans Saints", "New Orleans", "NO"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "New Orleans Saints",
+    },
+    {
+        "canonical": "New York Giants",
+        "mascot": "Giants",
+        "city": "New York",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#2545a4",
+
+        # Polymarket
+        "polymarket_id": 71,
+        "polymarket_abbreviation": "nyg",
+        "polymarket_name": "New York Giants",
+        "polymarket_safe_name": "New York G",
+        "polymarket_names": ["New York Giants", "New York G", "NYG"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "New York Giants",
+    },
+    {
+        "canonical": "New York Jets",
+        "mascot": "Jets",
+        "city": "New York",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#1a654d",
+
+        # Polymarket
+        "polymarket_id": 72,
+        "polymarket_abbreviation": "nyj",
+        "polymarket_name": "New York Jets",
+        "polymarket_safe_name": "New York J",
+        "polymarket_names": ["New York Jets", "New York J", "NYJ"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "New York Jets",
+    },
+    {
+        "canonical": "Philadelphia Eagles",
+        "mascot": "Eagles",
+        "city": "Philadelphia",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#11687f",
+
+        # Polymarket
+        "polymarket_id": 73,
+        "polymarket_abbreviation": "phi",
+        "polymarket_name": "Philadelphia Eagles",
+        "polymarket_safe_name": "Philadelphia",
+        "polymarket_names": ["Philadelphia Eagles", "Philadelphia", "PHI"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Philadelphia Eagles",
+    },
+    {
+        "canonical": "Pittsburgh Steelers",
+        "mascot": "Steelers",
+        "city": "Pittsburgh",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#e5ad2f",
+
+        # Polymarket
+        "polymarket_id": 74,
+        "polymarket_abbreviation": "pit",
+        "polymarket_name": "Pittsburgh Steelers",
+        "polymarket_safe_name": "Pittsburgh",
+        "polymarket_names": ["Pittsburgh Steelers", "Pittsburgh", "PIT"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Pittsburgh Steelers",
+    },
+    {
+        "canonical": "San Francisco 49ers",
+        "mascot": "49ers",
+        "city": "San Francisco",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#c11512",
+
+        # Polymarket
+        "polymarket_id": 76,
+        "polymarket_abbreviation": "sf",
+        "polymarket_name": "San Francisco 49ers",
+        "polymarket_safe_name": "San Francisco",
+        "polymarket_names": ["San Francisco 49ers", "San Francisco", "SF"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "San Francisco 49ers",
+    },
+    {
+        "canonical": "Seattle Seahawks",
+        "mascot": "Seahawks",
+        "city": "Seattle",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#1d4e9b",
+
+        # Polymarket
+        "polymarket_id": 75,
+        "polymarket_abbreviation": "sea",
+        "polymarket_name": "Seattle Seahawks",
+        "polymarket_safe_name": "Seattle",
+        "polymarket_names": ["Seattle Seahawks", "Seattle", "SEA"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Seattle Seahawks",
+    },
+    {
+        "canonical": "Tampa Bay Buccaneers",
+        "mascot": "Buccaneers",
+        "city": "Tampa Bay",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#c12d2f",
+
+        # Polymarket
+        "polymarket_id": 77,
+        "polymarket_abbreviation": "tb",
+        "polymarket_name": "Tampa Bay Buccaneers",
+        "polymarket_safe_name": "Tampa Bay",
+        "polymarket_names": ["Tampa Bay Buccaneers", "Tampa Bay", "TB"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Tampa Bay Buccaneers",
+    },
+    {
+        "canonical": "Tennessee Titans",
+        "mascot": "Titans",
+        "city": "Tennessee",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#50a3e3",
+
+        # Polymarket
+        "polymarket_id": 78,
+        "polymarket_abbreviation": "ten",
+        "polymarket_name": "Tennessee Titans",
+        "polymarket_safe_name": "Tennessee",
+        "polymarket_names": ["Tennessee Titans", "Tennessee", "TEN"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Tennessee Titans",
+    },
+    {
+        "canonical": "Washington Commanders",
+        "mascot": "Commanders",
+        "city": "Washington",
+        "league": "nfl",
+        "sport": "americanfootball_nfl",
+        "color": "#841f1f",
+
+        # Polymarket
+        "polymarket_id": 79,
+        "polymarket_abbreviation": "was",
+        "polymarket_name": "Washington Commanders",
+        "polymarket_safe_name": "Washington",
+        "polymarket_names": ["Washington Commanders", "Washington", "WAS"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_nfl",
+        "odds_api_name": "Washington Commanders",
+    },
+
     # =========================================================
     # MLS
     # =========================================================
@@ -1804,6 +2413,386 @@ TEAM_REGISTRY = [
     # =========================================================
     # EPL
     # =========================================================
+    {
+        "canonical": "Arsenal",
+        "mascot": "Arsenal",
+        "city": "London",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#EF0007",
+
+        # Polymarket
+        "polymarket_id": 2686,
+        "polymarket_abbreviation": "ars",
+        "polymarket_name": "Arsenal FC",
+        "polymarket_safe_name": "Arsenal",
+        "polymarket_names": ["Arsenal FC", "Arsenal", "ARS"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Arsenal",
+    },
+    {
+        "canonical": "Aston Villa",
+        "mascot": "Aston Villa",
+        "city": "Birmingham",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#670E36",
+
+        # Polymarket
+        "polymarket_id": 2687,
+        "polymarket_abbreviation": "ast",
+        "polymarket_name": "Aston Villa FC",
+        "polymarket_safe_name": "Aston Villa",
+        "polymarket_names": ["Aston Villa FC", "Aston Villa", "AST"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Aston Villa",
+    },
+    {
+        "canonical": "Bournemouth",
+        "mascot": "Bournemouth",
+        "city": "Bournemouth",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#E62333",
+
+        # Polymarket
+        "polymarket_id": 2685,
+        "polymarket_abbreviation": "bor",
+        "polymarket_name": "AFC Bournemouth",
+        "polymarket_safe_name": "Bournemouth",
+        "polymarket_names": ["AFC Bournemouth", "Bournemouth", "BOR"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Bournemouth",
+    },
+    {
+        "canonical": "Brentford",
+        "mascot": "Brentford",
+        "city": "London",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#E30613",
+
+        # Polymarket
+        "polymarket_id": 2714,
+        "polymarket_abbreviation": "bre",
+        "polymarket_name": "Brentford FC",
+        "polymarket_safe_name": "Brentford",
+        "polymarket_names": ["Brentford FC", "Brentford", "BRE"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Brentford",
+    },
+    {
+        "canonical": "Brighton & Hove Albion",
+        "mascot": "Brighton & Hove Albion",
+        "city": "Brighton",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#0055A9",
+
+        # Polymarket
+        "polymarket_id": 2708,
+        "polymarket_abbreviation": "bha",
+        "polymarket_name": "Brighton & Hove Albion FC",
+        "polymarket_safe_name": "Brighton & Hove Albion",
+        "polymarket_names": ["Brighton & Hove Albion FC", "Brighton & Hove Albion", "Brighton and Hove Albion", "BHA"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Brighton and Hove Albion",
+    },
+    {
+        "canonical": "Burnley",
+        "mascot": "Burnley",
+        "city": "Burnley",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#8CCCE5",
+
+        # Polymarket
+        "polymarket_id": 2705,
+        "polymarket_abbreviation": "bur",
+        "polymarket_name": "Burnley FC",
+        "polymarket_safe_name": "Burnley",
+        "polymarket_names": ["Burnley FC", "Burnley", "BUR"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Burnley",
+    },
+    {
+        "canonical": "Chelsea",
+        "mascot": "Chelsea",
+        "city": "London",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#034694",
+
+        # Polymarket
+        "polymarket_id": 2688,
+        "polymarket_abbreviation": "cfc",
+        "polymarket_name": "Chelsea FC",
+        "polymarket_safe_name": "Chelsea",
+        "polymarket_names": ["Chelsea FC", "Chelsea", "CFC"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Chelsea",
+    },
+    {
+        "canonical": "Crystal Palace",
+        "mascot": "Crystal Palace",
+        "city": "London",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#1B458F",
+
+        # Polymarket
+        "polymarket_id": 2689,
+        "polymarket_abbreviation": "cry",
+        "polymarket_name": "Crystal Palace FC",
+        "polymarket_safe_name": "Crystal Palace",
+        "polymarket_names": ["Crystal Palace FC", "Crystal Palace", "CRY"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Crystal Palace",
+    },
+    {
+        "canonical": "Everton",
+        "mascot": "Everton",
+        "city": "Liverpool",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#274488",
+
+        # Polymarket
+        "polymarket_id": 2690,
+        "polymarket_abbreviation": "eve",
+        "polymarket_name": "Everton FC",
+        "polymarket_safe_name": "Everton",
+        "polymarket_names": ["Everton FC", "Everton", "EVE"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Everton",
+    },
+    {
+        "canonical": "Fulham",
+        "mascot": "Fulham",
+        "city": "London",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#CC0100",
+
+        # Polymarket
+        "polymarket_id": 2711,
+        "polymarket_abbreviation": "ful",
+        "polymarket_name": "Fulham FC",
+        "polymarket_safe_name": "Fulham",
+        "polymarket_names": ["Fulham FC", "Fulham", "FUL"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Fulham",
+    },
+    {
+        "canonical": "Leeds United",
+        "mascot": "Leeds United",
+        "city": "Leeds",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#034694",
+
+        # Polymarket
+        "polymarket_id": 2716,
+        "polymarket_abbreviation": "lee",
+        "polymarket_name": "Leeds United FC",
+        "polymarket_safe_name": "Leeds United",
+        "polymarket_names": ["Leeds United FC", "Leeds United", "LEE"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Leeds United",
+    },
+    {
+        "canonical": "Liverpool",
+        "mascot": "Liverpool",
+        "city": "Liverpool",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#00857B",
+
+        # Polymarket
+        "polymarket_id": 2692,
+        "polymarket_abbreviation": "liv",
+        "polymarket_name": "Liverpool FC",
+        "polymarket_safe_name": "Liverpool",
+        "polymarket_names": ["Liverpool FC", "Liverpool", "LIV"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Liverpool",
+    },
+    {
+        "canonical": "Manchester City",
+        "mascot": "Manchester City",
+        "city": "Manchester",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#98C5E9",
+
+        # Polymarket
+        "polymarket_id": 2693,
+        "polymarket_abbreviation": "mnc",
+        "polymarket_name": "Manchester City FC",
+        "polymarket_safe_name": "Manchester City",
+        "polymarket_names": ["Manchester City FC", "Manchester City", "MNC"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Manchester City",
+    },
+    {
+        "canonical": "Manchester United",
+        "mascot": "Manchester United",
+        "city": "Manchester",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#DA020E",
+
+        # Polymarket
+        "polymarket_id": 2694,
+        "polymarket_abbreviation": "mnu",
+        "polymarket_name": "Manchester United FC",
+        "polymarket_safe_name": "Manchester United",
+        "polymarket_names": ["Manchester United FC", "Manchester United", "MNU"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Manchester United",
+    },
+    {
+        "canonical": "Newcastle United",
+        "mascot": "Newcastle United",
+        "city": "Newcastle upon Tyne",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#274488",
+
+        # Polymarket
+        "polymarket_id": 2695,
+        "polymarket_abbreviation": "new",
+        "polymarket_name": "Newcastle United FC",
+        "polymarket_safe_name": "Newcastle United",
+        "polymarket_names": ["Newcastle United FC", "Newcastle United", "NEW"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Newcastle United",
+    },
+    {
+        "canonical": "Nottingham Forest",
+        "mascot": "Nottingham Forest",
+        "city": "Nottingham",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#E22E30",
+
+        # Polymarket
+        "polymarket_id": 2718,
+        "polymarket_abbreviation": "not",
+        "polymarket_name": "Nottingham Forest FC",
+        "polymarket_safe_name": "Nottingham Forest",
+        "polymarket_names": ["Nottingham Forest FC", "Nottingham Forest", "NOT"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Nottingham Forest",
+    },
+    {
+        "canonical": "Sunderland",
+        "mascot": "Sunderland",
+        "city": "Sunderland",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#EF0000",
+
+        # Polymarket
+        "polymarket_id": 2699,
+        "polymarket_abbreviation": "sun",
+        "polymarket_name": "Sunderland AFC",
+        "polymarket_safe_name": "Sunderland",
+        "polymarket_names": ["Sunderland AFC", "Sunderland", "SUN"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Sunderland",
+    },
+    {
+        "canonical": "Tottenham Hotspur",
+        "mascot": "Tottenham Hotspur",
+        "city": "London",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#001C58",
+
+        # Polymarket
+        "polymarket_id": 2701,
+        "polymarket_abbreviation": "tot",
+        "polymarket_name": "Tottenham Hotspur FC",
+        "polymarket_safe_name": "Tottenham Hotspur",
+        "polymarket_names": ["Tottenham Hotspur FC", "Tottenham Hotspur", "TOT"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Tottenham Hotspur",
+    },
+    {
+        "canonical": "West Ham United",
+        "mascot": "West Ham United",
+        "city": "London",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#902239",
+
+        # Polymarket
+        "polymarket_id": 2704,
+        "polymarket_abbreviation": "whu",
+        "polymarket_name": "West Ham United FC",
+        "polymarket_safe_name": "West Ham United",
+        "polymarket_names": ["West Ham United FC", "West Ham United", "WHU"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "West Ham United",
+    },
+    {
+        "canonical": "Wolverhampton Wanderers",
+        "mascot": "Wolverhampton Wanderers",
+        "city": "Wolverhampton",
+        "league": "epl",
+        "sport": "soccer_epl",
+        "color": "#034694",
+
+        # Polymarket
+        "polymarket_id": 2712,
+        "polymarket_abbreviation": "wol",
+        "polymarket_name": "Wolverhampton Wanderers FC",
+        "polymarket_safe_name": "Wolverhampton Wanderers",
+        "polymarket_names": ["Wolverhampton Wanderers FC", "Wolverhampton Wanderers", "WOL"],
+
+        # Odds API
+        "odds_api_key": "soccer_epl",
+        "odds_api_name": "Wolverhampton Wanderers",
+    },
 
     # =========================================================
     # La Liga
