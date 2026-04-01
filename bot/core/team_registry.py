@@ -4503,6 +4503,1147 @@ TEAM_REGISTRY = [
     # UCL
     # =========================================================
 
+    {
+        "canonical": "AFC Ajax",
+        "mascot": "AFC Ajax",
+        "city": "Amsterdam",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#D2122E",
+
+        # Polymarket
+        "polymarket_id": 2738,
+        "polymarket_abbreviation": "aja",
+        "polymarket_name": "AFC Ajax",
+        "polymarket_safe_name": "Ajax",
+        "polymarket_names": ["AFC Ajax", "Ajax", "AJA"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Ajax",
+    },
+    {
+        "canonical": "Arsenal",
+        "mascot": "Arsenal",
+        "city": "London",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#EF0007",
+
+        # Polymarket
+        "polymarket_id": 2719,
+        "polymarket_abbreviation": "ars",
+        "polymarket_name": "Arsenal FC",
+        "polymarket_safe_name": "Arsenal",
+        "polymarket_names": ["Arsenal FC", "Arsenal", "ARS"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Arsenal",
+    },
+    {
+        "canonical": "AS Monaco",
+        "mascot": "AS Monaco",
+        "city": "Monaco",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#E51B22",
+
+        # Polymarket
+        "polymarket_id": 2740,
+        "polymarket_abbreviation": "asm",
+        "polymarket_name": "AS Monaco FC",
+        "polymarket_safe_name": "AS Monaco",
+        "polymarket_names": ["AS Monaco FC", "AS Monaco", "ASM"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "AS Monaco",
+    },
+    {
+        "canonical": "Atalanta",
+        "mascot": "Atalanta",
+        "city": "Bergamo",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#2D5CAE",
+
+        # Polymarket
+        "polymarket_id": 2811,
+        "polymarket_abbreviation": "ata",
+        "polymarket_name": "Atalanta BC",
+        "polymarket_safe_name": "Atalanta BC",
+        "polymarket_names": ["Atalanta BC", "Atalanta", "ATA"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Atalanta BC",
+    },
+    {
+        "canonical": "Athletic Club",
+        "mascot": "Athletic Club",
+        "city": "Bilbao",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#EC1412",
+
+        # Polymarket
+        "polymarket_id": 2807,
+        "polymarket_abbreviation": "ath",
+        "polymarket_name": "Athletic Club",
+        "polymarket_safe_name": "Athletic Club",
+        "polymarket_names": ["Athletic Club", "Athletic Bilbao", "ATH"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Athletic Bilbao",
+    },
+    {
+        "canonical": "Atletico Madrid",
+        "mascot": "Atletico Madrid",
+        "city": "Madrid",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#CB3524",
+
+        # Polymarket
+        "polymarket_id": 2745,
+        "polymarket_abbreviation": "atm",
+        "polymarket_name": "Club Atlético de Madrid",
+        "polymarket_safe_name": "Club Atlético de Madrid",
+        "polymarket_names": ["Club Atlético de Madrid", "Atlético Madrid", "Atletico Madrid", "ATM"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Atlético Madrid",
+    },
+    {
+        "canonical": "Barcelona",
+        "mascot": "Barcelona",
+        "city": "Barcelona",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#A50044",
+
+        # Polymarket
+        "polymarket_id": 2750,
+        "polymarket_abbreviation": "fcb",
+        "polymarket_name": "FC Barcelona",
+        "polymarket_safe_name": "FC Barcelona",
+        "polymarket_names": ["FC Barcelona", "Barcelona", "FCB"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Barcelona",
+    },
+    {
+        "canonical": "Bayer Leverkusen",
+        "mascot": "Bayer Leverkusen",
+        "city": "Leverkusen",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#E32221",
+
+        # Polymarket
+        "polymarket_id": 2728,
+        "polymarket_abbreviation": "lev",
+        "polymarket_name": "Bayer 04 Leverkusen",
+        "polymarket_safe_name": "Bayer 04 Leverkusen",
+        "polymarket_names": ["Bayer 04 Leverkusen", "Bayer Leverkusen", "LEV"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Bayer Leverkusen",
+    },
+    {
+        "canonical": "Bayern Munich",
+        "mascot": "Bayern Munich",
+        "city": "Munich",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#DC052D",
+
+        # Polymarket
+        "polymarket_id": 2732,
+        "polymarket_abbreviation": "bay",
+        "polymarket_name": "FC Bayern München",
+        "polymarket_safe_name": "FC Bayern München",
+        "polymarket_names": ["FC Bayern München", "Bayern Munich", "FC Bayern Munich", "BAY"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Bayern Munich",
+    },
+    {
+        "canonical": "Benfica",
+        "mascot": "Benfica",
+        "city": "Lisbon",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#CC0000",
+
+        # Polymarket
+        "polymarket_id": 2799,
+        "polymarket_abbreviation": "ben",
+        "polymarket_name": "Sport Lisboa e Benfica",
+        "polymarket_safe_name": "Sport Lisboa e Benfica",
+        "polymarket_names": ["Sport Lisboa e Benfica", "Benfica", "BEN"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Benfica",
+    },
+    {
+        "canonical": "Bodo/Glimt",
+        "mascot": "Bodo/Glimt",
+        "city": "Bodo",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#8B7500",
+
+        # Polymarket
+        "polymarket_id": 2944,
+        "polymarket_abbreviation": "bog",
+        "polymarket_name": "FK Bodø/Glimt",
+        "polymarket_safe_name": "FK Bodø/Glimt",
+        "polymarket_names": ["FK Bodø/Glimt", "Bodø/Glimt", "Bodo/Glimt", "BOG"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Bodø/Glimt",
+    },
+    {
+        "canonical": "Borussia Dortmund",
+        "mascot": "Borussia Dortmund",
+        "city": "Dortmund",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#867700",
+
+        # Polymarket
+        "polymarket_id": 2730,
+        "polymarket_abbreviation": "bvb",
+        "polymarket_name": "BV Borussia 09 Dortmund",
+        "polymarket_safe_name": "BV Borussia 09 Dortmund",
+        "polymarket_names": ["BV Borussia 09 Dortmund", "Borussia Dortmund", "BVB"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Borussia Dortmund",
+    },
+    {
+        "canonical": "Breiðablik",
+        "mascot": "Breiðablik",
+        "city": "Kópavogur",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#006A2E",
+
+        # Polymarket
+        "polymarket_id": 2893,
+        "polymarket_abbreviation": "bre",
+        "polymarket_name": "UMF Breiðablik",
+        "polymarket_safe_name": "UMF Breiðablik",
+        "polymarket_names": ["UMF Breiðablik", "Breiðablik", "BRE"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Breiðablik",
+    },
+    {
+        "canonical": "Budućnost Podgorica",
+        "mascot": "Budućnost Podgorica",
+        "city": "Podgorica",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#003087",
+
+        # Polymarket
+        "polymarket_id": 2839,
+        "polymarket_abbreviation": "bud",
+        "polymarket_name": "FK Budućnost Podgorica",
+        "polymarket_safe_name": "FK Budućnost Podgorica",
+        "polymarket_names": ["FK Budućnost Podgorica", "Budućnost Podgorica", "BUD"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Budućnost Podgorica",
+    },
+    {
+        "canonical": "Celtic",
+        "mascot": "Celtic",
+        "city": "Glasgow",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#00843D",
+
+        # Polymarket
+        "polymarket_id": 2744,
+        "polymarket_abbreviation": "cel",
+        "polymarket_name": "Celtic FC",
+        "polymarket_safe_name": "Celtic",
+        "polymarket_names": ["Celtic FC", "Celtic", "CEL"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Celtic",
+    },
+    {
+        "canonical": "Chelsea",
+        "mascot": "Chelsea",
+        "city": "London",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#034694",
+
+        # Polymarket
+        "polymarket_id": 2721,
+        "polymarket_abbreviation": "cfc",
+        "polymarket_name": "Chelsea FC",
+        "polymarket_safe_name": "Chelsea",
+        "polymarket_names": ["Chelsea FC", "Chelsea", "CFC"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Chelsea",
+    },
+    {
+        "canonical": "Club Brugge",
+        "mascot": "Club Brugge",
+        "city": "Bruges",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#0078BF",
+
+        # Polymarket
+        "polymarket_id": 2746,
+        "polymarket_abbreviation": "bru",
+        "polymarket_name": "Club Brugge KV",
+        "polymarket_safe_name": "Club Brugge KV",
+        "polymarket_names": ["Club Brugge KV", "Club Brugge", "BRU"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Club Brugge",
+    },
+    {
+        "canonical": "Eintracht Frankfurt",
+        "mascot": "Eintracht Frankfurt",
+        "city": "Frankfurt",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#E1000F",
+
+        # Polymarket
+        "polymarket_id": 2731,
+        "polymarket_abbreviation": "fra",
+        "polymarket_name": "Eintracht Frankfurt",
+        "polymarket_safe_name": "Eintracht Frankfurt",
+        "polymarket_names": ["Eintracht Frankfurt", "FRA"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Eintracht Frankfurt",
+    },
+    {
+        "canonical": "FC Basel",
+        "mascot": "FC Basel",
+        "city": "Basel",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#E62020",
+
+        # Polymarket
+        "polymarket_id": 2751,
+        "polymarket_abbreviation": "bas",
+        "polymarket_name": "FC Basel 1893",
+        "polymarket_safe_name": "FC Basel 1893",
+        "polymarket_names": ["FC Basel 1893", "FC Basel", "BAS"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FC Basel",
+    },
+    {
+        "canonical": "FC Copenhagen",
+        "mascot": "FC Copenhagen",
+        "city": "Copenhagen",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#BF2126",
+
+        # Polymarket
+        "polymarket_id": 2833,
+        "polymarket_abbreviation": "kob",
+        "polymarket_name": "FC København",
+        "polymarket_safe_name": "FC København",
+        "polymarket_names": ["FC København", "FC Copenhagen", "KOB"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FC Copenhagen",
+    },
+    {
+        "canonical": "FC Déifferdeng 03",
+        "mascot": "FC Déifferdeng 03",
+        "city": "Differdange",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#006A2E",
+
+        # Polymarket
+        "polymarket_id": 2829,
+        "polymarket_abbreviation": "dif",
+        "polymarket_name": "FC Déifferdeng 03",
+        "polymarket_safe_name": "FC Déifferdeng 03",
+        "polymarket_names": ["FC Déifferdeng 03", "FC Differdange 03", "FC Differdange", "DIF"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FC Differdange 03",
+    },
+    {
+        "canonical": "FC Drita",
+        "mascot": "FC Drita",
+        "city": "Gjilan",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#1B2F6B",
+
+        # Polymarket
+        "polymarket_id": 2922,
+        "polymarket_abbreviation": "dgj",
+        "polymarket_name": "FC Drita",
+        "polymarket_safe_name": "FC Drita",
+        "polymarket_names": ["FC Drita", "DGJ"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FC Drita",
+    },
+    {
+        "canonical": "FC Iberia 1999",
+        "mascot": "FC Iberia 1999",
+        "city": "Tbilisi",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#CC0000",
+
+        # Polymarket
+        "polymarket_id": 2933,
+        "polymarket_abbreviation": "sab",
+        "polymarket_name": "SK Iberia 1999",
+        "polymarket_safe_name": "SK Iberia 1999",
+        "polymarket_names": ["SK Iberia 1999", "FC Iberia 1999", "SAB"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FC Iberia 1999",
+    },
+    {
+        "canonical": "FCI Levadia",
+        "mascot": "FCI Levadia",
+        "city": "Tallinn",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#8B7500",
+
+        # Polymarket
+        "polymarket_id": 2753,
+        "polymarket_abbreviation": "fcil",
+        "polymarket_name": "FCI Levadia",
+        "polymarket_safe_name": "FCI Levadia",
+        "polymarket_names": ["FCI Levadia", "FCIL"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FCI Levadia",
+    },
+    {
+        "canonical": "FCSB",
+        "mascot": "FCSB",
+        "city": "Bucharest",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#EC1412",
+
+        # Polymarket
+        "polymarket_id": 2760,
+        "polymarket_abbreviation": "ste",
+        "polymarket_name": "FCSB",
+        "polymarket_safe_name": "FCSB",
+        "polymarket_names": ["FCSB", "STE"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FCSB",
+    },
+    {
+        "canonical": "Fenerbahçe",
+        "mascot": "Fenerbahçe",
+        "city": "Istanbul",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#827900",
+
+        # Polymarket
+        "polymarket_id": 2763,
+        "polymarket_abbreviation": "fen",
+        "polymarket_name": "Fenerbahçe SK",
+        "polymarket_safe_name": "Fenerbahçe SK",
+        "polymarket_names": ["Fenerbahçe SK", "Fenerbahçe", "Fenerbahce", "FEN"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Fenerbahce",
+    },
+    {
+        "canonical": "Ferencváros",
+        "mascot": "Ferencváros",
+        "city": "Budapest",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#006A2E",
+
+        # Polymarket
+        "polymarket_id": 2837,
+        "polymarket_abbreviation": "ftc",
+        "polymarket_name": "Ferencvárosi TC",
+        "polymarket_safe_name": "Ferencvárosi TC",
+        "polymarket_names": ["Ferencvárosi TC", "Ferencváros TC", "Ferencváros", "FTC"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Ferencváros TC",
+    },
+    {
+        "canonical": "FK Crvena zvezda",
+        "mascot": "FK Crvena zvezda",
+        "city": "Belgrade",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#EB1623",
+
+        # Polymarket
+        "polymarket_id": 2840,
+        "polymarket_abbreviation": "crv",
+        "polymarket_name": "FK Crvena zvezda",
+        "polymarket_safe_name": "FK Crvena zvezda",
+        "polymarket_names": ["FK Crvena zvezda", "Red Star Belgrade", "CRV"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Red Star Belgrade",
+    },
+    {
+        "canonical": "FK Dynama-Minsk",
+        "mascot": "FK Dynama-Minsk",
+        "city": "Minsk",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#0038A8",
+
+        # Polymarket
+        "polymarket_id": 2841,
+        "polymarket_abbreviation": "fkdy",
+        "polymarket_name": "FK Dynama-Minsk",
+        "polymarket_safe_name": "FK Dynama-Minsk",
+        "polymarket_names": ["FK Dynama-Minsk", "FC Dinamo Minsk", "FKDY"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FC Dinamo Minsk",
+    },
+    {
+        "canonical": "FK Milsami Orhei",
+        "mascot": "FK Milsami Orhei",
+        "city": "Orhei",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#907300",
+
+        # Polymarket
+        "polymarket_id": 2755,
+        "polymarket_abbreviation": "mil",
+        "polymarket_name": "FC Milsami Orhei",
+        "polymarket_safe_name": "FC Milsami Orhei",
+        "polymarket_names": ["FC Milsami Orhei", "Milsami Orhei", "MIL"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Milsami Orhei",
+    },
+    {
+        "canonical": "FK Žalgiris",
+        "mascot": "FK Žalgiris",
+        "city": "Vilnius",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#006A2E",
+
+        # Polymarket
+        "polymarket_id": 2762,
+        "polymarket_abbreviation": "zal",
+        "polymarket_name": "FK Žalgiris Vilnius",
+        "polymarket_safe_name": "FK Žalgiris Vilnius",
+        "polymarket_names": ["FK Žalgiris Vilnius", "FK Žalgiris", "ZAL"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FK Žalgiris",
+    },
+    {
+        "canonical": "Galatasaray",
+        "mascot": "Galatasaray",
+        "city": "Istanbul",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#A90432",
+
+        # Polymarket
+        "polymarket_id": 2775,
+        "polymarket_abbreviation": "gal",
+        "polymarket_name": "Galatasaray SK",
+        "polymarket_safe_name": "Galatasaray SK",
+        "polymarket_names": ["Galatasaray SK", "Galatasaray", "GAL"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Galatasaray",
+    },
+    {
+        "canonical": "HNK Rijeka",
+        "mascot": "HNK Rijeka",
+        "city": "Rijeka",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#003366",
+
+        # Polymarket
+        "polymarket_id": 2854,
+        "polymarket_abbreviation": "rij",
+        "polymarket_name": "HNK Rijeka",
+        "polymarket_safe_name": "HNK Rijeka",
+        "polymarket_names": ["HNK Rijeka", "Rijeka", "RIJ"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "HNK Rijeka",
+    },
+    {
+        "canonical": "HŠK Zrinjski Mostar",
+        "mascot": "HŠK Zrinjski Mostar",
+        "city": "Mostar",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#CC0000",
+
+        # Polymarket
+        "polymarket_id": 2855,
+        "polymarket_abbreviation": "zri",
+        "polymarket_name": "HŠK Zrinjski Mostar",
+        "polymarket_safe_name": "HŠK Zrinjski Mostar",
+        "polymarket_names": ["HŠK Zrinjski Mostar", "Zrinjski Mostar", "ZRI"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "HŠK Zrinjski Mostar",
+    },
+    {
+        "canonical": "Inter Milan",
+        "mascot": "Inter Milan",
+        "city": "Milan",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#010E80",
+
+        # Polymarket
+        "polymarket_id": 2813,
+        "polymarket_abbreviation": "int",
+        "polymarket_name": "FC Internazionale Milano",
+        "polymarket_safe_name": "FC Internazionale Milano",
+        "polymarket_names": ["FC Internazionale Milano", "Inter Milan", "Internazionale", "INT"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Inter Milan",
+    },
+    {
+        "canonical": "Juventus",
+        "mascot": "Juventus",
+        "city": "Turin",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#000000",
+
+        # Polymarket
+        "polymarket_id": 2779,
+        "polymarket_abbreviation": "juv",
+        "polymarket_name": "Juventus FC",
+        "polymarket_safe_name": "Juventus",
+        "polymarket_names": ["Juventus FC", "Juventus", "JUV"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Juventus",
+    },
+    {
+        "canonical": "KF Víkingur",
+        "mascot": "KF Víkingur",
+        "city": "Reykjavik",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#003087",
+
+        # Polymarket
+        "polymarket_id": 2859,
+        "polymarket_abbreviation": "vik",
+        "polymarket_name": "KF Víkingur",
+        "polymarket_safe_name": "KF Víkingur",
+        "polymarket_names": ["KF Víkingur", "Víkingur Reykjavík", "VIK"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Víkingur Reykjavík",
+    },
+    {
+        "canonical": "Lincoln Red Imps",
+        "mascot": "Lincoln Red Imps",
+        "city": "Gibraltar",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#CC0000",
+
+        # Polymarket
+        "polymarket_id": 2783,
+        "polymarket_abbreviation": "lin",
+        "polymarket_name": "Lincoln Red Imps FC",
+        "polymarket_safe_name": "Lincoln Red Imps",
+        "polymarket_names": ["Lincoln Red Imps FC", "Lincoln Red Imps", "LIN"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Lincoln Red Imps FC",
+    },
+    {
+        "canonical": "Linfield",
+        "mascot": "Linfield",
+        "city": "Belfast",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#003CB5",
+
+        # Polymarket
+        "polymarket_id": 2862,
+        "polymarket_abbreviation": "linf",
+        "polymarket_name": "Linfield FC",
+        "polymarket_safe_name": "Linfield",
+        "polymarket_names": ["Linfield FC", "Linfield", "LINF"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Linfield",
+    },
+    {
+        "canonical": "Liverpool",
+        "mascot": "Liverpool",
+        "city": "Liverpool",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#C8102E",
+
+        # Polymarket
+        "polymarket_id": 2723,
+        "polymarket_abbreviation": "liv",
+        "polymarket_name": "Liverpool FC",
+        "polymarket_safe_name": "Liverpool",
+        "polymarket_names": ["Liverpool FC", "Liverpool", "LIV"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Liverpool",
+    },
+    {
+        "canonical": "Maccabi Tel Aviv",
+        "mascot": "Maccabi Tel Aviv",
+        "city": "Tel Aviv",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#8B7500",
+
+        # Polymarket
+        "polymarket_id": 2784,
+        "polymarket_abbreviation": "mta",
+        "polymarket_name": "MH Maccabi Tel Aviv",
+        "polymarket_safe_name": "MH Maccabi Tel Aviv",
+        "polymarket_names": ["MH Maccabi Tel Aviv", "Maccabi Tel Aviv", "MTA"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Maccabi Tel Aviv",
+    },
+    {
+        "canonical": "Manchester City",
+        "mascot": "Manchester City",
+        "city": "Manchester",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#2B7BBB",
+
+        # Polymarket
+        "polymarket_id": 2724,
+        "polymarket_abbreviation": "mnc",
+        "polymarket_name": "Manchester City FC",
+        "polymarket_safe_name": "Manchester City",
+        "polymarket_names": ["Manchester City FC", "Manchester City", "MNC"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Manchester City",
+    },
+    {
+        "canonical": "Napoli",
+        "mascot": "Napoli",
+        "city": "Naples",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#087AC5",
+
+        # Polymarket
+        "polymarket_id": 2814,
+        "polymarket_abbreviation": "nap",
+        "polymarket_name": "SSC Napoli",
+        "polymarket_safe_name": "SSC Napoli",
+        "polymarket_names": ["SSC Napoli", "Napoli", "NAP"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Napoli",
+    },
+    {
+        "canonical": "Newcastle United",
+        "mascot": "Newcastle United",
+        "city": "Newcastle",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#241F20",
+
+        # Polymarket
+        "polymarket_id": 2726,
+        "polymarket_abbreviation": "new",
+        "polymarket_name": "Newcastle United FC",
+        "polymarket_safe_name": "Newcastle United",
+        "polymarket_names": ["Newcastle United FC", "Newcastle United", "NEW"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Newcastle United",
+    },
+    {
+        "canonical": "NK Olimpija Ljubljana",
+        "mascot": "NK Olimpija Ljubljana",
+        "city": "Ljubljana",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#006A2E",
+
+        # Polymarket
+        "polymarket_id": 2890,
+        "polymarket_abbreviation": "oli",
+        "polymarket_name": "NK Olimpija Ljubljana",
+        "polymarket_safe_name": "NK Olimpija Ljubljana",
+        "polymarket_names": ["NK Olimpija Ljubljana", "Olimpija Ljubljana", "OLI"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "NK Olimpija Ljubljana",
+    },
+    {
+        "canonical": "Olympiakos",
+        "mascot": "Olympiakos",
+        "city": "Piraeus",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#D0061F",
+
+        # Polymarket
+        "polymarket_id": 2789,
+        "polymarket_abbreviation": "oly",
+        "polymarket_name": "Olympiakós SFP",
+        "polymarket_safe_name": "Olympiakós SFP",
+        "polymarket_names": ["Olympiakós SFP", "Olympiakos Piraeus", "Olympiakos", "OLY"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Olympiakos Piraeus",
+    },
+    {
+        "canonical": "Panathinaikos",
+        "mascot": "Panathinaikos",
+        "city": "Athens",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#00793F",
+
+        # Polymarket
+        "polymarket_id": 2790,
+        "polymarket_abbreviation": "pao",
+        "polymarket_name": "Panathinaikós AO",
+        "polymarket_safe_name": "Panathinaikós AO",
+        "polymarket_names": ["Panathinaikós AO", "Panathinaikos FC", "Panathinaikos", "PAO"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Panathinaikos FC",
+    },
+    {
+        "canonical": "Paris Saint-Germain",
+        "mascot": "Paris Saint-Germain",
+        "city": "Paris",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#003370",
+
+        # Polymarket
+        "polymarket_id": 2791,
+        "polymarket_abbreviation": "psg",
+        "polymarket_name": "Paris Saint-Germain FC",
+        "polymarket_safe_name": "Paris Saint-Germain",
+        "polymarket_names": ["Paris Saint-Germain FC", "Paris Saint-Germain", "Paris Saint Germain", "PSG"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Paris Saint Germain",
+    },
+    {
+        "canonical": "PSV Eindhoven",
+        "mascot": "PSV Eindhoven",
+        "city": "Eindhoven",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#E3000F",
+
+        # Polymarket
+        "polymarket_id": 2794,
+        "polymarket_abbreviation": "psv",
+        "polymarket_name": "PSV",
+        "polymarket_safe_name": "PSV",
+        "polymarket_names": ["PSV", "PSV Eindhoven"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "PSV Eindhoven",
+    },
+    {
+        "canonical": "Qarabag",
+        "mascot": "Qarabag",
+        "city": "Baku",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#A26C10",
+
+        # Polymarket
+        "polymarket_id": 2795,
+        "polymarket_abbreviation": "qar",
+        "polymarket_name": "Qarabağ Ağdam FK",
+        "polymarket_safe_name": "Qarabağ Ağdam FK",
+        "polymarket_names": ["Qarabağ Ağdam FK", "Qarabağ FK", "Qarabag", "QAR"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Qarabağ FK",
+    },
+    {
+        "canonical": "Qairat",
+        "mascot": "Qairat",
+        "city": "Almaty",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#8F7409",
+
+        # Polymarket
+        "polymarket_id": 2842,
+        "polymarket_abbreviation": "kai",
+        "polymarket_name": "Qairat FK",
+        "polymarket_safe_name": "Qairat FK",
+        "polymarket_names": ["Qairat FK", "FC Kairat", "Qairat", "KAI"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "FC Kairat",
+    },
+    {
+        "canonical": "Rangers",
+        "mascot": "Rangers",
+        "city": "Glasgow",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#1B458F",
+
+        # Polymarket
+        "polymarket_id": 2919,
+        "polymarket_abbreviation": "ran",
+        "polymarket_name": "Rangers FC",
+        "polymarket_safe_name": "Rangers",
+        "polymarket_names": ["Rangers FC", "Rangers", "RAN"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Rangers FC",
+    },
+    {
+        "canonical": "Real Madrid",
+        "mascot": "Real Madrid",
+        "city": "Madrid",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#997001",
+
+        # Polymarket
+        "polymarket_id": 2796,
+        "polymarket_abbreviation": "rma",
+        "polymarket_name": "Real Madrid CF",
+        "polymarket_safe_name": "Real Madrid",
+        "polymarket_names": ["Real Madrid CF", "Real Madrid", "RMA"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Real Madrid",
+    },
+    {
+        "canonical": "Servette",
+        "mascot": "Servette",
+        "city": "Geneva",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#990000",
+
+        # Polymarket
+        "polymarket_id": 2942,
+        "polymarket_abbreviation": "ser",
+        "polymarket_name": "Servette FC",
+        "polymarket_safe_name": "Servette",
+        "polymarket_names": ["Servette FC", "Servette", "SER"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Servette FC",
+    },
+    {
+        "canonical": "SK Brann",
+        "mascot": "SK Brann",
+        "city": "Bergen",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#D9001E",
+
+        # Polymarket
+        "polymarket_id": 2920,
+        "polymarket_abbreviation": "bra",
+        "polymarket_name": "SK Brann",
+        "polymarket_safe_name": "SK Brann",
+        "polymarket_names": ["SK Brann", "BRA"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "SK Brann",
+    },
+    {
+        "canonical": "Slavia Praha",
+        "mascot": "Slavia Praha",
+        "city": "Prague",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#D7141A",
+
+        # Polymarket
+        "polymarket_id": 2907,
+        "polymarket_abbreviation": "slp",
+        "polymarket_name": "SK Slavia Praha",
+        "polymarket_safe_name": "SK Slavia Praha",
+        "polymarket_names": ["SK Slavia Praha", "Slavia Praha", "SLP"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Slavia Praha",
+    },
+    {
+        "canonical": "Sporting CP",
+        "mascot": "Sporting CP",
+        "city": "Lisbon",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#008057",
+
+        # Polymarket
+        "polymarket_id": 2800,
+        "polymarket_abbreviation": "spo",
+        "polymarket_name": "Sporting CP",
+        "polymarket_safe_name": "Sporting CP",
+        "polymarket_names": ["Sporting CP", "Sporting Lisbon", "SPO"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Sporting Lisbon",
+    },
+    {
+        "canonical": "The New Saints",
+        "mascot": "The New Saints",
+        "city": "Oswestry",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#008000",
+
+        # Polymarket
+        "polymarket_id": 2803,
+        "polymarket_abbreviation": "tns",
+        "polymarket_name": "The New Saints FC",
+        "polymarket_safe_name": "The New Saints",
+        "polymarket_names": ["The New Saints FC", "The New Saints", "TNS"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "The New Saints FC",
+    },
+    {
+        "canonical": "Tottenham Hotspur",
+        "mascot": "Tottenham Hotspur",
+        "city": "London",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#132257",
+
+        # Polymarket
+        "polymarket_id": 2727,
+        "polymarket_abbreviation": "tot",
+        "polymarket_name": "Tottenham Hotspur FC",
+        "polymarket_safe_name": "Tottenham Hotspur",
+        "polymarket_names": ["Tottenham Hotspur FC", "Tottenham Hotspur", "Tottenham", "TOT"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Tottenham Hotspur",
+    },
+    {
+        "canonical": "Villarreal",
+        "mascot": "Villarreal",
+        "city": "Villarreal",
+        "league": "ucl",
+        "sport": "soccer_uefa_champs_league",
+        "color": "#8B7600",
+
+        # Polymarket
+        "polymarket_id": 2809,
+        "polymarket_abbreviation": "vil",
+        "polymarket_name": "Villarreal CF",
+        "polymarket_safe_name": "Villarreal",
+        "polymarket_names": ["Villarreal CF", "Villarreal", "VIL"],
+
+        # Odds API
+        "odds_api_key": "soccer_uefa_champs_league",
+        "odds_api_name": "Villarreal",
+    },
+
     # =========================================================
     # CBB
     # =========================================================
