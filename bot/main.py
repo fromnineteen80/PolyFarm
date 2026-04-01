@@ -161,6 +161,7 @@ async def main():
     odds_key = os.environ.get("ODDS_API_KEY")
     if odds_key:
         pipeline = Pipeline(odds_api_key=odds_key, db=db)
+        pipeline.ws_markets = markets_ws
         await pipeline.run_startup()
         edge_detector.odds_api = pipeline
         edge_detector.ws_markets = markets_ws

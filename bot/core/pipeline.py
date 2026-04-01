@@ -147,6 +147,7 @@ class Pipeline:
     def __init__(self, odds_api_key: str, db):
         self.odds_api_key = odds_api_key
         self.db = db
+        self.ws_markets = None  # Set by main.py for slug subscription
 
         # Step 1 output: operational leagues
         # [{slug: "nba", name: "NBA", sport: "Basketball"}, ...]
@@ -1094,6 +1095,7 @@ class Pipeline:
             return False
         await self.step8_load_scores()
         await self.step9_write_to_supabase()
+        await self._subscribe_matched_slugs()
 
         logger.info("Pipeline startup complete")
         return True
@@ -1105,6 +1107,17 @@ class Pipeline:
         await self.step7_match_games()
         await self.step8_load_scores()
         await self.step9_write_to_supabase()
+        await self._subscribe_matched_slugs()
+
+    async def _subscribe_matched_slugs(self):
+        """Push all matched game slugs to the Markets WebSocket
+        so they get real-time price streams for edge detection."""
+        if not self.ws_markets:
+            return
+        matched_slugs = list(self.matched_games.keys())
+        if matched_slugs:
+            await self.ws_markets.subscribe_markets(matched_slugs)
+            logger.info(f"Subscribed {len(matched_slugs)} matched slugs to Markets WebSocket")
 
     async def refresh_loop(self):
         """Run refresh every 60 seconds."""
