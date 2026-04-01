@@ -23,12 +23,14 @@ class MarketsWebSocket:
     RECONNECT_BASE = 1
     RECONNECT_MAX = 60
     BATCH_SIZE = 10
+    MAX_SUBS_PER_CONNECTION = 90  # leave headroom below 100 limit
 
     def __init__(self, client, price_queue, trade_queue=None):
         self.client = client
         self.price_queue = price_queue
         self.trade_queue = trade_queue or asyncio.Queue(maxsize=500)
         self._ws = None
+        self._extra_connections: list = []  # overflow connections
         self._subscribed_slugs: set = set()
         self._pending_slugs: set = set()
         self._last_heartbeat = None
@@ -37,6 +39,7 @@ class MarketsWebSocket:
         self._price_history: dict = {}
         self._trade_flow: dict = {}
         self._HISTORY_WINDOW_SECONDS = 1800
+        self._sub_count_primary = 0  # track subs on primary connection
 
     async def start(self):
         self._running = True
@@ -63,6 +66,12 @@ class MarketsWebSocket:
         self._running = False
         if self._ws:
             await self._ws.close()
+        for ws in self._extra_connections:
+            try:
+                await ws.close()
+            except Exception:
+                pass
+        self._extra_connections.clear()
 
     async def _connect_and_run(self):
         self._ws = self.client.ws.markets()
@@ -97,14 +106,18 @@ class MarketsWebSocket:
                     await self._ws.close()
                     break
 
-    async def _subscribe_batch(self, slugs):
+    async def _subscribe_batch(self, slugs, ws=None):
+        """Subscribe slugs to a specific WS connection."""
+        target = ws or self._ws
+        if not target:
+            return []
         added = []
         ts = int(datetime.now().timestamp())
         for i in range(0, len(slugs), self.BATCH_SIZE):
             batch = slugs[i:i + self.BATCH_SIZE]
             batch_idx = i // self.BATCH_SIZE
             try:
-                await self._ws.subscribe(
+                await target.subscribe(
                     f"mdl-sub-{batch_idx}-{ts}",
                     "SUBSCRIPTION_TYPE_MARKET_DATA_LITE",
                     batch
@@ -114,15 +127,46 @@ class MarketsWebSocket:
             except Exception as e:
                 logger.error(f"Subscribe batch error: {e}")
         self._subscribed_slugs.update(added)
+        return added
+
+    async def _open_overflow_connection(self):
+        """Open an additional WS connection for overflow subscriptions."""
+        ws = self.client.ws.markets()
+        ws.on("market_data_lite", self._on_market_data_lite)
+        ws.on("trade", self._on_trade)
+        ws.on("heartbeat", self._on_heartbeat)
+        ws.on("error", self._on_error)
+        ws.on("close", self._on_close)
+        await ws.connect()
+        self._extra_connections.append(ws)
+        logger.info(f"Overflow Markets WS connected (total: {1 + len(self._extra_connections)})")
+        return ws
 
     async def subscribe_markets(self, slugs):
         new_slugs = [s for s in slugs if s not in self._subscribed_slugs]
         if not new_slugs:
             return
-        if self._ws:
-            await self._subscribe_batch(new_slugs)
-        else:
+        if not self._ws:
             self._pending_slugs.update(new_slugs)
+            return
+
+        # Split across connections respecting the limit
+        remaining = list(new_slugs)
+
+        # Fill primary connection first
+        primary_capacity = self.MAX_SUBS_PER_CONNECTION - self._sub_count_primary
+        if primary_capacity > 0:
+            primary_batch = remaining[:primary_capacity]
+            remaining = remaining[primary_capacity:]
+            added = await self._subscribe_batch(primary_batch, self._ws)
+            self._sub_count_primary += len(added)
+
+        # Overflow to additional connections
+        while remaining:
+            overflow_ws = await self._open_overflow_connection()
+            batch = remaining[:self.MAX_SUBS_PER_CONNECTION]
+            remaining = remaining[self.MAX_SUBS_PER_CONNECTION:]
+            await self._subscribe_batch(batch, overflow_ws)
 
     # Backward-compatible alias
     async def subscribe_slugs(self, slugs):

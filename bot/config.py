@@ -20,23 +20,27 @@ MAKER_REBATE_RATE = 0.002
 
 # ─────────────────────────────────────────────────────
 # ORACLE ARB BAND THRESHOLDS
+# Fee-adjusted for high-volume farming.
+# Round-trip cost ~0.6% of price. Bands set above
+# fee break-even with profit margin.
+# No price floor — trade any price where edge > fees.
 # ─────────────────────────────────────────────────────
-BAND_A_MIN_PRICE = 0.70
-BAND_A_MIN_EDGE = 0.08
+BAND_A_MIN_PRICE = 0.50
+BAND_A_MIN_EDGE = 0.04
 BAND_A_POSITION_PCT = 0.04
 
-BAND_B_MIN_PRICE = 0.60
-BAND_B_MAX_PRICE = 0.70
-BAND_B_MIN_EDGE = 0.05
+BAND_B_MIN_PRICE = 0.35
+BAND_B_MAX_PRICE = 0.50
+BAND_B_MIN_EDGE = 0.03
 BAND_B_POSITION_PCT = 0.025
 
-BAND_C_MIN_PRICE = 0.55
-BAND_C_MAX_PRICE = 0.60
-BAND_C_MIN_EDGE = 0.03
+BAND_C_MIN_PRICE = 0.20
+BAND_C_MAX_PRICE = 0.35
+BAND_C_MIN_EDGE = 0.02
 BAND_C_POSITION_PCT = 0.015
 
-# Hard rules — never enter below this price
-FAVORITES_FLOOR = 0.55
+# No price floor — edge must cover fees, that's the only gate
+FAVORITES_FLOOR = 0.15
 # Reduce edge threshold by this amount for live games
 LIVE_GAME_EDGE_REDUCTION = 0.01
 CONFIDENCE_THRESHOLD = 0.85
