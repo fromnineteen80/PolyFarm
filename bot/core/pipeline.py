@@ -82,14 +82,14 @@ def build_full_name(team: dict) -> str:
     if norm_safe_clean in norm_short:
         return short
 
-    # Check word overlap — if most words match, they're the same team
+    # Check word overlap — if they share the mascot (last word), use shorter name
     safe_words = set(norm_safe_clean.split())
     short_words = set(norm_short.split())
     if safe_words and short_words:
         overlap = safe_words & short_words
-        # If more than half the words overlap, use the longer name
-        if len(overlap) >= min(len(safe_words), len(short_words)):
-            return safe_clean if len(safe_clean) >= len(short) else short
+        # If they share any words, they're the same team
+        if overlap:
+            return short if len(short) <= len(safe_clean) else safe_clean
 
     # No overlap — genuinely different city + mascot
     if safe_clean:
