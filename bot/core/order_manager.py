@@ -596,64 +596,60 @@ class OrderManager:
 
         should_hold = False
 
+        # Hold if we're on the winning side late in the game.
+        # current_bid > 0.55 means our team is favored to win.
+        # Only exit if current_bid < 0.40 (we're clearly losing).
+
         if sport in ("basketball_nba",
                      "basketball_ncaab"):
+            # 4th quarter, last 2 minutes
             if time_rem <= 120 and \
-               current_bid > 0.80:
+               current_bid > 0.55:
                 should_hold = True
 
         elif sport in ("americanfootball_nfl",
                        "americanfootball_ncaaf"):
+            # 4th quarter, last 4 minutes
             if time_rem <= 240 and \
-               current_bid > 0.75:
+               current_bid > 0.55:
                 should_hold = True
 
         elif sport == "baseball_mlb":
-            if inning >= 8 and current_bid > 0.72:
+            # 8th inning or later
+            if inning >= 8 and current_bid > 0.55:
                 should_hold = True
 
         elif sport == "icehockey_nhl":
+            # 3rd period, last 5 minutes
             if time_rem <= 300 and \
                not is_overtime and \
-               current_bid > 0.75:
+               current_bid > 0.55:
                 should_hold = True
 
         elif sport in ("soccer_epl", "soccer_usa_mls",
                        "soccer_mls",
-                       "soccer_uefa_champs_league"):
-            if minute >= 80 and current_bid > 0.78:
-                should_hold = True
-
-        elif sport in ("mma_mixed_martial_arts",
-                       "tennis_atp", "tennis_wta",
-                       "golf_pga_tour"):
-            if current_bid > 0.78:
+                       "soccer_uefa_champs_league",
+                       "soccer_spain_la_liga",
+                       "soccer_germany_bundesliga",
+                       "soccer_italy_serie_a"):
+            # 80th minute or later
+            if minute >= 80 and current_bid > 0.55:
                 should_hold = True
 
         if should_hold:
-            # Check hold-to-resolution qualification
-            if position.original_edge >= \
-               0.12 and \
-               position.entry_price >= 0.65:
-                htr_count = self.pm.get_htr_count()
-                total = len(
-                    self.pm.get_all_positions()
+            # We're winning late in the game — hold to settlement
+            position.hold_to_resolution = True
+            if position.sell_order_id:
+                await self._cancel_order(
+                    position.sell_order_id
                 )
-                if total > 0 and \
-                   htr_count / total < 0.15:
-                    position.hold_to_resolution = True
-                    # Cancel GTC sell
-                    if position.sell_order_id:
-                        await self._cancel_order(
-                            position.sell_order_id
-                        )
-                    await self.pm.update_position(
-                        position.slug,
-                        {"hold_to_resolution": True}
-                    )
-                    return
+            await self.pm.update_position(
+                position.slug,
+                {"hold_to_resolution": True}
+            )
+            return
 
-        # Not holding — IOC exit
+        # We're losing late in the game — exit
         await self._ioc_exit(
             position, current_bid, "pre_resolution"
         )
