@@ -13562,6 +13562,481 @@ TEAM_REGISTRY = [
         "odds_api_key": "americanfootball_ncaaf",
         "odds_api_name": "Jackson State Tigers",
     },
+    {
+        "canonical": "Kansas State Wildcats",
+        "mascot": "Wildcats",
+        "city": "Manhattan",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#512888",
+
+        # Polymarket
+        "polymarket_id": 1143,
+        "polymarket_abbreviation": "kanst",
+        "polymarket_name": "Wildcats",
+        "polymarket_safe_name": "Kansas State",
+        "polymarket_names": ["Wildcats", "Kansas State", "Kansas State Wildcats", "KANST"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Kansas State Wildcats",
+    },
+    {
+        "canonical": "Lakeland Muskies",
+        "mascot": "Muskies",
+        "city": "Plymouth",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#0070B9",
+
+        # Polymarket
+        "polymarket_id": 1338,
+        "polymarket_abbreviation": "lake",
+        "polymarket_name": "Muskies",
+        "polymarket_safe_name": "Lakeland",
+        "polymarket_names": ["Muskies", "Lakeland", "Lakeland Muskies", "LAKE"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Lakeland Muskies",
+    },
+    {
+        "canonical": "LIU Sharks",
+        "mascot": "Sharks",
+        "city": "Brooklyn",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#4FB5E5",
+
+        # Polymarket
+        "polymarket_id": 1219,
+        "polymarket_abbreviation": "liub",
+        "polymarket_name": "Sharks",
+        "polymarket_safe_name": "LIU",
+        "polymarket_names": ["Sharks", "LIU", "LIU Sharks", "LIUB"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "LIU Sharks",
+    },
+    {
+        "canonical": "Lincoln (CA) Oaks",
+        "mascot": "Oaks",
+        "city": "Oakland",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#000000",
+
+        # Polymarket
+        "polymarket_id": 1335,
+        "polymarket_abbreviation": "loaks",
+        "polymarket_name": "Oaks",
+        "polymarket_safe_name": "Lincoln (CA)",
+        "polymarket_names": ["Oaks", "Lincoln (CA)", "Lincoln (CA) Oaks", "LOAKS"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Lincoln (CA) Oaks",
+    },
+    {
+        "canonical": "Louisiana-Monroe Warhawks",
+        "mascot": "Warhawks",
+        "city": "Monroe",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#862633",
+
+        # Polymarket
+        "polymarket_id": 1300,
+        "polymarket_abbreviation": "lamon",
+        "polymarket_name": "Warhawks",
+        "polymarket_safe_name": "Louisiana-Monroe",
+        "polymarket_names": ["Warhawks", "Louisiana-Monroe", "Louisiana-Monroe Warhawks", "UL Monroe Warhawks", "LAMON"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "UL Monroe Warhawks",
+    },
+    {
+        "canonical": "Lynchburg Hornets",
+        "mascot": "Hornets",
+        "city": "Lynchburg",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#E40327",
+
+        # Polymarket
+        "polymarket_id": 1336,
+        "polymarket_abbreviation": "lchb",
+        "polymarket_name": "Hornets",
+        "polymarket_safe_name": "Lynchburg",
+        "polymarket_names": ["Hornets", "Lynchburg", "Lynchburg Hornets", "LCHB"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Lynchburg Hornets",
+    },
+    {
+        "canonical": "Memphis Tigers",
+        "mascot": "Tigers",
+        "city": "Memphis",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#003087",
+
+        # Polymarket
+        "polymarket_id": 1073,
+        "polymarket_abbreviation": "mphs",
+        "polymarket_name": "Tigers",
+        "polymarket_safe_name": "Memphis",
+        "polymarket_names": ["Tigers", "Memphis", "Memphis Tigers", "MPHS"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Memphis Tigers",
+    },
+    {
+        "canonical": "Merrimack Warriors",
+        "mascot": "Warriors",
+        "city": "North Andover",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#003767",
+
+        # Polymarket
+        "polymarket_id": 1322,
+        "polymarket_abbreviation": "merri",
+        "polymarket_name": "Warriors",
+        "polymarket_safe_name": "Merrimack College",
+        "polymarket_names": ["Warriors", "Merrimack College", "Merrimack Warriors", "MERRI"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Merrimack Warriors",
+    },
+    {
+        "canonical": "Monmouth Hawks",
+        "mascot": "Hawks",
+        "city": "West Long Branch",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#0A2240",
+
+        # Polymarket
+        "polymarket_id": 1175,
+        "polymarket_abbreviation": "monm",
+        "polymarket_name": "Hawks",
+        "polymarket_safe_name": "Monmouth",
+        "polymarket_names": ["Hawks", "Monmouth", "Monmouth Hawks", "MONM"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Monmouth Hawks",
+    },
+    {
+        "canonical": "Murray State Racers",
+        "mascot": "Racers",
+        "city": "Murray",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#002144",
+
+        # Polymarket
+        "polymarket_id": 1228,
+        "polymarket_abbreviation": "murst",
+        "polymarket_name": "Racers",
+        "polymarket_safe_name": "Murray State",
+        "polymarket_names": ["Racers", "Murray State", "Murray State Racers", "MURST"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Murray State Racers",
+    },
+    {
+        "canonical": "Navy Midshipmen",
+        "mascot": "Midshipmen",
+        "city": "Annapolis",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#003B7C",
+
+        # Polymarket
+        "polymarket_id": 1245,
+        "polymarket_abbreviation": "navy",
+        "polymarket_name": "Midshipmen",
+        "polymarket_safe_name": "Navy",
+        "polymarket_names": ["Midshipmen", "Navy", "Navy Midshipmen", "NAVY"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Navy Midshipmen",
+    },
+    {
+        "canonical": "NC State Wolfpack",
+        "mascot": "Wolfpack",
+        "city": "Raleigh",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#CC0000",
+
+        # Polymarket
+        "polymarket_id": 1094,
+        "polymarket_abbreviation": "ncst",
+        "polymarket_name": "Wolfpack",
+        "polymarket_safe_name": "North Carolina State",
+        "polymarket_names": ["Wolfpack", "North Carolina State", "NC State Wolfpack", "NCST"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "NC State Wolfpack",
+    },
+    {
+        "canonical": "New Hampshire Wildcats",
+        "mascot": "Wildcats",
+        "city": "Durham",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#041E42",
+
+        # Polymarket
+        "polymarket_id": 1080,
+        "polymarket_abbreviation": "nhamp",
+        "polymarket_name": "Wildcats",
+        "polymarket_safe_name": "New Hampshire",
+        "polymarket_names": ["Wildcats", "New Hampshire", "New Hampshire Wildcats", "NHAMP"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "New Hampshire Wildcats",
+    },
+    {
+        "canonical": "Norfolk State Spartans",
+        "mascot": "Spartans",
+        "city": "Norfolk",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#007A53",
+
+        # Polymarket
+        "polymarket_id": 1190,
+        "polymarket_abbreviation": "norfst",
+        "polymarket_name": "Spartans",
+        "polymarket_safe_name": "Norfolk State",
+        "polymarket_names": ["Spartans", "Norfolk State", "Norfolk State Spartans", "NORFST"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Norfolk State Spartans",
+    },
+    {
+        "canonical": "North Carolina Central Eagles",
+        "mascot": "Eagles",
+        "city": "Durham",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#8B2331",
+
+        # Polymarket
+        "polymarket_id": 1195,
+        "polymarket_abbreviation": "ncc",
+        "polymarket_name": "Eagles",
+        "polymarket_safe_name": "North Carolina Central",
+        "polymarket_names": ["Eagles", "North Carolina Central", "North Carolina Central Eagles", "NCC"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "North Carolina Central Eagles",
+    },
+    {
+        "canonical": "North Carolina Tar Heels",
+        "mascot": "Tar Heels",
+        "city": "Chapel Hill",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#56A0D3",
+
+        # Polymarket
+        "polymarket_id": 1082,
+        "polymarket_abbreviation": "ncar",
+        "polymarket_name": "Tar Heels",
+        "polymarket_safe_name": "North Carolina",
+        "polymarket_names": ["Tar Heels", "North Carolina", "North Carolina Tar Heels", "NCAR"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "North Carolina Tar Heels",
+    },
+    {
+        "canonical": "Northeastern Huskies",
+        "mascot": "Huskies",
+        "city": "Boston",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#C8102E",
+
+        # Polymarket
+        "polymarket_id": 1155,
+        "polymarket_abbreviation": "neast",
+        "polymarket_name": "Huskies",
+        "polymarket_safe_name": "Northeastern",
+        "polymarket_names": ["Huskies", "Northeastern", "Northeastern Huskies", "NEAST"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Northeastern Huskies",
+    },
+    {
+        "canonical": "Northern Arizona Lumberjacks",
+        "mascot": "Lumberjacks",
+        "city": "Flagstaff",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#003466",
+
+        # Polymarket
+        "polymarket_id": 1115,
+        "polymarket_abbreviation": "narz",
+        "polymarket_name": "Lumberjacks",
+        "polymarket_safe_name": "Northern Arizona",
+        "polymarket_names": ["Lumberjacks", "Northern Arizona", "Northern Arizona Lumberjacks", "NARZ"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Northern Arizona Lumberjacks",
+    },
+    {
+        "canonical": "Northwestern State Demons",
+        "mascot": "Demons",
+        "city": "Natchitoches",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#582C83",
+
+        # Polymarket
+        "polymarket_id": 1282,
+        "polymarket_abbreviation": "nwst",
+        "polymarket_name": "Demons",
+        "polymarket_safe_name": "Northwestern State",
+        "polymarket_names": ["Demons", "Northwestern State", "Northwestern State Demons", "NWST"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Northwestern State Demons",
+    },
+    {
+        "canonical": "Oregon Ducks",
+        "mascot": "Ducks",
+        "city": "Eugene",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#154733",
+
+        # Polymarket
+        "polymarket_id": 1232,
+        "polymarket_abbreviation": "ore",
+        "polymarket_name": "Ducks",
+        "polymarket_safe_name": "Oregon",
+        "polymarket_names": ["Ducks", "Oregon", "Oregon Ducks", "ORE"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Oregon Ducks",
+    },
+    {
+        "canonical": "Portland State Vikings",
+        "mascot": "Vikings",
+        "city": "Portland",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#154734",
+
+        # Polymarket
+        "polymarket_id": 1112,
+        "polymarket_abbreviation": "portst",
+        "polymarket_name": "Vikings",
+        "polymarket_safe_name": "Portland State",
+        "polymarket_names": ["Vikings", "Portland State", "Portland State Vikings", "PORTST"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Portland State Vikings",
+    },
+    {
+        "canonical": "Prairie View A&M Panthers",
+        "mascot": "Panthers",
+        "city": "Prairie View",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#582C83",
+
+        # Polymarket
+        "polymarket_id": 1294,
+        "polymarket_abbreviation": "pvam",
+        "polymarket_name": "Panthers",
+        "polymarket_safe_name": "Prairie View A&M",
+        "polymarket_names": ["Panthers", "Prairie View A&M", "Prairie View A&M Panthers", "Prairie View Panthers", "PVAM"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Prairie View Panthers",
+    },
+    {
+        "canonical": "Princeton Tigers",
+        "mascot": "Tigers",
+        "city": "Princeton",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#FF671F",
+
+        # Polymarket
+        "polymarket_id": 1174,
+        "polymarket_abbreviation": "prnce",
+        "polymarket_name": "Tigers",
+        "polymarket_safe_name": "Princeton",
+        "polymarket_names": ["Tigers", "Princeton", "Princeton Tigers", "PRNCE"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Princeton Tigers",
+    },
+    {
+        "canonical": "Richmond Spiders",
+        "mascot": "Spiders",
+        "city": "Richmond",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#BA0C2F",
+
+        # Polymarket
+        "polymarket_id": 1100,
+        "polymarket_abbreviation": "rich",
+        "polymarket_name": "Spiders",
+        "polymarket_safe_name": "Richmond",
+        "polymarket_names": ["Spiders", "Richmond", "Richmond Spiders", "RICH"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "Richmond Spiders",
+    },
+    {
+        "canonical": "SMU Mustangs",
+        "mascot": "Mustangs",
+        "city": "Dallas",
+        "league": "cfb",
+        "sport": "americanfootball_ncaaf",
+        "color": "#C8102E",
+
+        # Polymarket
+        "polymarket_id": 1067,
+        "polymarket_abbreviation": "smu",
+        "polymarket_name": "Mustangs",
+        "polymarket_safe_name": "SMU",
+        "polymarket_names": ["Mustangs", "SMU", "SMU Mustangs"],
+
+        # Odds API
+        "odds_api_key": "americanfootball_ncaaf",
+        "odds_api_name": "SMU Mustangs",
+    },
 ]
 
 
