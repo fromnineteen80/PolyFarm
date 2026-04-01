@@ -692,7 +692,7 @@ class Pipeline:
                     try:
                         pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00"))
                         ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00"))
-                        if abs((pt - ot).total_seconds()) > 7200:
+                        if abs((pt - ot).total_seconds()) > 10800:
                             continue
                     except Exception:
                         pass
@@ -734,7 +734,7 @@ class Pipeline:
                         try:
                             pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00"))
                             ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00"))
-                            if abs((pt - ot).total_seconds()) <= 7200:
+                            if abs((pt - ot).total_seconds()) <= 10800:
                                 has_nearby_odds = True
                                 break
                         except Exception:
