@@ -41,7 +41,7 @@ def _exit_label(exit_type: str) -> str:
 
 class AlertManager:
 
-    BATCH_INTERVAL = 900  # 15 minutes
+    BATCH_INTERVAL = 1800  # 30 minutes
 
     def __init__(self):
         self._token = None
@@ -51,6 +51,7 @@ class AlertManager:
         self._session: aiohttp.ClientSession = None
         self._trade_batch: list = []  # batched trade alerts
         self._urgent_queue: asyncio.Queue = asyncio.Queue()  # sent immediately
+        self.wallet = None  # set by main.py for balance reads
 
     async def initialize(self):
         self._token = os.environ.get(
@@ -82,7 +83,7 @@ class AlertManager:
                 logger.debug(f"Alert sender error: {e}")
 
     async def _batch_loop(self):
-        """Send batched trade updates every 15 minutes."""
+        """Send trade summary every 30 minutes."""
         while True:
             await asyncio.sleep(self.BATCH_INTERVAL)
             if not self._trade_batch:
@@ -97,35 +98,47 @@ class AlertManager:
             wins = sum(1 for b in exits if b.get("pnl", 0) > 0)
             losses = len(exits) - wins
 
-            lines = [f"-- 15-Minute Update --", ""]
+            # Get wallet state directly
+            wallet_val = None
+            start_val = None
+            if self.wallet:
+                wallet_val = self.wallet.state.live_portfolio_value
+                start_val = self.wallet.state.session_start_value
+
+            lines = ["-- 30-Minute Summary --", ""]
+
+            # Trade activity
             if entries:
-                lines.append(f"Entered {len(entries)} trades")
+                lines.append(f"Opened: {len(entries)} new trades")
             if exits:
                 sign = "+" if total_pnl >= 0 else ""
                 lines.append(
-                    f"Closed {len(exits)} trades: "
-                    f"{wins}W / {losses}L | "
-                    f"P&L: {sign}${total_pnl:.2f}"
+                    f"Closed: {len(exits)} trades "
+                    f"({wins} won, {losses} lost)"
                 )
+                lines.append(f"Period P&L: {sign}${total_pnl:.2f}")
+
+            # Individual results
+            if exits:
+                lines.append("")
+                for b in exits[-5:]:
+                    sign = "+" if b.get("pnl", 0) >= 0 else ""
+                    lines.append(
+                        f"  {b.get('teams', '?')}: "
+                        f"{sign}${b.get('pnl', 0):.2f} "
+                        f"({_exit_label(b.get('exit_type', '?'))})"
+                    )
+                if len(exits) > 5:
+                    lines.append(f"  ... and {len(exits) - 5} more")
+
+            # Portfolio summary
             lines.append("")
-            for b in exits[-5:]:  # show last 5 exits
-                sign = "+" if b.get("pnl", 0) >= 0 else ""
-                lines.append(
-                    f"  {b.get('teams', '?')}: "
-                    f"{sign}${b.get('pnl', 0):.2f} "
-                    f"({_exit_label(b.get('exit_type', '?'))})"
-                )
-            if len(exits) > 5:
-                lines.append(f"  ... and {len(exits) - 5} more")
-
-            try:
-                from data.database import get_bot_config
-                wallet = await get_bot_config("live_portfolio_value")
-            except Exception:
-                wallet = None
-
-            if wallet:
-                lines.append(f"\nWallet: ${float(wallet):.2f}")
+            if wallet_val:
+                lines.append(f"Balance: ${wallet_val:.2f}")
+            if wallet_val and start_val and start_val > 0:
+                growth = ((wallet_val - start_val) / start_val) * 100
+                sign = "+" if growth >= 0 else ""
+                lines.append(f"Today: {sign}{growth:.1f}%")
 
             msg = "\n".join(lines)
             await self._send(msg)
