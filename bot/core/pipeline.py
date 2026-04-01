@@ -741,7 +741,111 @@ class Pipeline:
         return True
 
     # ─────────────────────────────────────────
-    # STEP 8: Calculate edge
+    # STEP 8: Load scores from Odds API
+    # ─────────────────────────────────────────
+
+    async def step8_load_scores(self):
+        """Fetch live and completed scores from the
+        Odds API /scores endpoint for all matched sport
+        keys. Updates game data with scores and
+        completed status."""
+        self.scores = {}  # {odds_api_event_id: {home_score, away_score, completed}}
+        odds_keys_to_poll = set(self.league_to_odds_key.values())
+
+        for key in odds_keys_to_poll:
+            await asyncio.sleep(0.5)  # rate limit
+            data = await self._get_odds(
+                f"/v4/sports/{key}/scores",
+                {"daysFrom": 3}
+            )
+            if not data or not isinstance(data, list):
+                continue
+
+            for event in data:
+                eid = event.get("id")
+                if not eid:
+                    continue
+                scores = event.get("scores")
+                if not scores:
+                    continue
+
+                home_team = event.get("home_team", "")
+                away_team = event.get("away_team", "")
+                home_score = None
+                away_score = None
+                for s in scores:
+                    if s.get("name") == home_team:
+                        home_score = s.get("score")
+                    elif s.get("name") == away_team:
+                        away_score = s.get("score")
+
+                self.scores[eid] = {
+                    "sport_key": key,
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_score": home_score,
+                    "away_score": away_score,
+                    "completed": event.get("completed", False),
+                    "last_update": event.get("last_update", ""),
+                }
+
+        # Also index scores by normalized team names for matching
+        # completed games whose event IDs rotated off the odds endpoint
+        scores_by_teams = {}  # {(sport_key, norm_home, norm_away): score_data}
+        for eid, sd in self.scores.items():
+            sport_key = sd.get("sport_key", "")
+            nh = normalize_team(sd["home_team"])
+            na = normalize_team(sd["away_team"])
+            scores_by_teams[(sport_key, nh, na)] = sd
+            scores_by_teams[(sport_key, na, nh)] = {
+                "home_team": sd["away_team"],
+                "away_team": sd["home_team"],
+                "home_score": sd["away_score"],
+                "away_score": sd["home_score"],
+                "completed": sd["completed"],
+                "last_update": sd["last_update"],
+            }
+
+        # Update matched games with scores
+        updated = 0
+        for slug, match in self.matched_games.items():
+            game = self.games.get(slug)
+            if not game:
+                continue
+
+            # Try direct event ID match first
+            score_data = self.scores.get(match["event_id"])
+
+            # Fall back to team name match within the sport
+            if not score_data:
+                odds_key = self.league_to_odds_key.get(game["league"], "")
+                bridge_home = self.team_bridge.get(
+                    normalize_team(game["home_team"]),
+                    normalize_team(game["home_team"]))
+                bridge_away = self.team_bridge.get(
+                    normalize_team(game["away_team"]),
+                    normalize_team(game["away_team"]))
+                score_data = scores_by_teams.get((odds_key, bridge_home, bridge_away))
+
+            if not score_data:
+                continue
+
+            # Respect orientation — if reversed, swap home/away scores
+            if match["reversed"]:
+                game["odds_api_home_score"] = score_data["away_score"]
+                game["odds_api_away_score"] = score_data["home_score"]
+            else:
+                game["odds_api_home_score"] = score_data["home_score"]
+                game["odds_api_away_score"] = score_data["away_score"]
+            game["odds_api_completed"] = score_data["completed"]
+            game["odds_api_score_update"] = score_data["last_update"]
+            updated += 1
+
+        logger.info(f"Step 8 complete: {len(self.scores)} scores fetched, {updated} matched games updated")
+        return True
+
+    # ─────────────────────────────────────────
+    # Edge calculation
     # ─────────────────────────────────────────
 
     def get_edge(self, slug: str) -> Optional[dict]:
@@ -932,6 +1036,13 @@ class Pipeline:
                     "series_slug": game["series_slug"],
                 }
 
+                # Add Odds API scores if available
+                if game.get("odds_api_home_score") is not None:
+                    data["odds_api_home_score"] = game["odds_api_home_score"]
+                    data["odds_api_away_score"] = game.get("odds_api_away_score")
+                    data["odds_api_completed"] = game.get("odds_api_completed", False)
+                    data["odds_api_score_update"] = game.get("odds_api_score_update")
+
                 # Add edge data if matched
                 edge_data = self.get_edge(slug)
                 if edge_data:
@@ -970,16 +1081,18 @@ class Pipeline:
             return False
         if not await self.step7_match_games():
             return False
+        await self.step8_load_scores()
         await self.step9_write_to_supabase()
 
         logger.info("Pipeline startup complete")
         return True
 
     async def run_refresh(self):
-        """Refresh pipeline — reload games and odds."""
+        """Refresh pipeline — reload games, odds, and scores."""
         await self.step4_load_odds()
         await self.step6_load_games()
         await self.step7_match_games()
+        await self.step8_load_scores()
         await self.step9_write_to_supabase()
 
     async def refresh_loop(self):

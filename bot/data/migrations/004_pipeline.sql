@@ -1,8 +1,9 @@
 -- ═══════════════════════════════════════════════
 -- 004_pipeline.sql
 -- All schema changes for the new pipeline.
--- Covers: ET time handling, game buckets on markets,
--- and ET timestamps + trade buckets on trades.
+-- Covers: ET time handling, game buckets, Odds API
+-- scores on markets, and ET timestamps + trade
+-- buckets on trades.
 -- Safe to run on a live database with 001-003
 -- already applied.
 -- ═══════════════════════════════════════════════
@@ -22,6 +23,19 @@ CREATE INDEX IF NOT EXISTS idx_markets_game_bucket
 
 CREATE INDEX IF NOT EXISTS idx_markets_game_start_time_et
   ON markets(game_start_time_et);
+
+-- Odds API scores (from /v4/sports/{key}/scores endpoint)
+ALTER TABLE markets
+  ADD COLUMN IF NOT EXISTS odds_api_home_score TEXT;
+
+ALTER TABLE markets
+  ADD COLUMN IF NOT EXISTS odds_api_away_score TEXT;
+
+ALTER TABLE markets
+  ADD COLUMN IF NOT EXISTS odds_api_completed BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE markets
+  ADD COLUMN IF NOT EXISTS odds_api_score_update TIMESTAMPTZ;
 
 -- ─── TRADES TABLE ────────────────────────────
 
