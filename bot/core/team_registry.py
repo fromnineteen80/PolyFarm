@@ -3771,6 +3771,348 @@ TEAM_REGISTRY = [
     # =========================================================
     # Bundesliga
     # =========================================================
+    {
+        "canonical": "Augsburg",
+        "mascot": "Augsburg",
+        "city": "Augsburg",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#BA3733",
+
+        # Polymarket
+        "polymarket_id": 3408,
+        "polymarket_abbreviation": "aug",
+        "polymarket_name": "FC Augsburg",
+        "polymarket_safe_name": "FC Augsburg",
+        "polymarket_names": ["FC Augsburg", "Augsburg", "AUG"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Augsburg",
+    },
+    {
+        "canonical": "Bayern Munich",
+        "mascot": "Bayern Munich",
+        "city": "Munich",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#DC052D",
+
+        # Polymarket
+        "polymarket_id": 3409,
+        "polymarket_abbreviation": "fcb",
+        "polymarket_name": "FC Bayern München",
+        "polymarket_safe_name": "FC Bayern München",
+        "polymarket_names": ["FC Bayern München", "Bayern Munich", "FCB"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Bayern Munich",
+    },
+    {
+        "canonical": "Bayer Leverkusen",
+        "mascot": "Bayer Leverkusen",
+        "city": "Leverkusen",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#E32221",
+
+        # Polymarket
+        "polymarket_id": 3404,
+        "polymarket_abbreviation": "lev",
+        "polymarket_name": "Bayer 04 Leverkusen",
+        "polymarket_safe_name": "Bayer 04 Leverkusen",
+        "polymarket_names": ["Bayer 04 Leverkusen", "Bayer Leverkusen", "LEV"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Bayer Leverkusen",
+    },
+    {
+        "canonical": "Borussia Dortmund",
+        "mascot": "Borussia Dortmund",
+        "city": "Dortmund",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#E1C500",
+
+        # Polymarket
+        "polymarket_id": 3406,
+        "polymarket_abbreviation": "bvb",
+        "polymarket_name": "BV Borussia 09 Dortmund",
+        "polymarket_safe_name": "BV Borussia 09 Dortmund",
+        "polymarket_names": ["BV Borussia 09 Dortmund", "Borussia Dortmund", "BVB"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Borussia Dortmund",
+    },
+    {
+        "canonical": "Borussia Monchengladbach",
+        "mascot": "Borussia Monchengladbach",
+        "city": "Monchengladbach",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#000000",
+
+        # Polymarket
+        "polymarket_id": 3405,
+        "polymarket_abbreviation": "bmg",
+        "polymarket_name": "Borussia Mönchengladbach",
+        "polymarket_safe_name": "Borussia Mönchengladbach",
+        "polymarket_names": ["Borussia Mönchengladbach", "Borussia Monchengladbach", "BMG"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Borussia Monchengladbach",
+    },
+    {
+        "canonical": "Eintracht Frankfurt",
+        "mascot": "Eintracht Frankfurt",
+        "city": "Frankfurt",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#E1000F",
+
+        # Polymarket
+        "polymarket_id": 3407,
+        "polymarket_abbreviation": "fra",
+        "polymarket_name": "Eintracht Frankfurt",
+        "polymarket_safe_name": "Eintracht Frankfurt",
+        "polymarket_names": ["Eintracht Frankfurt", "FRA"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Eintracht Frankfurt",
+    },
+    {
+        "canonical": "Freiburg",
+        "mascot": "Freiburg",
+        "city": "Freiburg",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#f77729",
+
+        # Polymarket
+        "polymarket_id": 3416,
+        "polymarket_abbreviation": "scf",
+        "polymarket_name": "SC Freiburg",
+        "polymarket_safe_name": "SC Freiburg",
+        "polymarket_names": ["SC Freiburg", "Freiburg", "SCF"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "SC Freiburg",
+    },
+    {
+        "canonical": "Hamburger SV",
+        "mascot": "Hamburger SV",
+        "city": "Hamburg",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#0A3F86",
+
+        # Polymarket
+        "polymarket_id": 3410,
+        "polymarket_abbreviation": "hsv",
+        "polymarket_name": "Hamburger SV",
+        "polymarket_safe_name": "Hamburger SV",
+        "polymarket_names": ["Hamburger SV", "HSV"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Hamburger SV",
+    },
+    {
+        "canonical": "Heidenheim",
+        "mascot": "Heidenheim",
+        "city": "Heidenheim",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#E2001A",
+
+        # Polymarket
+        "polymarket_id": 3418,
+        "polymarket_abbreviation": "hei",
+        "polymarket_name": "1. FC Heidenheim 1846",
+        "polymarket_safe_name": "FC Heidenheim 1846",
+        "polymarket_names": ["1. FC Heidenheim 1846", "FC Heidenheim 1846", "1. FC Heidenheim", "Heidenheim", "HEI"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "1. FC Heidenheim",
+    },
+    {
+        "canonical": "Hoffenheim",
+        "mascot": "Hoffenheim",
+        "city": "Sinsheim",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#1961B5",
+
+        # Polymarket
+        "polymarket_id": 3412,
+        "polymarket_abbreviation": "hof",
+        "polymarket_name": "TSG 1899 Hoffenheim",
+        "polymarket_safe_name": "TSG 1899 Hoffenheim",
+        "polymarket_names": ["TSG 1899 Hoffenheim", "TSG Hoffenheim", "Hoffenheim", "HOF"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "TSG Hoffenheim",
+    },
+    {
+        "canonical": "Koln",
+        "mascot": "Koln",
+        "city": "Cologne",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#EB1722",
+
+        # Polymarket
+        "polymarket_id": 3403,
+        "polymarket_abbreviation": "koe",
+        "polymarket_name": "1. FC Köln",
+        "polymarket_safe_name": "FC Köln",
+        "polymarket_names": ["1. FC Köln", "FC Köln", "Koln", "KOE"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "1. FC Köln",
+    },
+    {
+        "canonical": "Mainz 05",
+        "mascot": "Mainz 05",
+        "city": "Mainz",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#C3141E",
+
+        # Polymarket
+        "polymarket_id": 3402,
+        "polymarket_abbreviation": "mai",
+        "polymarket_name": "1. FSV Mainz 05",
+        "polymarket_safe_name": "FSV Mainz 05",
+        "polymarket_names": ["1. FSV Mainz 05", "FSV Mainz 05", "Mainz 05", "MAI"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "FSV Mainz 05",
+    },
+    {
+        "canonical": "RB Leipzig",
+        "mascot": "RB Leipzig",
+        "city": "Leipzig",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#DD013F",
+
+        # Polymarket
+        "polymarket_id": 3415,
+        "polymarket_abbreviation": "rbl",
+        "polymarket_name": "RB Leipzig",
+        "polymarket_safe_name": "RB Leipzig",
+        "polymarket_names": ["RB Leipzig", "RBL"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "RB Leipzig",
+    },
+    {
+        "canonical": "St. Pauli",
+        "mascot": "St. Pauli",
+        "city": "Hamburg",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#624839",
+
+        # Polymarket
+        "polymarket_id": 3419,
+        "polymarket_abbreviation": "stp",
+        "polymarket_name": "FC St. Pauli 1910",
+        "polymarket_safe_name": "FC St. Pauli 1910",
+        "polymarket_names": ["FC St. Pauli 1910", "FC St. Pauli", "St. Pauli", "STP"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "FC St. Pauli",
+    },
+    {
+        "canonical": "Stuttgart",
+        "mascot": "Stuttgart",
+        "city": "Stuttgart",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#E32219",
+
+        # Polymarket
+        "polymarket_id": 3413,
+        "polymarket_abbreviation": "stu",
+        "polymarket_name": "VfB Stuttgart",
+        "polymarket_safe_name": "VfB Stuttgart",
+        "polymarket_names": ["VfB Stuttgart", "Stuttgart", "STU"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "VfB Stuttgart",
+    },
+    {
+        "canonical": "Union Berlin",
+        "mascot": "Union Berlin",
+        "city": "Berlin",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#EA1822",
+
+        # Polymarket
+        "polymarket_id": 3417,
+        "polymarket_abbreviation": "unb",
+        "polymarket_name": "1. FC Union Berlin",
+        "polymarket_safe_name": "FC Union Berlin",
+        "polymarket_names": ["1. FC Union Berlin", "FC Union Berlin", "Union Berlin", "UNB"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Union Berlin",
+    },
+    {
+        "canonical": "Werder Bremen",
+        "mascot": "Werder Bremen",
+        "city": "Bremen",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#0D884C",
+
+        # Polymarket
+        "polymarket_id": 3411,
+        "polymarket_abbreviation": "bre",
+        "polymarket_name": "SV Werder Bremen",
+        "polymarket_safe_name": "SV Werder Bremen",
+        "polymarket_names": ["SV Werder Bremen", "Werder Bremen", "BRE"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "Werder Bremen",
+    },
+    {
+        "canonical": "Wolfsburg",
+        "mascot": "Wolfsburg",
+        "city": "Wolfsburg",
+        "league": "bun",
+        "sport": "soccer_germany_bundesliga",
+        "color": "#65B32E",
+
+        # Polymarket
+        "polymarket_id": 3414,
+        "polymarket_abbreviation": "wob",
+        "polymarket_name": "VfL Wolfsburg",
+        "polymarket_safe_name": "VfL Wolfsburg",
+        "polymarket_names": ["VfL Wolfsburg", "Wolfsburg", "WOB"],
+
+        # Odds API
+        "odds_api_key": "soccer_germany_bundesliga",
+        "odds_api_name": "VfL Wolfsburg",
+    },
 
     # =========================================================
     # Serie A
