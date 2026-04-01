@@ -202,7 +202,7 @@ class EdgeDetector:
         open_positions = self.position_monitor.get_all_positions()
         total = len(open_positions)
         if total > 0:
-            sport_count = sum(1 for p in open_positions.values() if p.get("sport") == market.sport)
+            sport_count = sum(1 for p in open_positions.values() if getattr(p, "sport", None) == market.sport)
             if sport_count / total >= MAX_SINGLE_SPORT_PCT:
                 return None
 
