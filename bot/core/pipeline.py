@@ -681,6 +681,93 @@ class Pipeline:
         }
 
     # ─────────────────────────────────────────
+    # COMPATIBILITY: methods for edge_detector
+    # and monitors (same interface as OddsAPIClient)
+    # ─────────────────────────────────────────
+
+    def is_matched(self, slug: str) -> bool:
+        return slug in self.matched_games
+
+    def get_fair_prob(self, polymarket_slug, team_side="home"):
+        match = self.matched_games.get(polymarket_slug)
+        if not match:
+            return None
+        odds = self.odds_events.get(match["event_id"])
+        if not odds:
+            return None
+        reversed_orientation = match["reversed"]
+        if reversed_orientation:
+            if team_side == "home":
+                return odds.get("consensus_away_prob")
+            else:
+                return odds.get("consensus_home_prob")
+        else:
+            if team_side == "home":
+                return odds.get("consensus_home_prob")
+            else:
+                return odds.get("consensus_away_prob")
+
+    def get_consensus_data(self, polymarket_slug):
+        match = self.matched_games.get(polymarket_slug)
+        if not match:
+            return None
+        odds = self.odds_events.get(match["event_id"])
+        if not odds:
+            return None
+        result = dict(odds)
+        result["reversed"] = match["reversed"]
+        return result
+
+    def get_edge_signal(self, polymarket_slug, team_side, poly_yes_price, ws_markets, band_threshold):
+        sharp_prob = self.get_fair_prob(polymarket_slug, team_side)
+        if sharp_prob is None:
+            return None
+        static_edge = round(sharp_prob - poly_yes_price, 4)
+        velocity, direction = ws_markets.calculate_velocity(polymarket_slug)
+        net_pressure = ws_markets.get_net_buy_pressure(polymarket_slug)
+
+        DIRECTION_THRESHOLD_MULTIPLIER = {
+            "falling": 0.85, "stable": 1.00, "rising": 1.20,
+        }
+        DIRECTION_SIZE_MULTIPLIER = {
+            "falling_strong": 1.15, "default": 1.00, "caution": 0.85,
+        }
+
+        multiplier = DIRECTION_THRESHOLD_MULTIPLIER.get(direction, 1.0)
+        required_edge = round(band_threshold * multiplier, 4)
+
+        if direction == "falling" and net_pressure < 0.8:
+            size_mult = DIRECTION_SIZE_MULTIPLIER["falling_strong"]
+        elif direction == "rising" or net_pressure > 1.5:
+            size_mult = DIRECTION_SIZE_MULTIPLIER["caution"]
+        else:
+            size_mult = DIRECTION_SIZE_MULTIPLIER["default"]
+
+        base_score = min(static_edge / 0.10, 1.0) * 60
+        direction_score = {"falling": 30, "stable": 15, "rising": 0}.get(direction, 15)
+        pressure_score = 10 if net_pressure < 0.7 else 5 if net_pressure <= 1.3 else 0
+        composite_score = round(base_score + direction_score + pressure_score, 1)
+
+        consensus = self.get_consensus_data(polymarket_slug)
+        match_data = self.matched_games.get(polymarket_slug, {})
+        event_id = match_data.get("event_id", "")
+        books_used = consensus.get("bookmakers_used", []) if consensus else []
+
+        return {
+            "sharp_prob": sharp_prob,
+            "static_edge": static_edge,
+            "direction": direction,
+            "velocity": velocity,
+            "net_buy_pressure": net_pressure,
+            "required_edge": required_edge,
+            "size_multiplier": size_mult,
+            "composite_score": composite_score,
+            "qualifies": static_edge >= required_edge,
+            "books_used": books_used,
+            "event_id": event_id,
+        }
+
+    # ─────────────────────────────────────────
     # STEP 9: Write to Supabase
     # ─────────────────────────────────────────
 

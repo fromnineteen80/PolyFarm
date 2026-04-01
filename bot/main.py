@@ -14,6 +14,7 @@ from data.database import (
 )
 from core.wallet import WalletManager
 from core.market_loader import MarketLoader, MarketRegistry
+from core.pipeline import Pipeline
 from core.edge_detector import EdgeDetector
 from core.order_manager import OrderManager
 from core.position_monitor import PositionMonitor
@@ -153,22 +154,20 @@ async def main():
     # ── STEP 11: Load markets ─────────────────────
     await market_loader.load_all_markets()
 
-    # ── STEP 12: Initialize Odds API ─────────────
-    from core.odds_api_client import OddsAPIClient
+    # ── STEP 12: Initialize pipeline ─────────────
     import data.database as db
 
-    odds_api = None
+    pipeline = None
     odds_key = os.environ.get("ODDS_API_KEY")
     if odds_key:
-        odds_api = OddsAPIClient(api_key=odds_key, db=db)
-        await odds_api.startup(registry, client)
-        edge_detector.odds_api = odds_api
+        pipeline = Pipeline(odds_api_key=odds_key, db=db)
+        await pipeline.run_startup()
+        edge_detector.odds_api = pipeline
         edge_detector.ws_markets = markets_ws
-        # Wire to monitors that need sharp probs
-        exception_monitor.mapper = odds_api
-        fade_monitor.mapper = odds_api
-        overnight_monitor.mapper = odds_api
-        logger.info("Odds API integration active")
+        exception_monitor.mapper = pipeline
+        fade_monitor.mapper = pipeline
+        overnight_monitor.mapper = pipeline
+        logger.info("Pipeline active — registry-based team matching")
     else:
         logger.warning("ODDS_API_KEY not set — running without sharp odds")
 
@@ -202,7 +201,6 @@ async def main():
         asyncio.create_task(private_ws.start(), name="ws_private"),
         asyncio.create_task(markets_ws.start(), name="ws_markets"),
         asyncio.create_task(market_loader.refresh_loop(), name="market_refresh"),
-        asyncio.create_task(market_loader.flush_loop(odds_api, markets_ws), name="market_flush"),
         asyncio.create_task(edge_detector.detection_loop(), name="edge_detection"),
         asyncio.create_task(position_monitor.monitor_loop(), name="position_monitor"),
         asyncio.create_task(wallet.monitor_loop(), name="wallet_recalculate"),
@@ -210,15 +208,15 @@ async def main():
         asyncio.create_task(fade_monitor.monitor_loop(), name="fade_monitor"),
         asyncio.create_task(overnight_monitor.monitor_loop(), name="overnight_monitor"),
         asyncio.create_task(midnight_scheduler(wallet, alerts, market_loader), name="midnight"),
-        asyncio.create_task(pre_game_scanner(registry, odds_api, alerts), name="pre_game"),
+        asyncio.create_task(pre_game_scanner(registry, pipeline, alerts), name="pre_game"),
         asyncio.create_task(game_complete_scanner(registry, position_monitor, alerts), name="game_complete"),
         asyncio.create_task(heartbeat_loop(), name="heartbeat"),
         asyncio.create_task(paper_milestone_checker(alerts), name="paper_milestones"),
     ]
 
-    if odds_api:
+    if pipeline:
         tasks.append(
-            asyncio.create_task(odds_api.poll_loop(lambda: registry, markets_ws), name="odds_api_poll")
+            asyncio.create_task(pipeline.refresh_loop(), name="pipeline_refresh")
         )
 
     if PHASE2_ENABLED:
@@ -270,8 +268,8 @@ async def main():
         await shutdown(wallet, alerts, order_manager)
         await private_ws.stop()
         await markets_ws.stop()
-        if odds_api:
-            await odds_api.close()
+        if pipeline:
+            await pipeline.close()
 
 
 async def paper_milestone_checker(alerts):
