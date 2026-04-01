@@ -24,7 +24,9 @@ pip install --quiet \
     supabase \
     polymarket-us \
     pynacl \
-    websockets
+    websockets \
+    aiohttp \
+    rich
 
 echo "Verifying dependencies..."
 python3 -c "
@@ -32,6 +34,8 @@ from polymarket_us import AsyncPolymarketUS
 from supabase import create_client
 from core.pipeline import Pipeline
 from core.team_registry import lookup_by_polymarket_id
+import aiohttp
+import rich
 print('All imports OK')
 "
 
