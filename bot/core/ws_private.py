@@ -19,8 +19,8 @@ logger = logging.getLogger("polyfarm.ws_private")
 class PrivateWebSocket:
 
     HEARTBEAT_TIMEOUT = 30
-    RECONNECT_BASE = 1
-    RECONNECT_MAX = 60
+    RECONNECT_BASE = 5
+    RECONNECT_MAX = 120
 
     def __init__(self, client, position_monitor, wallet):
         self.client = client

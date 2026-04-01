@@ -23,8 +23,9 @@ if [ ! -f ".env" ]; then
     exit 1
 fi
 
-# Start bot
+# Start bot (truncate log so we don't mix old/new output)
 echo "Starting OracleFarming bot..."
+> "$LOG"
 python3 main.py > "$LOG" 2>&1 &
 echo "PID: $!"
 

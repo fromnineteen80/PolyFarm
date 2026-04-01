@@ -20,8 +20,8 @@ logger = logging.getLogger("polyfarm.ws_markets")
 class MarketsWebSocket:
 
     HEARTBEAT_TIMEOUT = 30
-    RECONNECT_BASE = 1
-    RECONNECT_MAX = 60
+    RECONNECT_BASE = 5
+    RECONNECT_MAX = 120
     BATCH_SIZE = 10
     MAX_SUBS_PER_CONNECTION = 90  # leave headroom below 100 limit
 
@@ -83,14 +83,19 @@ class MarketsWebSocket:
 
         await self._ws.connect()
         self._reconnect_delay = self.RECONNECT_BASE
+        self._sub_count_primary = 0
+        self._sub_limit_logged = False
         logger.info("Markets WebSocket connected")
         try:
             await set_bot_config("ws_markets_status", "CONNECTED")
         except Exception:
             pass
 
+        # Resubscribe through subscribe_markets which handles splitting
         if self._subscribed_slugs:
-            await self._subscribe_batch(list(self._subscribed_slugs))
+            resub = list(self._subscribed_slugs)
+            self._subscribed_slugs.clear()
+            await self.subscribe_markets(resub)
 
         self._last_heartbeat = datetime.now(timezone.utc)
         while self._running:
@@ -311,7 +316,14 @@ class MarketsWebSocket:
         self._last_heartbeat = datetime.now(timezone.utc)
 
     def _on_error(self, error):
-        logger.error(f"Markets WS error: {error}")
+        error_str = str(error)
+        if "max subscriptions" in error_str.lower():
+            # Log once, not on every batch
+            if not getattr(self, '_sub_limit_logged', False):
+                logger.warning(f"Markets WS hit subscription limit ({self._sub_count_primary} subs). Overflow will use additional connections.")
+                self._sub_limit_logged = True
+        else:
+            logger.error(f"Markets WS error: {error}")
 
     def _on_close(self, data):
         logger.warning("Markets WS closed. Reconnect loop will restart.")
