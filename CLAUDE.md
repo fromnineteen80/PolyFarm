@@ -111,7 +111,12 @@ ucl → soccer_uefa_champs_league → soccer_uefa_champs_league
 **How to get API-specific data for each team:**
 - Polymarket: use v1 teams endpoint (`GET /v1/sports/teams?filters.league={slug}&limit=100&offset=0`)
 - Odds API: use v4 participants endpoint (`GET /v4/sports/{key}/participants?apiKey={KEY}`)
-- v1 is used ONLY for building the registry. It is NOT referenced in bot code at runtime.
+- v1 is used ONLY for building the registry. It is NOT referenced in bot code at runtime. Make this clear in the md file. 
+  When processing v2 events and trading and in game state, look up
+  team_registry[team_id] to get full static
+  team data (logos, colors, conference, etc).
+  Override record and ranking from v2 since
+  those update live during the season.
 
 **Lookup functions must be league-scoped** to prevent cross-league collisions:
 - "Kings" = Sacramento Kings (NBA) vs Los Angeles Kings (NHL)
@@ -232,6 +237,8 @@ WalletManager with profit/loss tiers. Paper mode: $700 total, $350 per investor.
 - Do NOT use the old `market_loader.py` or `odds_api_client.py` patterns
 - Do NOT make assumptions about team names — verify against the actual APIs by curling them
 - Do NOT use monospace fonts, system font stacks — dashboard uses Raleway from Google Fonts
+- Do NOT use inline CSS. All styling must be done in global CSS.
+- Do NOT reference Polymarket v1 endpoints in bot code. v1 was used ONLY to build team_registry.py. The bot uses v2 at runtime.
 - Commit and push to `main` after each step
 - We are NOT doing WCBB (women's college basketball)
 - The project name is **OracleFarming** (not PolyFarm)
