@@ -510,7 +510,10 @@ class Pipeline:
             for name in unmatched:
                 logger.warning(f"Step 5 UNMATCHED: {name}")
 
-        logger.info(f"Step 5 complete: {matched} teams matched via registry, {len(unmatched)} unmatched")
+        logger.info(
+            f"Step 5 complete: {matched}/{len(self.teams)} active teams matched via registry "
+            f"(registry has 929 total), {len(unmatched)} unmatched"
+        )
         return True
 
     # ─────────────────────────────────────────
@@ -741,9 +744,9 @@ class Pipeline:
                 logger.warning(f"Step 7 UNMATCHED: {name}")
 
         logger.info(
-            f"Step 7 complete: {matched} matched, "
-            f"{waiting_for_odds} waiting for odds, "
-            f"{len(unmatched)} unmatched (broken)")
+            f"Step 7 complete: {matched}/{len(self.games)} games matched with odds, "
+            f"{waiting_for_odds} future games waiting for bookmaker lines, "
+            f"{len(unmatched)} broken (should be 0)")
         return True
 
     # ─────────────────────────────────────────
