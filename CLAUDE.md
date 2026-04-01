@@ -125,8 +125,8 @@ ucl → soccer_uefa_champs_league → soccer_uefa_champs_league
 
 ---
 
-### `bot/core/pipeline.py` — NEEDS STEP 5 UPDATED
-782 lines. Steps 1-9 implemented. This is the NEW pipeline that replaces the old `market_loader.py` + `odds_api_client.py`.
+### `bot/core/pipeline.py` — COMPLETE
+Pipeline wired into main.py, replaces old `market_loader.py` + `odds_api_client.py` for odds/matching/edge.
 
 **Steps:**
 1. `step1_discover_leagues()` — fetch league slugs from Polymarket v2
@@ -134,10 +134,16 @@ ucl → soccer_uefa_champs_league → soccer_uefa_champs_league
 3. `step3_discover_odds_keys()` — map leagues to Odds API sport keys
 4. `step4_load_odds()` — fetch odds from The Odds API for each sport key
 5. `step5_match_teams()` — COMPLETE. Uses team_registry lookups by polymarket_id. No fuzzy matching. No fallback. Registry is the single source of truth.
-6. `step6_load_games()` — load game events from Polymarket. Stamps each game with `game_start_time_et` (Eastern) and `game_bucket`.
-7. `step7_match_games()` — match Polymarket games to Odds API events
-8. `step8_calculate_edge()` — compute edge = sharp fair prob - polymarket price
-9. `step9_write_to_supabase()` — write matched data to Supabase for dashboard. Includes ET times and game buckets.
+6. `step6_load_games()` — load game events from Polymarket. Stamps each game with `game_start_time_et` (Eastern), `game_bucket`, `outcome_prices`, `outcomes`, `ep3_status`, `market_closed`.
+7. `step7_match_games()` — match Polymarket games to Odds API events. Reports three categories: matched, waiting for odds (future games without bookmaker lines yet — normal), unmatched/broken (odds exist nearby but bridge failed — should be zero).
+8. `step8_load_scores()` — fetch live and final scores from Odds API `/v4/sports/{key}/scores`. Matches by event ID first, falls back to team name matching for completed games whose IDs rotated off the odds endpoint.
+9. `step9_write_to_supabase()` — write all market data to Supabase for dashboard. Includes ET times, game buckets, scores, outcome prices, edge data.
+
+**Compatibility methods (same interface as old OddsAPIClient):**
+- `is_matched(slug)` — does this game have odds data
+- `get_fair_prob(slug, team_side)` — sharp bookmaker probability
+- `get_edge_signal(slug, team_side, poly_yes_price, ws_markets, band_threshold)` — composite edge signal for edge_detector
+- `get_consensus_data(slug)` — full odds data with orientation
 
 **Time handling:**
 - Both Polymarket v2 and Odds API return all times in UTC (Z suffix)
@@ -148,9 +154,19 @@ ucl → soccer_uefa_champs_league → soccer_uefa_champs_league
   - `today` — game starts between 12:01 AM and 11:59 PM ET today
   - `upcoming` — game starts after today
   - `historical` — game ended (`event.ended == true`)
-- Trade timestamps: `entered_at_utc`, `entered_at_et`, `exited_at_utc`, `exited_at_et`
+- Trade timestamps: `timestamp_entry` (UTC), `timestamp_entry_et` (ET), `timestamp_exit` (UTC), `timestamp_exit_et` (ET)
 - Trade buckets: `live` (open position), `historical` (closed)
-- Supabase columns needed: `game_start_time_et` (text), `game_bucket` (text)
+
+**Scores:**
+- Polymarket v2: `score`, `period`, `elapsed` on event level (live game clock)
+- Odds API: `/v4/sports/{key}/scores` — `home_score`, `away_score`, `completed` (definitive final scores)
+- Both captured on every 60s refresh
+
+**Settlement:**
+- `outcome_prices` — live prices during game, `["1","0"]` after settlement (winner gets 1)
+- `outcomes` — team names matching each price position
+- `ep3_status` — `OPEN` during trading, `EXPIRED` after settlement
+- `market_closed` — true when trading is done
 
 **Other pipeline details:**
 - `TEAM_ALIASES` dict removed (replaced by team_registry)
@@ -159,26 +175,18 @@ ucl → soccer_uefa_champs_league → soccer_uefa_champs_league
 - `TARGET_SPORTS = {"Basketball", "Football", "Ice Hockey", "Baseball", "Soccer"}`
 - Uses `seen_events` set to dedup games (one market per event)
 - `run_startup()` runs steps 1-9 sequentially
-- `run_refresh()` re-runs for ongoing updates
-- `refresh_loop()` calls refresh every 5 minutes
+- `run_refresh()` re-runs steps 4,6,7,8,9 for ongoing updates
+- `refresh_loop()` calls refresh every 60 seconds
+- Uses httpx for both Polymarket and Odds API calls (no aiohttp)
 
 ---
 
-### `bot/main.py` — NEEDS REWIRING
-Currently starts the bot using OLD components:
-- `MarketLoader` from `market_loader.py` (OLD)
-- `OddsAPIClient` from `odds_api_client.py` (OLD)
+### `bot/main.py` — COMPLETE (REWIRED)
+Pipeline wired in, replaces OddsAPIClient. MarketLoader/MarketRegistry kept for live game state used by other components (position_monitor, edge_detector, terminal, scanners).
 
-**Must be rewired to use `pipeline.py` instead.** The pipeline's `run_startup()` replaces the old market loading + odds loading + matching flow. The pipeline's `refresh_loop()` replaces the old `market_loader.refresh_loop()`.
-
-Current main.py startup flow:
-1. SDK client init → verify connectivity
-2. Init components (market loader, odds api, edge detector, ws, wallet)
-3. Reconcile orders → session init
-4. Load markets → init Odds API → send alert
-5. Start background tasks (heartbeat, pre_game_scanner, game_complete_scanner, paper_milestone_checker, midnight_scheduler)
-
-New flow should replace steps 2-4 with pipeline init.
+- Pipeline passed as `odds_api` to edge_detector (exposes same interface)
+- Pipeline passed as `mapper` to exception_monitor, fade_monitor, overnight_monitor
+- `pipeline.refresh_loop()` (60s) replaces old `odds_api.poll_loop()` and `market_loader.flush_loop()`
 
 ---
 
@@ -235,11 +243,11 @@ WalletManager with profit/loss tiers. Paper mode: $700 total, $350 per investor.
 
 **Step 2:** COMPLETE. Added all D1 college teams: CBB (365) and CFB (272). Total registry: 929 teams.
 
-**Step 3:** Update `pipeline.py` Step 5 (`step5_match_teams()`) to use registry lookups by `polymarket_id` first, name fallback within league scope. Remove old `TEAM_ALIASES` dict. Commit and push to main.
+**Step 3:** COMPLETE. Rewrote `step5_match_teams()` to use registry lookups by `polymarket_id`. No fallback. Removed `TEAM_ALIASES` dict. Removed aiohttp, using httpx for all API calls.
 
-**Step 4:** Wire `pipeline.py` into `main.py` replacing `market_loader.py` + `odds_api_client.py`. Commit and push to main.
+**Step 4:** COMPLETE. Wired `pipeline.py` into `main.py` replacing `OddsAPIClient`. Pipeline exposes same interface for edge_detector and monitors. Refresh loop set to 60 seconds.
 
-**Step 5:** Run pipeline and verify zero unmatched teams across all leagues. Fix any mismatches. Commit and push to main.
+**Step 5:** COMPLETE. Pipeline verified: 204 teams matched via registry, 0 unmatched. 83 games matched with edge data, 116 waiting for odds (future games, normal). 0 broken matches. Added ET time handling, game buckets, Odds API scores (step 8), Polymarket settlement data (outcome_prices, ep3_status). Trade ET timestamps added to order_manager. Migration 004 covers all new Supabase columns.
 
 ---
 
