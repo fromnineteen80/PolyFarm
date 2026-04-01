@@ -9,7 +9,7 @@ from config import PAPER_MODE, PHASE2_ENABLED, logger
 from data.database import (
     init_database, seed_bot_config,
     log_system_event, set_bot_config,
-    write_daily_snapshot, write_daily_stats,
+    write_daily_snapshot,
     get_bot_config
 )
 from core.wallet import WalletManager
@@ -163,6 +163,7 @@ async def main():
     if odds_key:
         pipeline = Pipeline(odds_api_key=odds_key, db=db)
         pipeline.ws_markets = markets_ws
+        pipeline.market_registry = registry
         await pipeline.run_startup()
         edge_detector.odds_api = pipeline
         edge_detector.ws_markets = markets_ws
@@ -202,7 +203,6 @@ async def main():
     tasks = [
         asyncio.create_task(private_ws.start(), name="ws_private"),
         asyncio.create_task(markets_ws.start(), name="ws_markets"),
-        asyncio.create_task(market_loader.refresh_loop(), name="market_refresh"),
         asyncio.create_task(edge_detector.detection_loop(), name="edge_detection"),
         asyncio.create_task(position_monitor.monitor_loop(), name="position_monitor"),
         asyncio.create_task(wallet.monitor_loop(), name="wallet_recalculate"),

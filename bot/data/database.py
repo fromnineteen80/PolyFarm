@@ -162,12 +162,12 @@ async def get_paper_trade_stats() -> dict:
     }
 
 async def get_closed_trades_by_game(
-    game_id: str
+    market_slug: str
 ) -> list:
     result = await db_execute(
         lambda: _supabase.table("trades")
             .select("*")
-            .eq("game_id", game_id)
+            .eq("market_slug", market_slug)
             .not_.is_("timestamp_exit", "null")
             .execute()
     )

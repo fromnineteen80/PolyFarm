@@ -16,6 +16,7 @@ from config import (
     PAPER_TRADES_REQUIRED,
     PAPER_WIN_RATE_REQUIRED,
 )
+from core.pipeline import normalize_team
 
 logger = logging.getLogger("polyfarm.edge")
 
@@ -88,7 +89,6 @@ class EdgeDetector:
             if isinstance(side, dict) and side.get("long"):
                 team_name = side.get("team", {}).get("name", "")
                 if team_name and market.home_team:
-                    from core.pipeline import normalize_team
                     if normalize_team(team_name) == normalize_team(market.home_team):
                         return "home"
                     else:

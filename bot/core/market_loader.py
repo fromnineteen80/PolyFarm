@@ -329,9 +329,11 @@ class MarketLoader:
         return slugs
 
     async def refresh_loop(self):
-        """Refresh markets every 5 minutes."""
+        """Refresh MarketRegistry every 10 minutes.
+        Pipeline handles the critical 60s refresh for odds/matching.
+        This only updates MarketRegistry for position_monitor and terminal."""
         while True:
-            await asyncio.sleep(300)
+            await asyncio.sleep(600)
             await self.load_all_markets()
 
     async def flush_to_supabase(self, odds_api=None, ws_markets=None):

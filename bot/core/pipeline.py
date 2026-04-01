@@ -148,6 +148,7 @@ class Pipeline:
         self.odds_api_key = odds_api_key
         self.db = db
         self.ws_markets = None  # Set by main.py for slug subscription
+        self.market_registry = None  # Set by main.py for MarketInfo updates
 
         # Step 1 output: operational leagues
         # [{slug: "nba", name: "NBA", sport: "Basketball"}, ...]
@@ -1100,6 +1101,7 @@ class Pipeline:
         await self.step8_load_scores()
         await self.step9_write_to_supabase()
         await self._subscribe_matched_slugs()
+        await self._sync_market_registry()
 
         logger.info("Pipeline startup complete")
         return True
@@ -1112,6 +1114,7 @@ class Pipeline:
         await self.step8_load_scores()
         await self.step9_write_to_supabase()
         await self._subscribe_matched_slugs()
+        await self._sync_market_registry()
 
     async def _subscribe_matched_slugs(self):
         """Push all matched game slugs to the Markets WebSocket
@@ -1122,6 +1125,40 @@ class Pipeline:
         if matched_slugs:
             await self.ws_markets.subscribe_markets(matched_slugs)
             logger.info(f"Subscribed {len(matched_slugs)} matched slugs to Markets WebSocket")
+
+    async def _sync_market_registry(self):
+        """Sync pipeline game data to MarketRegistry so position_monitor,
+        edge_detector, terminal, and scanners have current game state."""
+        if not self.market_registry:
+            return
+        from core.market_loader import MarketInfo
+        for slug, game in self.games.items():
+            info = MarketInfo(
+                slug=slug,
+                event_id=game.get("event_id", ""),
+                event_slug=game.get("event_slug", ""),
+                sport=game.get("sport", ""),
+                league=game.get("league", ""),
+                home_team=game.get("home_team", ""),
+                away_team=game.get("away_team", ""),
+                home_team_id=game.get("home_team_id", 0),
+                away_team_id=game.get("away_team_id", 0),
+                home_record=game.get("home_record", ""),
+                away_record=game.get("away_record", ""),
+                home_color=game.get("home_color", ""),
+                away_color=game.get("away_color", ""),
+                yes_price=game.get("yes_price", 0.5),
+                is_live=game.get("is_live", False),
+                is_finished=game.get("is_finished", False),
+                current_score=game.get("game_score") or None,
+                current_period=game.get("game_period") or None,
+                time_elapsed=game.get("game_elapsed") or None,
+                game_start_time=game.get("game_start_time", ""),
+                market_type=game.get("market_type", "moneyline"),
+                series_slug=game.get("series_slug", ""),
+                market_sides=game.get("market_sides"),
+            )
+            await self.market_registry.update(slug, info)
 
     async def refresh_loop(self):
         """Run refresh every 60 seconds."""

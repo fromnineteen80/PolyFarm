@@ -785,7 +785,7 @@ def get_active_strategies(profit_mode: str,
         "research":  {"active": True,
                       "size": PHASE1B_MAX_POSITION_PCT},
         "overnight": {"active": True,
-                      "size": "variable"},
+                      "size": OVERNIGHT_MAX_POOL_PCT},
     }
 
 # ─────────────────────────────────────────────────────

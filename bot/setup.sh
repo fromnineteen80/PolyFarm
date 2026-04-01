@@ -1,9 +1,11 @@
 #!/bin/bash
 # OracleFarming Bot Setup — DigitalOcean Droplet
-# Run once: bash setup.sh
-# Start bot: bash start.sh
+# Run once: bash /root/PolyFarm/bot/setup.sh
 
 set -e
+
+BOT_DIR="/root/PolyFarm/bot"
+cd "$BOT_DIR"
 
 echo "=== OracleFarming Setup ==="
 
@@ -28,7 +30,7 @@ pip install --quiet \
     aiohttp \
     rich
 
-echo "Verifying dependencies..."
+echo "Verifying imports..."
 python3 -c "
 from polymarket_us import AsyncPolymarketUS
 from supabase import create_client
@@ -43,10 +45,11 @@ print('All imports OK')
 if [ ! -f ".env" ]; then
     echo ""
     echo "ERROR: .env file not found."
-    echo "Create bot/.env with your credentials before starting."
+    echo "Copy .env.example to .env and fill in your credentials."
     exit 1
 fi
 
 echo ""
 echo "=== Setup complete ==="
-echo "Start the bot: cd bot && bash start.sh"
+echo "Start: bash $BOT_DIR/start.sh"
+echo "Stop:  bash $BOT_DIR/stop.sh"
