@@ -35,10 +35,14 @@ TARGET_SPORTS = {"Basketball", "Football", "Ice Hockey", "Baseball", "Soccer"}
 
 
 def normalize_team(name: str) -> str:
-    """Normalize team name for comparison."""
+    """Normalize team name for comparison.
+    Strips accents, punctuation, common suffixes."""
     if not name:
         return ""
-    n = name.lower().strip()
+    import unicodedata
+    # Remove accents
+    n = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore').decode('ascii')
+    n = n.lower().strip()
     n = re.sub(r"[^\w\s]", "", n)
     n = re.sub(r"\b(fc|sc|cf|afc|the)\s*$", "", n)
     n = re.sub(r"^the\s+", "", n)
@@ -47,22 +51,47 @@ def normalize_team(name: str) -> str:
 
 def build_full_name(team: dict) -> str:
     """Build canonical team name from Polymarket team data.
-    Handles: safeName=name (duplicates), trailing abbreviations,
-    containment (one name inside the other)."""
+    Handles all known duplication patterns:
+    - safeName == name (exact duplicate)
+    - safeName contains name or vice versa
+    - safeName is alternate spelling (UConn vs Connecticut)
+    - Accent differences (Montreal vs Montréal)
+    """
     safe = (team.get("safeName", "") or "").strip()
     short = (team.get("name", "") or "").strip()
     if not short:
         return safe
     if not safe:
         return short
-    if safe.lower() == short.lower():
+
+    # Normalize both for comparison
+    norm_safe = normalize_team(safe)
+    norm_short = normalize_team(short)
+
+    # Exact match after normalization
+    if norm_safe == norm_short:
         return short
-    # Strip single trailing letter (e.g. "Los Angeles L")
+
+    # Strip single trailing letter abbreviation (e.g. "Los Angeles L")
     safe_clean = re.sub(r'\s+[A-Z]$', '', safe).strip()
-    if short.lower() in safe_clean.lower():
+    norm_safe_clean = normalize_team(safe_clean)
+
+    # One contains the other
+    if norm_short in norm_safe_clean:
         return safe_clean
-    if safe_clean.lower() in short.lower():
+    if norm_safe_clean in norm_short:
         return short
+
+    # Check word overlap — if most words match, they're the same team
+    safe_words = set(norm_safe_clean.split())
+    short_words = set(norm_short.split())
+    if safe_words and short_words:
+        overlap = safe_words & short_words
+        # If more than half the words overlap, use the longer name
+        if len(overlap) >= min(len(safe_words), len(short_words)):
+            return safe_clean if len(safe_clean) >= len(short) else short
+
+    # No overlap — genuinely different city + mascot
     if safe_clean:
         return f"{safe_clean} {short}"
     return short
@@ -456,21 +485,27 @@ class Pipeline:
     # ─────────────────────────────────────────
 
     async def step6_load_games(self):
-        """Load all moneyline/drawable_outcome games
-        from each operational league. Uses team registry
-        for correct names."""
-        self.games = {}  # {slug: game_info}
+        """Load one game per event from each league.
+        For moneyline: one market per event.
+        For drawable_outcome (soccer): take the first
+        market side where long=true as the YES price.
+        Dedup by event ID — never load the same game twice."""
+        self.games = {}
+        seen_events = set()  # dedup by event ID
 
         for league in self.leagues:
-            slug = league["slug"]
+            lslug = league["slug"]
             data = await self._get_poly(
-                f"/v2/leagues/{slug}/events",
+                f"/v2/leagues/{lslug}/events",
                 {"limit": 100}
             )
             if not data:
                 continue
 
             for event in data.get("events", []):
+                eid = str(event.get("id", ""))
+                if not eid or eid in seen_events:
+                    continue
                 if event.get("ended"):
                     continue
 
@@ -478,6 +513,8 @@ class Pipeline:
                 home_t = teams[0] if teams else {}
                 away_t = teams[1] if len(teams) > 1 else {}
 
+                # Find the first qualifying market for this event
+                chosen_market = None
                 for market in event.get("markets", []):
                     mtype = market.get("marketType", "")
                     stype = market.get("sportsMarketTypeV2", "")
@@ -485,52 +522,56 @@ class Pipeline:
                         continue
                     if not market.get("active"):
                         continue
-
-                    mslug = market.get("slug")
-                    if not mslug:
+                    if not market.get("slug"):
                         continue
+                    chosen_market = market
+                    break  # Take first qualifying market only
 
-                    # Get price from marketSides
-                    sides = market.get("marketSides", [])
-                    yes_price = 0.5
-                    for side in sides:
-                        if side.get("long"):
-                            try:
-                                yes_price = float(side.get("price", "0.5"))
-                            except (ValueError, TypeError):
-                                pass
-                            break
+                if not chosen_market:
+                    continue
 
-                    home_name = build_full_name(home_t)
-                    away_name = build_full_name(away_t)
+                mslug = chosen_market["slug"]
+                sides = chosen_market.get("marketSides", [])
+                yes_price = 0.5
+                for side in sides:
+                    if side.get("long"):
+                        try:
+                            yes_price = float(side.get("price", "0.5"))
+                        except (ValueError, TypeError):
+                            pass
+                        break
 
-                    self.games[mslug] = {
-                        "slug": mslug,
-                        "event_id": str(event.get("id", "")),
-                        "event_slug": event.get("slug", ""),
-                        "league": slug,
-                        "sport": league["sport"],
-                        "home_team": home_name,
-                        "away_team": away_name,
-                        "home_team_id": home_t.get("id", 0),
-                        "away_team_id": away_t.get("id", 0),
-                        "home_color": home_t.get("colorPrimary", ""),
-                        "away_color": away_t.get("colorPrimary", ""),
-                        "home_record": home_t.get("record", ""),
-                        "away_record": away_t.get("record", ""),
-                        "yes_price": yes_price,
-                        "is_live": event.get("live", False),
-                        "is_finished": event.get("ended", False),
-                        "game_score": event.get("score", "") or "",
-                        "game_period": event.get("period", "") or "",
-                        "game_elapsed": event.get("elapsed", "") or "",
-                        "game_start_time": market.get("gameStartTime", "") or event.get("startTime", ""),
-                        "series_slug": event.get("seriesSlug", ""),
-                        "market_type": mtype,
-                        "market_sides": sides,
-                    }
+                home_name = build_full_name(home_t)
+                away_name = build_full_name(away_t)
 
-        logger.info(f"Step 6 complete: {len(self.games)} games from {len(self.leagues)} leagues")
+                self.games[mslug] = {
+                    "slug": mslug,
+                    "event_id": eid,
+                    "event_slug": event.get("slug", ""),
+                    "league": lslug,
+                    "sport": league["sport"],
+                    "home_team": home_name,
+                    "away_team": away_name,
+                    "home_team_id": home_t.get("id", 0),
+                    "away_team_id": away_t.get("id", 0),
+                    "home_color": home_t.get("colorPrimary", ""),
+                    "away_color": away_t.get("colorPrimary", ""),
+                    "home_record": home_t.get("record", ""),
+                    "away_record": away_t.get("record", ""),
+                    "yes_price": yes_price,
+                    "is_live": event.get("live", False),
+                    "is_finished": event.get("ended", False),
+                    "game_score": event.get("score", "") or "",
+                    "game_period": event.get("period", "") or "",
+                    "game_elapsed": event.get("elapsed", "") or "",
+                    "game_start_time": chosen_market.get("gameStartTime", "") or event.get("startTime", ""),
+                    "series_slug": event.get("seriesSlug", ""),
+                    "market_type": chosen_market.get("marketType", ""),
+                    "market_sides": sides,
+                }
+                seen_events.add(eid)
+
+        logger.info(f"Step 6 complete: {len(self.games)} games (1 per event) from {len(self.leagues)} leagues")
         return True
 
     # ─────────────────────────────────────────
