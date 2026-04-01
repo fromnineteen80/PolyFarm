@@ -888,9 +888,9 @@ class Pipeline:
         await self.step9_write_to_supabase()
 
     async def refresh_loop(self):
-        """Run refresh every 3 minutes."""
+        """Run refresh every 60 seconds."""
         while True:
-            await asyncio.sleep(180)
+            await asyncio.sleep(60)
             try:
                 await self.run_refresh()
             except Exception as e:
