@@ -133,24 +133,41 @@ class WalletManager:
         all profit and loss tier thresholds.
         """
         try:
-            result = await self.client.account.balances()
-            balances = result.get("balances", [])
-            cash = float(
-                balances[0].get("buyingPower", 0) or 0
-            ) if balances else 0.0
+            from config import PAPER_MODE, PAPER_SEED_BALANCE
 
-            # Update position values from WebSocket
-            # state (_position_values updated by
-            # position_monitor via update_position_value)
-            pos_value = sum(
-                v["value"]
-                for v in self._position_values.values()
-            )
+            if PAPER_MODE and PAPER_SEED_BALANCE > 0:
+                # Paper mode: track simulated balance
+                # Start from seed, add/subtract realized P&L
+                pos_value = sum(
+                    v["value"]
+                    for v in self._position_values.values()
+                )
+                total = (
+                    self.state.session_start_value
+                    + self.state.realized_pnl_today
+                    + pos_value
+                    - self.state.open_positions_value
+                )
+                self.state.open_positions_value = pos_value
+                self.state.live_portfolio_value = total
+                self.state.cash_balance = total - pos_value
+            else:
+                # Live mode: read real balance from Polymarket
+                result = await self.client.account.balances()
+                balances = result.get("balances", [])
+                cash = float(
+                    balances[0].get("buyingPower", 0) or 0
+                ) if balances else 0.0
 
-            total = cash + pos_value
-            self.state.cash_balance = cash
-            self.state.open_positions_value = pos_value
-            self.state.live_portfolio_value = total
+                pos_value = sum(
+                    v["value"]
+                    for v in self._position_values.values()
+                )
+
+                total = cash + pos_value
+                self.state.cash_balance = cash
+                self.state.open_positions_value = pos_value
+                self.state.live_portfolio_value = total
 
             if self.state.session_start_value > 0:
                 gain_pct = (
