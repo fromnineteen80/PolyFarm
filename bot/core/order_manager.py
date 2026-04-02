@@ -774,7 +774,7 @@ class OrderManager:
             "taker_fee_paid": taker_fee,
         })
 
-        self.wallet.remove_position(position.slug)
+        self.wallet.remove_position(position.slug, net_pnl)
         await self.pm.remove_position(position.slug)
 
         await self.alerts.send_exit(

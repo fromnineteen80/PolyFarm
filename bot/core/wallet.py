@@ -38,6 +38,7 @@ class WalletState:
     # Daily tracking
     daily_peak_gain: float = 0.0
     daily_gain_pct: float = 0.0
+    realized_pnl_today: float = 0.0  # closed trades only
 
     # Mode state
     profit_mode: str = "NORMAL"
@@ -173,9 +174,10 @@ class WalletManager:
             "current_bid": bid,
         }
 
-    def remove_position(self, slug: str):
+    def remove_position(self, slug: str, pnl: float = 0.0):
         """Called when a position closes."""
         self._position_values.pop(slug, None)
+        self.state.realized_pnl_today += pnl
 
     async def on_balance_update(self, buying_power, current_balance):
         """Called by private WebSocket on balance change."""
@@ -271,7 +273,14 @@ class WalletManager:
     async def _check_loss_tiers(self):
         if self.state.session_locked:
             return
-        pnl_pct = self.state.daily_gain_pct
+        # Use realized P&L only — unrealized dips on open
+        # positions are game volatility, not real losses
+        if self.state.session_start_value <= 0:
+            return
+        pnl_pct = (
+            self.state.realized_pnl_today
+            / self.state.session_start_value
+        )
 
         # -15%: done for the day
         if pnl_pct <= DAILY_LOSS_HALT_TIER:
@@ -431,6 +440,7 @@ class WalletManager:
         """Called by midnight_scheduler."""
         self.state.daily_peak_gain = 0.0
         self.state.daily_gain_pct = 0.0
+        self.state.realized_pnl_today = 0.0
         self.state.profit_mode = "NORMAL"
         self.state.loss_mode = "NORMAL"
         self.state.session_locked = False
