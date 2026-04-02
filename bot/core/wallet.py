@@ -273,22 +273,23 @@ class WalletManager:
             return
         pnl_pct = self.state.daily_gain_pct
 
+        # -15%: done for the day
         if pnl_pct <= DAILY_LOSS_HALT_TIER:
             if self.state.loss_mode != "HALT":
                 self.state.loss_mode = "HALT"
                 self.state.entries_halted = True
+                self.state.session_locked = True
                 self.state.new_entries_paused = True
-                logger.warning("DAILY LOSS HALT triggered")
+                logger.warning("Daily loss limit (-15%) — done for the day")
                 if self._alerts:
                     await self._alerts.send_daily_halt(
                         pnl_pct,
                         self.state.live_portfolio_value
                     )
-                if self._order_manager:
-                    await self._order_manager\
-                        .emergency_exit_all("DAILY_HALT")
+                # Don't emergency exit — let positions settle
             return
 
+        # -10%: pause new entries
         if pnl_pct <= DAILY_LOSS_PAUSE_TIER:
             if self.state.loss_mode not in (
                 "PAUSE", "HALT"
@@ -296,7 +297,7 @@ class WalletManager:
                 self.state.loss_mode = "PAUSE"
                 self.state.new_entries_paused = True
                 self.state.sizing_reduced = False
-                logger.warning("DAILY LOSS PAUSE triggered")
+                logger.warning("Losses at -10% — pausing new trades")
                 if self._alerts:
                     await self._alerts.send_daily_pause(
                         pnl_pct,
@@ -304,11 +305,12 @@ class WalletManager:
                     )
             return
 
+        # -5%: reduce position sizes
         if pnl_pct <= DAILY_LOSS_REDUCE_TIER:
             if self.state.loss_mode == "NORMAL":
                 self.state.loss_mode = "REDUCE"
                 self.state.sizing_reduced = True
-                logger.warning("DAILY LOSS REDUCE triggered")
+                logger.warning("Losses at -5% — reducing position sizes")
                 if self._alerts:
                     await self._alerts.send_daily_reduce(
                         pnl_pct,
@@ -316,12 +318,20 @@ class WalletManager:
                     )
             return
 
-        # Recover from reduce if P&L improves
-        if pnl_pct > DAILY_LOSS_REDUCE_TIER and \
-           self.state.loss_mode == "REDUCE":
+        # Recovery: if paused at -10% and recovers to -5%, resume trading
+        if self.state.loss_mode == "PAUSE" and \
+           pnl_pct > DAILY_LOSS_REDUCE_TIER:
+            self.state.loss_mode = "NORMAL"
+            self.state.new_entries_paused = False
+            self.state.sizing_reduced = False
+            logger.info("Recovered from -10% to above -5% — resuming trades")
+
+        # Recovery: if reduced at -5% and recovers above 0%
+        elif self.state.loss_mode == "REDUCE" and \
+             pnl_pct > 0:
             self.state.loss_mode = "NORMAL"
             self.state.sizing_reduced = False
-            logger.info("Recovered from REDUCE loss tier")
+            logger.info("Recovered to positive — back to normal")
 
     async def _trigger_lock(self, reason: str):
         self.state.profit_mode = "LOCKED"
