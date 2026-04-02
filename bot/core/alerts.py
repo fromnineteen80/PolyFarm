@@ -160,7 +160,7 @@ class AlertManager:
                 )
                 params = {
                     "offset": self._last_update_id + 1,
-                    "timeout": 5,
+                    "timeout": 30,
                 }
                 async with self._session.get(
                     url, params=params, timeout=15

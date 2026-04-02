@@ -360,7 +360,20 @@ class Pipeline:
         """For each mapped sport key, fetch consensus
         odds and build the odds events store."""
         self.odds_events = {}
-        odds_keys_to_poll = set(self.league_to_odds_key.values())
+        # Only poll sport keys that have active Polymarket games
+        active_leagues = set()
+        for game in self.games.values():
+            league = game.get("league")
+            if league and not game.get("is_finished"):
+                active_leagues.add(league)
+        odds_keys_to_poll = set()
+        for league in active_leagues:
+            key = self.league_to_odds_key.get(league)
+            if key:
+                odds_keys_to_poll.add(key)
+        # On startup (no games yet), poll all
+        if not odds_keys_to_poll:
+            odds_keys_to_poll = set(self.league_to_odds_key.values())
 
         for key in odds_keys_to_poll:
             await asyncio.sleep(0.5)  # rate limit
@@ -1029,7 +1042,26 @@ class Pipeline:
         except Exception:
             pass
 
+        written = 0
         for slug, game in self.games.items():
+            # Only write to Supabase if game data changed
+            change_key = (
+                game.get("yes_price"),
+                game.get("is_live"),
+                game.get("is_finished"),
+                game.get("game_score"),
+                game.get("game_period"),
+                game.get("odds_api_home_score"),
+                game.get("odds_api_completed"),
+            )
+            last = getattr(self, '_last_market_state', {})
+            if slug in last and last[slug] == change_key:
+                continue  # nothing changed, skip write
+            if not hasattr(self, '_last_market_state'):
+                self._last_market_state = {}
+            self._last_market_state[slug] = change_key
+            written += 1
+
             try:
                 data = {
                     "market_slug": slug,
@@ -1085,7 +1117,7 @@ class Pipeline:
             except Exception as e:
                 logger.error(f"Market write error {slug}: {e}")
 
-        logger.info(f"Step 9 complete: wrote {len(self.games)} markets to Supabase")
+        logger.info(f"Step 9 complete: {written} markets updated in Supabase ({len(self.games)} total)")
         return True
 
     # ─────────────────────────────────────────

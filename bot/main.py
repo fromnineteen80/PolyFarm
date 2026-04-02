@@ -473,7 +473,7 @@ async def paper_milestone_checker(alerts):
 
 
 async def heartbeat_loop():
-    """Write heartbeat timestamp every 60 seconds."""
+    """Write heartbeat timestamp every 5 minutes."""
     while True:
         try:
             await set_bot_config(
@@ -482,7 +482,7 @@ async def heartbeat_loop():
             )
         except Exception:
             pass
-        await asyncio.sleep(60)
+        await asyncio.sleep(300)
 
 
 async def pre_game_scanner(registry, mapper, alerts):

@@ -516,9 +516,9 @@ class WalletManager:
         return min(deployed / working * 100, 100.0)
 
     async def monitor_loop(self):
-        """Runs every 10 seconds."""
+        """Runs every 30 seconds."""
         while True:
-            await asyncio.sleep(10)
+            await asyncio.sleep(30)
             await self.recalculate()
 
     async def reset_daily(self):
