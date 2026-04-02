@@ -163,17 +163,20 @@ class WalletManager:
                 self.state.open_positions_value = pos_value
                 self.state.live_portfolio_value = total
                 self.state.cash_balance = total - pos_value
-                # Persist to database so restarts don't lose state
-                try:
-                    await set_bot_config(
-                        "paper_balance", str(round(total, 2))
-                    )
-                    await set_bot_config(
-                        "paper_realized_pnl_today",
-                        str(round(self.state.realized_pnl_today, 4))
-                    )
-                except Exception:
-                    pass
+                # Persist to database only when balance changes
+                rounded = round(total, 2)
+                if rounded != getattr(self, '_last_persisted_balance', 0):
+                    self._last_persisted_balance = rounded
+                    try:
+                        await set_bot_config(
+                            "paper_balance", str(rounded)
+                        )
+                        await set_bot_config(
+                            "paper_realized_pnl_today",
+                            str(round(self.state.realized_pnl_today, 4))
+                        )
+                    except Exception:
+                        pass
             else:
                 # Live mode: read real balance from Polymarket
                 result = await self.client.account.balances()
