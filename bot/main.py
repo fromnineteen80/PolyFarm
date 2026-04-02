@@ -219,10 +219,15 @@ async def main():
     # ── STEP 13: Send session start alert ─────────
     try:
         stats = await get_bot_config("paper_trades_completed")
+        wr_str = await get_bot_config("paper_win_rate")
         try:
             paper_progress = int(str(stats or 0).strip('"'))
         except (ValueError, TypeError):
             paper_progress = 0
+        try:
+            paper_win_rate = float(str(wr_str or 0).strip('"'))
+        except (ValueError, TypeError):
+            paper_win_rate = 0.0
         await alerts.send_session_start(
             wallet=wallet.state.live_portfolio_value,
             floor=wallet.state.floor_value,
@@ -233,6 +238,7 @@ async def main():
             market_count=await registry.count(),
             paper_mode=PAPER_MODE,
             paper_progress=paper_progress,
+            paper_win_rate=paper_win_rate,
         )
     except Exception as e:
         logger.error(f"Session start alert error: {e}")

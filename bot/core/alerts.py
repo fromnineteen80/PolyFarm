@@ -343,16 +343,26 @@ class AlertManager:
     async def send_session_start(self, wallet, floor,
                                   capital, market_count,
                                   paper_mode,
-                                  paper_progress):
-        mode = "PAPER" if paper_mode else "LIVE"
-        msg = (
-            f"🚀 POLYFARM SESSION START {mode}\n"
-            f"Wallet: ${wallet:.2f} | "
-            f"Floor: ${floor:.2f}\n"
-            f"Working capital: ${capital:.2f}\n"
-            f"Markets loaded: {market_count}\n"
-            f"Paper unlock: {paper_progress}/300 trades"
-        )
+                                  paper_progress,
+                                  paper_win_rate=0.0):
+        if paper_mode:
+            wr = paper_win_rate * 100 if paper_win_rate else 0
+            needs = max(0, 300 - paper_progress)
+            status = "ready to go live" if paper_progress >= 300 and wr >= 70 else f"{needs} trades to go"
+            msg = (
+                f"Bot started. Paper mode.\n\n"
+                f"Balance: ${wallet:.2f}\n"
+                f"Paper progress: {paper_progress}/300 trades "
+                f"({wr:.0f}% win rate)\n"
+                f"{status}"
+            )
+        else:
+            msg = (
+                f"Bot started. Live mode.\n\n"
+                f"Balance: ${wallet:.2f}\n"
+                f"Daily target: ${wallet * 1.15:.2f}\n"
+                f"Floor: ${floor:.2f}"
+            )
         self._enqueue(msg)
 
     # ─────────────────────────────────────────────
