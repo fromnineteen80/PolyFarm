@@ -608,7 +608,29 @@ async def write_end_of_day(wallet, alerts):
     from data.database import get_today_closed_trades, get_paper_trade_stats
     today = date.today().isoformat()
     wallet_value = wallet.state.live_portfolio_value
+    session_start = wallet.state.session_start_value
 
+    # Get today's trades FIRST so we can include in snapshot
+    closed = await get_today_closed_trades(today, PAPER_MODE)
+    trade_count = len(closed)
+    wins = sum(1 for t in closed if float(t.get("pnl", 0) or 0) > 0)
+    win_rate = (wins / trade_count * 100) if trade_count > 0 else 0
+    session_pnl = wallet_value - session_start
+
+    # Calculate cumulative from seed
+    from config import PAPER_SEED_BALANCE
+    if PAPER_MODE:
+        seed = PAPER_SEED_BALANCE
+    else:
+        seed = float(
+            await get_bot_config("first_live_wallet_value") or wallet_value
+        )
+    cumulative_pnl = wallet_value - seed
+    cumulative_pnl_pct = (
+        (cumulative_pnl / seed * 100) if seed > 0 else 0
+    )
+
+    # Projections from first trading day
     first_date = await get_bot_config("first_live_trade_date")
     first_value = await get_bot_config("first_live_wallet_value")
     proj_1pct = None
@@ -618,7 +640,7 @@ async def write_end_of_day(wallet, alerts):
         try:
             start = datetime.fromisoformat(first_date)
             start_val = float(first_value)
-            days = (datetime.now() - start).days
+            days = max((datetime.now() - start).days, 1)
             proj_1pct = start_val * (1.01 ** days)
             proj_15pct = start_val * (1.015 ** days)
             proj_2pct = start_val * (1.02 ** days)
@@ -629,20 +651,16 @@ async def write_end_of_day(wallet, alerts):
         "date": today,
         "wallet_value": wallet_value,
         "floor_value": wallet.state.floor_value,
-        "session_pnl": wallet_value - wallet.state.session_start_value,
-        "cumulative_pnl": wallet_value - float(
-            await get_bot_config("first_live_wallet_value") or wallet_value
-        ),
-        "cumulative_pnl_pct": 0,
-        "trades_today": 0,
-        "win_rate_today": 0,
+        "session_pnl": session_pnl,
+        "cumulative_pnl": cumulative_pnl,
+        "cumulative_pnl_pct": cumulative_pnl_pct,
+        "trades_today": trade_count,
+        "win_rate_today": win_rate,
         "projected_1pct": proj_1pct,
         "projected_15pct": proj_15pct,
         "projected_2pct": proj_2pct,
         "paper_mode": PAPER_MODE,
     })
-
-    closed = await get_today_closed_trades(today, PAPER_MODE)
     strats = {}
     for name in ("oracle_arb", "exception", "fade", "overnight"):
         st = [t for t in closed if t.get("position_type") == name or (name == "oracle_arb" and t.get("position_type") in ("normal", "oracle_arb"))]
