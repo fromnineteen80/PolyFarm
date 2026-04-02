@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from typing import Optional
@@ -467,28 +468,36 @@ class OrderManager:
                 return
 
         # ── TRIGGER 4: Smart Stop Loss ───────────
-        # Hold as long as sharp odds > our entry price.
-        # We're betting on the outcome, not the journey.
-        # A 73% team down 10 points in Q2 still wins 73%
-        # of the time. Only exit when bookmakers say
-        # the team is less likely to win than what we paid.
+        # Evaluate the FULL picture before exiting:
+        # sharp odds, team record, game state,
+        # dominant/fade status, score, game progress.
+        # A 73% team down 10 in Q2 still wins 73%
+        # of the time.
         stop_loss = self._get_stop_loss(strategy)
         if stop_loss is not None:
             if current_gain <= stop_loss:
-                sharp_still_supports = False
-                if self.pipeline and self.pipeline.is_matched(slug):
-                    sharp_prob = self.pipeline.get_fair_prob(slug, "home")
-                    if sharp_prob and sharp_prob > position.entry_price:
-                        # Bookmakers still say this team wins
-                        # more often than what we paid. Hold.
-                        sharp_still_supports = True
-                if not sharp_still_supports:
+                should_hold, reason = \
+                    await self._should_hold_position(
+                        position, current_bid,
+                        game_state
+                    )
+                if should_hold:
+                    logger.info(
+                        f"Holding {slug} despite "
+                        f"{current_gain:.1%} loss: "
+                        f"{reason}"
+                    )
+                else:
+                    logger.info(
+                        f"Exiting {slug}: {reason}"
+                    )
                     await self._ioc_exit(
                         position, current_bid,
                         f"{strategy}_stop_loss"
                     )
                     await self.alerts.send_stop_loss(
-                        position, current_gain, strategy
+                        position, current_gain,
+                        strategy
                     )
                     return
 
@@ -1039,6 +1048,165 @@ class OrderManager:
         except Exception:
             pass
         return False
+
+    async def _should_hold_position(
+        self, position, current_bid, game_state
+    ) -> tuple:
+        """Evaluate whether to hold a losing position.
+        Uses sharp odds, team record, game state,
+        dominant/fade status, and home advantage.
+
+        Returns (should_hold: bool, reason: str)
+        """
+        from config import DOMINANT_TEAMS, FADE_TEAMS
+
+        slug = position.slug
+        reasons_to_hold = []
+        reasons_to_exit = []
+
+        # 1. Sharp odds check — most important signal
+        if self.pipeline and self.pipeline.is_matched(slug):
+            sharp_prob = self.pipeline.get_fair_prob(
+                slug, "home"
+            )
+            if sharp_prob:
+                if sharp_prob > position.entry_price:
+                    reasons_to_hold.append(
+                        f"sharp odds {sharp_prob:.0%} > "
+                        f"entry {position.entry_price:.0%}"
+                    )
+                else:
+                    reasons_to_exit.append(
+                        f"sharp odds dropped to "
+                        f"{sharp_prob:.0%}"
+                    )
+
+        # 2. Team record — win rate from season record
+        market = None
+        if hasattr(self, 'pm') and self.pm:
+            try:
+                market = await self.pm.registry.get(slug)
+            except Exception:
+                pass
+
+        if market:
+            record = getattr(
+                market, 'home_record', ''
+            ) or ''
+            if record and '-' in record:
+                try:
+                    parts = record.split('-')
+                    wins = int(parts[0])
+                    losses = int(parts[1])
+                    total = wins + losses
+                    if total > 0:
+                        win_rate = wins / total
+                        if win_rate >= 0.65:
+                            reasons_to_hold.append(
+                                f"strong team ({record})"
+                            )
+                        elif win_rate <= 0.35:
+                            reasons_to_exit.append(
+                                f"weak team ({record})"
+                            )
+                except Exception:
+                    pass
+
+        # 3. Dominant/fade team status
+        teams_str = position.teams or ""
+        for team_name, data in DOMINANT_TEAMS.items():
+            if team_name.lower() in teams_str.lower():
+                cwrate = data.get(
+                    "comeback_win_rate_when_trailing", 0
+                )
+                reasons_to_hold.append(
+                    f"dominant team {team_name} "
+                    f"(comeback {cwrate:.0%})"
+                )
+                break
+
+        opponent_is_fade = False
+        for team_name, data in FADE_TEAMS.items():
+            if team_name.lower() in teams_str.lower():
+                # If we're ON the fade team, that's bad
+                # If we're AGAINST the fade team, that's good
+                conf = data.get("confidence", "medium")
+                if current_bid > 0.50:
+                    # We're likely on the other side
+                    reasons_to_hold.append(
+                        f"opponent is fade team "
+                        f"{team_name} ({conf})"
+                    )
+                    opponent_is_fade = True
+                else:
+                    reasons_to_exit.append(
+                        f"we may be on fade team "
+                        f"{team_name}"
+                    )
+                break
+
+        # 4. Game state — are we in early or late game?
+        if game_state:
+            period = game_state.get("period", 0)
+            time_rem = game_state.get(
+                "time_remaining_seconds", 9999
+            )
+            inning = game_state.get("inning", 0)
+            score = game_state.get("score", "")
+
+            # Parse score to see if our team is winning
+            if score and "-" in str(score):
+                try:
+                    parts = str(score).split("-")
+                    s1 = int(parts[0].strip())
+                    s2 = int(parts[1].strip())
+                    if current_bid > 0.50:
+                        # We're likely on home team
+                        if s1 > s2:
+                            reasons_to_hold.append(
+                                f"our team leads {score}"
+                            )
+                        elif s1 < s2:
+                            deficit = s2 - s1
+                            reasons_to_exit.append(
+                                f"trailing by {deficit}"
+                            )
+                except Exception:
+                    pass
+
+            # Early game dips are noise
+            sport = position.sport or ""
+            if "basketball" in sport and period <= 2:
+                reasons_to_hold.append("early game (Q1-Q2)")
+            elif "baseball" in sport and inning <= 5:
+                reasons_to_hold.append(
+                    f"early game (inning {inning})"
+                )
+            elif "hockey" in sport and period <= 1:
+                reasons_to_hold.append("early game (P1)")
+            elif "football" in sport and period <= 2:
+                reasons_to_hold.append("early game (Q1-Q2)")
+
+        # 5. Current price still shows we're favored
+        if current_bid > 0.55:
+            reasons_to_hold.append(
+                f"still favored at {current_bid:.0%}"
+            )
+        elif current_bid < 0.30:
+            reasons_to_exit.append(
+                f"heavily unfavored at {current_bid:.0%}"
+            )
+
+        # Decision: hold if more reasons to hold
+        hold = len(reasons_to_hold) >= len(reasons_to_exit)
+
+        reason = "HOLD: " + ", ".join(
+            reasons_to_hold
+        ) if hold else "EXIT: " + ", ".join(
+            reasons_to_exit
+        )
+
+        return hold, reason
 
     async def _get_paper_stats(self) -> dict:
         from data.database import get_paper_trade_stats
