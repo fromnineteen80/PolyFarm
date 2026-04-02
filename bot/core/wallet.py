@@ -106,10 +106,22 @@ class WalletManager:
 
         total = cash + pos_value
 
-        # In paper mode, use seed balance instead of real balance
+        # In paper mode, restore persisted balance or use seed
         from config import PAPER_MODE, PAPER_SEED_BALANCE
         if PAPER_MODE and PAPER_SEED_BALANCE > 0:
-            total = PAPER_SEED_BALANCE
+            from data.database import get_bot_config
+            try:
+                saved = await get_bot_config("paper_balance")
+                saved_pnl = await get_bot_config("paper_realized_pnl_today")
+                if saved and float(saved) > 0:
+                    total = float(saved)
+                    self.state.realized_pnl_today = float(saved_pnl or 0)
+                    logger.info(f"Restored paper balance: ${total:.2f}")
+                else:
+                    total = PAPER_SEED_BALANCE
+                    logger.info(f"Starting fresh paper: ${total:.2f}")
+            except Exception:
+                total = PAPER_SEED_BALANCE
 
         floor = total * FLOOR_PCT
 
@@ -151,6 +163,17 @@ class WalletManager:
                 self.state.open_positions_value = pos_value
                 self.state.live_portfolio_value = total
                 self.state.cash_balance = total - pos_value
+                # Persist to database so restarts don't lose state
+                try:
+                    await set_bot_config(
+                        "paper_balance", str(round(total, 2))
+                    )
+                    await set_bot_config(
+                        "paper_realized_pnl_today",
+                        str(round(self.state.realized_pnl_today, 4))
+                    )
+                except Exception:
+                    pass
             else:
                 # Live mode: read real balance from Polymarket
                 result = await self.client.account.balances()
@@ -484,6 +507,20 @@ class WalletManager:
             ed = self._order_manager._edge_detector
             if ed and hasattr(ed, '_recently_exited'):
                 ed._recently_exited.clear()
+
+        # Persist paper balance for next startup
+        from config import PAPER_MODE
+        if PAPER_MODE:
+            try:
+                await set_bot_config(
+                    "paper_balance",
+                    str(round(self.state.live_portfolio_value, 2))
+                )
+                await set_bot_config(
+                    "paper_realized_pnl_today", "0"
+                )
+            except Exception:
+                pass
 
         logger.info("Daily reset complete")
 
