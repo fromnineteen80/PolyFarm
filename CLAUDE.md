@@ -51,6 +51,40 @@ TRADE LIFECYCLE
     → Supabase: timestamp_exit_et, trade_bucket="historical", PnL
   Settlement: outcome_prices=["1","0"], ep3_status="EXPIRED"
 
+INTELLIGENT POSITION EVALUATOR (before any exit)
+  Every stop loss and pre-resolution decision runs through:
+  1. Sharp odds vs entry price — bookmakers still support us?
+  2. Team record — 58-18 team (hold) vs 18-58 team (worry)
+  3. Dominant team status — comeback rate, market overreaction
+  4. Fade opponent — playing a known quitter? Hold.
+  5. Score in context of sport:
+     NBA/CBB: down 15+ = hard to recover, down 5 in Q1 = noise
+     MLB: down 4+ runs = exit, down 1 in inning 3 = hold
+     NHL: down 3+ goals = exit, down 1 in P1 = hold
+     NFL/CFB: down 17+ = exit, down 7 in Q1 = hold
+     Soccer: down 2+ goals = exit, down 1 before 60' = hold
+  6. Game progress — first half dips = noise, final minutes = real
+  7. Late game reality — winning late = hold to settlement ($1.00)
+     No point selling at 92c with 2 minutes left.
+     Losing late = no buyers anyway, accept settlement.
+  Decision: count hold reasons vs exit reasons. More reasons to hold = hold.
+
+DAILY CYCLE (runs 24/7 via systemd)
+  Midnight ET: reset_daily() — unlock session, reset modes, re-anchor floor
+  Morning: games post on Polymarket, pipeline matches, trading begins
+  During day: farming small misprices across all sports
+  Hit +15%: daily target — stop new trades, let winners settle
+  Hit -5% realized: reduce position sizes 50%
+  Hit -10% realized: pause new entries (resume if recovers to -5%)
+  Hit -15% realized: done for the day, resets midnight
+  Loss tiers use REALIZED P&L only — unrealized dips are game noise
+
+ALERTS (Telegram, every 30 minutes)
+  Batched summary: trades opened/closed, W/L, P&L, balance, daily growth %
+  Urgent only: daily target hit, daily loss limit, floor breach
+  Human-readable exit labels: "target hit", "locked in gains",
+    "game ending", "held too long", "cut losses"
+
 DATA STORES
   Supabase markets: game data + edge + scores + ET times + buckets
   Supabase trades: entry/exit + ET timestamps + PnL + band + edge

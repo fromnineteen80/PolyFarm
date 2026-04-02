@@ -53,10 +53,10 @@ export default function About() {
 
         <Section title="Strategy 1: Oracle Arbitrage">
           <p>
-            The primary engine. Runs continuously across every active moneyline market with sufficient volume.
+            The primary engine. Runs continuously across every active moneyline market with sufficient liquidity. The system trades both favorites and underdogs across the full price range -- there is no arbitrary price floor.
           </p>
           <p>
-            Signals are classified into three bands based on the pricing gap and the implied probability. Band A requires a gap above 8% with market price above 70 cents. Band B requires 5% to 8% with price between 60 and 70 cents. Band C requires 3% to 5% with price between 55 and 60 cents. The system never enters below 55 cents. Favorites only.
+            Signals are classified into three bands based on the pricing gap. Band A requires a gap above 4% with market price above 50 cents. Band B requires 3% with price between 35 and 50 cents. Band C requires 2% with price between 20 and 35 cents. These thresholds are calibrated above round-trip fee break-even (approximately 0.6% of position price) with a profit margin. The system farms small, consistent misprices at high volume rather than waiting for rare large gaps.
           </p>
           <p>
             Each entry triggers an immediate limit sell at the exit target, set at 65% of the detected gap above entry price. This captures the fastest portion of the market correction while minimizing hold time. The GTC limit sell earns a maker rebate when it fills, partially offsetting the taker fee paid on entry.
@@ -69,12 +69,6 @@ export default function About() {
           </p>
           <p>
             Static edge from the sportsbook consensus provides the base signal. Price direction modifies the entry threshold -- when the Polymarket crowd is actively selling (price falling away from the sharp line), the required edge threshold drops by 15% because the gap is widening and conviction is highest. When the crowd is buying (price rising toward the sharp line), the threshold increases by 20% because the gap may be closing. Net buy pressure modifies position sizing -- strong net selling with a falling price triggers 15% larger positions, while heavy buying or rising prices reduce position size by 15%.
-          </p>
-          <p>
-            This means OracleFarming does not just detect that a gap exists. It detects whether the gap is growing or shrinking, and sizes accordingly. Standard oracle arbitrage treats every qualifying gap identically. OracleFarming trades larger when the crowd is creating the gap and smaller when the crowd is correcting it.
-          </p>
-          <p>
-            Win rate expectations: Band A 88% to 93%. Band B 83% to 88%. Band C 78% to 83%. Blended target above 82%.
           </p>
           <p>
             Capital allocation: Band A at 4% of total wallet. Band B at 2.5%. Band C at 1.5%. Modified by the composite signal size multiplier.
@@ -101,7 +95,7 @@ export default function About() {
 
         <Section title="Strategy 3: Fade Trading">
           <p>
-            Fade trading does not mean buying underdogs. The system never buys below 55 cents. Fade trading means identifying situations where a structurally weak team is trailing and the crowd is still pricing their comeback probability too generously. The system buys YES on the opponent -- the leading team -- at a price the crowd has held artificially low.
+            Fade trading means identifying situations where a structurally weak team is trailing and the crowd is still pricing their comeback probability too generously. The system buys YES on the opponent -- the leading team -- at a price the crowd has held artificially low.
           </p>
           <p>
             Example: the Pittsburgh Pirates are trailing 3-1 in the seventh inning. Polymarket has the opponent at 69 cents. The sportsbook consensus says the opponent should be at 78 cents. The system buys the opponent YES at 69 cents and exits when Polymarket corrects toward 78 cents.
@@ -129,69 +123,66 @@ export default function About() {
           </p>
         </Section>
 
-        <Section title="How Every Position Avoids Liquidity Risk">
+        <Section title="Intelligent Position Management">
           <p>
-            In prediction markets, liquidity is not guaranteed. Near the end of a game, the losing side of the order book thins because nobody wants to buy a position likely to settle at zero. A system not designed around this can find itself holding positions with no buyers.
+            OracleFarming does not use simple stop losses. Every exit decision runs through a full game-context evaluation that weighs multiple signals before deciding to hold or exit a position.
           </p>
           <p>
-            OracleFarming addresses this at multiple levels. Volume minimums at entry ensure enough active participants for reliable exits. Bid-ask spread checks filter deteriorating liquidity before entry.
+            The core principle: we are betting on outcomes, not price movements. If bookmakers say a team has a 73% chance of winning and we bought at 65 cents, a mid-game dip to 55 cents is not a loss -- it is a larger misprice in our favor. The expected value has not changed. The system holds as long as sharp odds remain above our entry price.
           </p>
           <p>
-            The timeout trigger is the primary safety mechanism. At 30 minutes for oracle arb, 15 for exception, 20 for fade -- if the GTC sell has not filled, the bot cancels it and evaluates current edge. If meaningful edge remains, it modifies the sell price. If edge has compressed, it places an IOC order at current best bid -- taking whatever the market pays right now and exiting cleanly.
+            Before exiting any position at a loss, the system evaluates: Do the bookmakers still support this position? What is the team's season record -- is this a 58-18 contender or a 18-58 rebuilder? Is this a documented dominant team with a high comeback rate? Is the opponent a known fade team that historically cannot hold leads? What is the score relative to the sport -- down 5 in NBA Q1 is noise, down 1 goal in soccer at minute 85 is real. Is the game in the first half (dips are noise) or the final minutes (dips are real)?
           </p>
           <p>
-            Pre-resolution triggers fire before the dangerous end-of-game window. NBA at 2 minutes remaining. NFL at 4 minutes. MLB at the 8th inning. NHL at 5 minutes of regulation. Soccer at minute 80. The system exits via IOC while liquidity still exists, before the final drain.
+            Sport-specific thresholds are calibrated to each game's structure. In basketball, trailing by 15 or more is hard to recover from. In baseball, trailing by 4 or more runs signals exit. In hockey, down 3 or more goals. In football, down 17 or more points (three scores). In soccer, down 2 or more goals. Smaller deficits in early game situations are treated as noise and held through.
           </p>
           <p>
-            The result is that OracleFarming holds most positions for two to fifteen minutes and exits during periods of high market liquidity. Hold-to-resolution positions represent at most 15% of open positions and only enter when original edge exceeded 12% with entry price above 65 cents.
-          </p>
-        </Section>
-
-        <Section title="Five-Layer Exit System">
-          <p>
-            Every position carries five independent exit triggers evaluated every 30 seconds. The first to fire wins.
-          </p>
-          <p>
-            Trigger 1: Passive reprice target. GTC limit sell at 65% of gap above entry. Earns maker rebate.
-          </p>
-          <p>
-            Trigger 2: Profit lock. Band A locks at 12% gain. Band B at 10%. Band C at 8%. Exception at 8%. Fade at 7%. In protection mode these tighten by 50%.
-          </p>
-          <p>
-            Trigger 3: Trailing stop. Activates at 6% peak gain. Exits if current gain falls below 50% of peak (65% in protection mode).
-          </p>
-          <p>
-            Trigger 4: Timeout with re-evaluation. Checks remaining edge before forcing exit. Modifies GTC if edge remains, IOC if compressed.
-          </p>
-          <p>
-            Trigger 5: Sport-specific pre-resolution logic. Exits before end-of-game liquidity drain.
+            Late in a game, liquidity reality takes over. When a team is clearly winning with minutes remaining, there are no buyers for the losing side. The system accepts this: winning positions hold to settlement and collect the full dollar payout. There is no reason to sell at 92 cents with two minutes left when settlement at one dollar is imminent. Losing positions late in the game also cannot be sold -- the system accepts settlement at zero rather than placing orders into an empty book.
           </p>
         </Section>
 
-        <Section title="Session-Level Protection">
+        <Section title="Exit Triggers">
           <p>
-            Portfolio profit tiers run every 10 seconds independently of individual positions.
+            Every position carries independent exit triggers evaluated every 30 seconds. The first to fire wins.
           </p>
           <p>
-            At +8% daily gain: harvest mode. Sizing reduces 25%.
+            Target hit: GTC limit sell at 65% of gap above entry fills passively. Earns maker rebate.
           </p>
           <p>
-            At +12%: protection mode. Band A only at 50% sizing. Profit locks tighten 50%. Trailing floor tightens to 65%.
+            Locked in gains: trailing stop activates at 6% peak gain, exits if current gain falls below 50% of peak.
           </p>
           <p>
-            At +17%: session locks. No new oracle arb. Exception and fade remain active. All positions drain.
+            Cut losses: smart stop loss fires only when BOTH the position is down past threshold AND the full game-context evaluation says exit. Sharp odds, team record, dominant/fade status, score, and game progress are all weighed before any loss is taken.
           </p>
           <p>
-            At -10% daily loss: sizing reduces 50%. Exception and fade suspend.
+            Held too long: 60-minute timeout with edge re-evaluation. If sharp odds still support the position, it continues to hold. If edge has compressed, it exits at current best bid.
           </p>
           <p>
-            At -15%: all new entries pause.
+            Game ending: sport-specific pre-resolution logic. Holds winning positions to settlement. Exits losing positions while liquidity still exists.
+          </p>
+        </Section>
+
+        <Section title="Daily Cycle and Protection">
+          <p>
+            The system runs 24/7 and manages itself automatically. At midnight Eastern it resets all session metrics, unlocks any locked session, re-anchors the floor, and begins trading fresh the next day when games become available.
           </p>
           <p>
-            At -20%: emergency exit all positions. Session halts.
+            Daily target: at +15% gain, the system stops entering new trades and lets open positions settle naturally. Winners hold to resolution and collect their full payout.
           </p>
           <p>
-            The floor is fixed at 80% of session-start value. If portfolio reaches the floor, all positions exit immediately. The worst possible outcome in any session is a 20% drawdown.
+            Loss protection uses realized P&L only -- unrealized mid-game price dips do not trigger loss tiers. A position down 10% on a mid-game dip is not a realized loss. Only closed trades count against the daily loss budget.
+          </p>
+          <p>
+            At -5% realized daily loss: position sizes reduce by 50%.
+          </p>
+          <p>
+            At -10% realized daily loss: no new entries. If losses recover to -5%, trading resumes.
+          </p>
+          <p>
+            At -15% realized daily loss: done for the day. Open positions settle naturally. Resets at midnight Eastern.
+          </p>
+          <p>
+            The floor is set at 85% of session-start value as an additional safety net. If reached, trading stops for the day and resets at midnight. No emergency exits that dump winning positions at a loss.
           </p>
         </Section>
 
