@@ -456,4 +456,22 @@ class WalletManager:
         self.state.floor_value = (
             self.state.session_start_value * FLOOR_PCT
         )
+        # Clear recently exited games for new day
+        if self._order_manager and hasattr(self._order_manager, '_edge_detector'):
+            ed = self._order_manager._edge_detector
+            if ed and hasattr(ed, '_recently_exited'):
+                ed._recently_exited.clear()
+
         logger.info("Daily reset complete")
+
+        if self._alerts:
+            floor = self.state.floor_value
+            start = self.state.session_start_value
+            target = start * 1.15
+            await self._alerts._enqueue(
+                f"Good morning. New trading day.\n\n"
+                f"Opening balance: ${start:.2f}\n"
+                f"Daily target (+15%): ${target:.2f}\n"
+                f"Floor (-15%): ${floor:.2f}\n"
+                f"Ready to trade."
+            )
