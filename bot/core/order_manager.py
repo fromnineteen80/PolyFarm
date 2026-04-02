@@ -419,6 +419,11 @@ class OrderManager:
         strategy = position.strategy
         profit_mode = self.wallet.state.profit_mode
 
+        # Never exit before the game starts
+        market = await self.pm.registry.get(slug)
+        if market and not market.is_live and not market.is_finished:
+            return  # game hasn't started, hold
+
         # Current gain percentage
         current_gain = (
             (current_bid - position.entry_price)

@@ -131,10 +131,6 @@ class EdgeDetector:
         if not market:
             return None
 
-        # Only trade live games — pre-game prices don't move
-        if not market.is_live:
-            return None
-
         # Band classification (thresholds preserved exactly)
         is_live = market.is_live
         live_adj = LIVE_GAME_EDGE_REDUCTION if is_live else 0.0
