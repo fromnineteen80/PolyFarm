@@ -359,7 +359,7 @@ class AlertManager:
                 personal_growth = current - initial
                 psign = "+" if personal_growth >= 0 else ""
                 lines.append(
-                    f"  {name}\n"
+                    f"\n  {name}\n"
                     f"    Invested: ${initial:.2f}\n"
                     f"    Current: ${current:.2f} "
                     f"({psign}${personal_growth:.2f})"
