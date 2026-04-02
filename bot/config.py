@@ -168,7 +168,7 @@ PAPER_MODE = os.environ.get(
     "PAPER_MODE", "true"
 ).lower() == "true"
 PAPER_SEED_BALANCE = float(os.environ.get(
-    "PAPER_SEED_BALANCE", "1200"
+    "PAPER_SEED_BALANCE", "2400"
 ))
 PAPER_TRADES_REQUIRED = 300
 PAPER_WIN_RATE_REQUIRED = 0.70
