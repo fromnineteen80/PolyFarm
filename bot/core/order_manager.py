@@ -1145,47 +1145,160 @@ class OrderManager:
                     )
                 break
 
-        # 4. Game state — are we in early or late game?
+        # 4. Game state — sport-specific evaluation
         if game_state:
             period = game_state.get("period", 0)
             time_rem = game_state.get(
                 "time_remaining_seconds", 9999
             )
             inning = game_state.get("inning", 0)
+            minute = game_state.get("game_minute", 0)
             score = game_state.get("score", "")
+            sport = position.sport or ""
 
-            # Parse score to see if our team is winning
+            # Parse score
+            our_score = 0
+            their_score = 0
+            has_score = False
             if score and "-" in str(score):
                 try:
                     parts = str(score).split("-")
                     s1 = int(parts[0].strip())
                     s2 = int(parts[1].strip())
+                    # If bid > 0.50, we're likely on home (first score)
                     if current_bid > 0.50:
-                        # We're likely on home team
-                        if s1 > s2:
-                            reasons_to_hold.append(
-                                f"our team leads {score}"
-                            )
-                        elif s1 < s2:
-                            deficit = s2 - s1
-                            reasons_to_exit.append(
-                                f"trailing by {deficit}"
-                            )
+                        our_score, their_score = s1, s2
+                    else:
+                        our_score, their_score = s2, s1
+                    has_score = True
                 except Exception:
                     pass
 
-            # Early game dips are noise
-            sport = position.sport or ""
-            if "basketball" in sport and period <= 2:
-                reasons_to_hold.append("early game (Q1-Q2)")
-            elif "baseball" in sport and inning <= 5:
-                reasons_to_hold.append(
-                    f"early game (inning {inning})"
-                )
-            elif "hockey" in sport and period <= 1:
-                reasons_to_hold.append("early game (P1)")
-            elif "football" in sport and period <= 2:
-                reasons_to_hold.append("early game (Q1-Q2)")
+            deficit = their_score - our_score
+            lead = our_score - their_score
+
+            if "basketball" in sport:
+                # NBA/CBB: 48 min game, high scoring
+                if has_score:
+                    if lead >= 15:
+                        reasons_to_hold.append(
+                            f"comfortable lead +{lead}")
+                    elif lead > 0:
+                        reasons_to_hold.append(
+                            f"leading by {lead}")
+                    elif deficit >= 15:
+                        reasons_to_exit.append(
+                            f"down {deficit} (hard to recover)")
+                    elif deficit > 0 and period >= 4 and time_rem < 120:
+                        reasons_to_exit.append(
+                            f"down {deficit} late in Q4")
+                    elif deficit > 0 and period <= 2:
+                        reasons_to_hold.append(
+                            f"only down {deficit} in early game")
+                # Game progress
+                if period <= 2:
+                    reasons_to_hold.append("first half")
+                elif period >= 4 and time_rem < 120:
+                    pass  # late game — let score decide
+
+            elif "baseball" in sport:
+                # MLB: 9 innings, low scoring
+                if has_score:
+                    if lead >= 4:
+                        reasons_to_hold.append(
+                            f"comfortable lead +{lead} runs")
+                    elif lead > 0:
+                        reasons_to_hold.append(
+                            f"leading by {lead} runs")
+                    elif deficit >= 4:
+                        reasons_to_exit.append(
+                            f"down {deficit} runs")
+                    elif deficit >= 2 and inning >= 8:
+                        reasons_to_exit.append(
+                            f"down {deficit} runs in "
+                            f"inning {inning}")
+                    elif deficit > 0 and inning <= 5:
+                        reasons_to_hold.append(
+                            f"only down {deficit} runs, "
+                            f"inning {inning}")
+                # Game progress
+                if inning <= 5:
+                    reasons_to_hold.append(
+                        f"early game (inning {inning})")
+                elif inning >= 8:
+                    pass  # late game — let score decide
+
+            elif "hockey" in sport:
+                # NHL: 3 periods, low scoring
+                if has_score:
+                    if lead >= 3:
+                        reasons_to_hold.append(
+                            f"commanding lead +{lead} goals")
+                    elif lead > 0:
+                        reasons_to_hold.append(
+                            f"leading by {lead}")
+                    elif deficit >= 3:
+                        reasons_to_exit.append(
+                            f"down {deficit} goals")
+                    elif deficit >= 2 and period >= 3 \
+                         and time_rem < 300:
+                        reasons_to_exit.append(
+                            f"down {deficit} goals "
+                            f"late in P3")
+                    elif deficit > 0 and period <= 1:
+                        reasons_to_hold.append(
+                            f"only down {deficit} in P1")
+                # Game progress
+                if period <= 1:
+                    reasons_to_hold.append("first period")
+
+            elif "football" in sport:
+                # NFL/CFB: 4 quarters
+                if has_score:
+                    if lead >= 17:
+                        reasons_to_hold.append(
+                            f"3+ score lead (+{lead})")
+                    elif lead > 0:
+                        reasons_to_hold.append(
+                            f"leading by {lead}")
+                    elif deficit >= 17:
+                        reasons_to_exit.append(
+                            f"down {deficit} (3+ scores)")
+                    elif deficit > 0 and period >= 4 \
+                         and time_rem < 240:
+                        reasons_to_exit.append(
+                            f"down {deficit} late in Q4")
+                    elif deficit > 0 and period <= 2:
+                        reasons_to_hold.append(
+                            f"only down {deficit} in "
+                            f"first half")
+                if period <= 2:
+                    reasons_to_hold.append("first half")
+
+            elif "soccer" in sport:
+                # Soccer: 90 minutes, very low scoring
+                if has_score:
+                    if lead >= 2:
+                        reasons_to_hold.append(
+                            f"comfortable lead +{lead} goals")
+                    elif lead > 0:
+                        reasons_to_hold.append(
+                            f"leading {our_score}-{their_score}")
+                    elif deficit >= 2:
+                        reasons_to_exit.append(
+                            f"down {deficit} goals")
+                    elif deficit == 1 and minute >= 80:
+                        reasons_to_exit.append(
+                            f"down a goal after 80'")
+                    elif deficit > 0 and minute <= 60:
+                        reasons_to_hold.append(
+                            f"only down {deficit} with "
+                            f"{90 - minute} min left")
+                if minute <= 60:
+                    reasons_to_hold.append(
+                        f"plenty of time ({minute}')")
+                elif minute >= 80:
+                    pass  # late game — let score decide
 
         # 5. Current price still shows we're favored
         if current_bid > 0.55:
