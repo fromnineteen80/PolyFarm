@@ -468,10 +468,27 @@ class WalletManager:
             floor = self.state.floor_value
             start = self.state.session_start_value
             target = start * 1.15
-            await self._alerts._enqueue(
-                f"Good morning. New trading day.\n\n"
-                f"Opening balance: ${start:.2f}\n"
-                f"Daily target (+15%): ${target:.2f}\n"
-                f"Floor (-15%): ${floor:.2f}\n"
-                f"Ready to trade."
-            )
+
+            # Check if balance changed from yesterday's close
+            prev = getattr(self, '_last_session_start', None)
+            self._last_session_start = start
+
+            if prev and abs(start - prev) > 0.50:
+                diff = start - prev
+                sign = "+" if diff > 0 else ""
+                await self._alerts._enqueue(
+                    f"Good morning. New trading day.\n\n"
+                    f"Opening balance: ${start:.2f} "
+                    f"({sign}${diff:.2f} since last night)\n"
+                    f"Daily target (+15%): ${target:.2f}\n"
+                    f"Floor (-15%): ${floor:.2f}\n"
+                    f"Ready to trade."
+                )
+            else:
+                await self._alerts._enqueue(
+                    f"Good morning. New trading day.\n\n"
+                    f"Opening balance: ${start:.2f}\n"
+                    f"Daily target (+15%): ${target:.2f}\n"
+                    f"Floor (-15%): ${floor:.2f}\n"
+                    f"Ready to trade."
+                )
