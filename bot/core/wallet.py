@@ -340,21 +340,19 @@ class WalletManager:
     async def _floor_breach_protocol(self):
         self.state.entries_halted = True
         self.state.session_locked = True
+        self.state.new_entries_paused = True
         self.state.loss_mode = "FLOOR_BREACH"
-        logger.critical("FLOOR BREACH — emergency exit")
+        logger.critical("Floor breach — stopping trades for the day. Resets at midnight ET.")
         if self._alerts:
             await self._alerts.send_floor_breach(
                 self.state.live_portfolio_value,
                 self.state.floor_value
             )
-        if self._order_manager:
-            await self._order_manager.emergency_exit_all(
-                "FLOOR_BREACH"
-            )
+        # Don't emergency exit — let positions settle naturally
+        # Midnight reset will unlock for next day
         await log_system_event(
             "floor_breach",
-            f"Portfolio fell to floor. "
-            f"Value: ${self.state.live_portfolio_value:.2f}",
+            f"Portfolio fell to floor. Stopped for the day.",
             {
                 "floor": self.state.floor_value,
                 "portfolio": self.state.live_portfolio_value

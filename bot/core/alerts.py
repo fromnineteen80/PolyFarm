@@ -274,12 +274,11 @@ class AlertManager:
 
     async def send_floor_breach(self, value, floor):
         msg = (
-            f"🚨 FLOOR BREACH — TRADING HALTED\n"
-            f"All orders cancelled. "
-            f"Exiting positions.\n"
-            f"Portfolio: ${value:.2f} | "
-            f"Floor: ${floor:.2f}\n"
-            f"Manual restart required."
+            f"Daily loss limit reached.\n"
+            f"No new trades until tomorrow.\n"
+            f"Open positions will close naturally.\n"
+            f"Balance: ${value:.2f}\n"
+            f"Resets at midnight ET."
         )
         self._enqueue(msg)
 
