@@ -49,9 +49,9 @@ MAX_SINGLE_SPORT_PCT = 0.40
 # ─────────────────────────────────────────────────────
 # PORTFOLIO STRUCTURE
 # ─────────────────────────────────────────────────────
-# Floor = 80% of session start wallet value
-# If portfolio drops to floor: emergency exit
-FLOOR_PCT = 0.80
+# Floor = 90% of session start wallet value
+# If portfolio drops to floor: stop trading for the day
+FLOOR_PCT = 0.90
 
 # Exit target = entry + (edge × this multiplier)
 REPRICE_EXIT_PCT = 0.65
@@ -90,9 +90,9 @@ PORTFOLIO_TRAIL_REVERT = 0.04    # If was +9%, fell to +4%
 # ─────────────────────────────────────────────────────
 # PORTFOLIO LOSS TIERS — checked every 10 seconds
 # ─────────────────────────────────────────────────────
-DAILY_LOSS_REDUCE_TIER = -0.10   # -10%: size down 50%
-DAILY_LOSS_PAUSE_TIER = -0.15    # -15%: no new entries
-DAILY_LOSS_HALT_TIER = -0.20     # -20%: exit everything
+DAILY_LOSS_REDUCE_TIER = -0.03   # -3%: size down 50%
+DAILY_LOSS_PAUSE_TIER = -0.05    # -5%: no new entries
+DAILY_LOSS_HALT_TIER = -0.08     # -8%: stop for the day
 
 # ─────────────────────────────────────────────────────
 # EXCEPTION TRADE PARAMETERS
