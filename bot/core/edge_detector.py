@@ -63,6 +63,12 @@ class EdgeDetector:
         self.order_manager = None
         self.price_queue: asyncio.Queue = asyncio.Queue()
         self._paper_stats: dict = {"completed": 0, "win_rate": 0.0}
+        self._recently_exited: set = set()  # slugs we exited at a loss — don't re-enter
+
+    def mark_exited(self, slug: str):
+        """Called by order_manager when a trade closes at a loss.
+        Prevents re-entering the same game."""
+        self._recently_exited.add(slug)
 
     def update_paper_stats(self, completed, win_rate):
         self._paper_stats = {"completed": completed, "win_rate": win_rate}
@@ -115,6 +121,10 @@ class EdgeDetector:
             return None
 
         if self.position_monitor.has_position(slug):
+            return None
+
+        # Don't re-enter a game we recently exited at a loss
+        if slug in self._recently_exited:
             return None
 
         market = await self.registry.get(slug)

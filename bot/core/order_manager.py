@@ -800,6 +800,10 @@ class OrderManager:
         self.wallet.remove_position(position.slug, net_pnl)
         await self.pm.remove_position(position.slug)
 
+        # If we lost money, block re-entry on this game
+        if net_pnl < 0 and hasattr(self, '_edge_detector') and self._edge_detector:
+            self._edge_detector.mark_exited(position.slug)
+
         await self.alerts.send_exit(
             position, exit_price, exit_type,
             net_pnl, duration,

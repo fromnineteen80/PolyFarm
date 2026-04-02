@@ -130,6 +130,7 @@ async def main():
         registry, None, wallet, position_monitor
     )
     edge_detector.order_manager = order_manager
+    order_manager._edge_detector = edge_detector
     edge_detector.price_queue = price_queue
 
     terminal = TerminalDashboard(
