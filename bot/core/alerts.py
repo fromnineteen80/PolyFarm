@@ -286,17 +286,43 @@ class AlertManager:
             wins = sum(1 for t in trades if float(t.get("pnl", 0) or 0) > 0)
             losses = len(trades) - wins
             sign = "+" if total_pnl >= 0 else ""
+            wr = (wins / len(trades) * 100) if trades else 0
             lines = [
                 f"Today: {len(trades)} trades "
-                f"({wins}W / {losses}L)\n"
+                f"({wins}W / {losses}L, {wr:.0f}%)\n"
                 f"P&L: {sign}${total_pnl:.2f}\n"
             ]
-            for t in trades[-5:]:
+            for t in trades[-8:]:
                 pnl = float(t.get("pnl", 0) or 0)
                 s = "+" if pnl >= 0 else ""
-                slug = (t.get("market_slug", "?")
-                    .replace("aec-", "").replace("-2026", ""))
-                lines.append(f"  {slug}: {s}${pnl:.2f}")
+                teams = t.get("teams", "")
+                if not teams:
+                    teams = (t.get("market_slug", "?")
+                        .replace("aec-", "").replace("-2026", ""))
+                exit_type = _exit_label(
+                    t.get("exit_type", "?")
+                )
+                hold = int(t.get("hold_duration_seconds", 0) or 0)
+                if hold >= 3600:
+                    hold_str = f"{hold // 3600}h {(hold % 3600) // 60}m"
+                elif hold >= 60:
+                    hold_str = f"{hold // 60}m"
+                else:
+                    hold_str = f"{hold}s"
+                entry = float(t.get("entry_price", 0) or 0)
+                exit_p = float(t.get("exit_price", 0) or 0)
+                band = t.get("band", "?")
+                size = float(t.get("position_size_usd", 0) or 0)
+                score = t.get("final_score", "")
+
+                lines.append(
+                    f"\n  {teams}\n"
+                    f"    {entry:.2f} -> {exit_p:.2f} | "
+                    f"{s}${pnl:.2f} | {exit_type}\n"
+                    f"    Band {band} | ${size:.0f} | "
+                    f"held {hold_str}"
+                    + (f" | {score}" if score else "")
+                )
             if len(trades) > 5:
                 lines.append(f"  ... and {len(trades) - 5} more")
             await self._send("\n".join(lines))
