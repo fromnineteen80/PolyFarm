@@ -68,8 +68,10 @@ class AlertManager:
             return
         self._session = aiohttp.ClientSession()
         self._enabled = True
+        self._last_update_id = 0
         asyncio.create_task(self._sender_loop())
         asyncio.create_task(self._batch_loop())
+        asyncio.create_task(self._command_listener())
         logger.info("Telegram alerts initialized")
 
     async def _sender_loop(self):
@@ -142,6 +144,197 @@ class AlertManager:
 
             msg = "\n".join(lines)
             await self._send(msg)
+
+    # ─────────────────────────────────────────────
+    # TELEGRAM COMMAND INTERFACE
+    # ─────────────────────────────────────────────
+
+    async def _command_listener(self):
+        """Poll Telegram for incoming commands every 5 seconds."""
+        await asyncio.sleep(10)  # let bot start first
+        while True:
+            try:
+                url = (
+                    f"https://api.telegram.org/"
+                    f"bot{self._token}/getUpdates"
+                )
+                params = {
+                    "offset": self._last_update_id + 1,
+                    "timeout": 5,
+                }
+                async with self._session.get(
+                    url, params=params, timeout=15
+                ) as resp:
+                    if resp.status != 200:
+                        await asyncio.sleep(10)
+                        continue
+                    data = await resp.json()
+                    for update in data.get("result", []):
+                        self._last_update_id = update["update_id"]
+                        msg = update.get("message", {})
+                        chat_id = str(msg.get("chat", {}).get("id", ""))
+                        text = (msg.get("text") or "").strip().lower()
+                        # Only respond to our chat
+                        if chat_id != self._chat_id:
+                            continue
+                        if text:
+                            await self._handle_command(text)
+            except Exception as e:
+                logger.debug(f"Command listener error: {e}")
+                await asyncio.sleep(10)
+
+    async def _handle_command(self, text: str):
+        """Process a command from Telegram."""
+        cmd = text.split()[0].lstrip("/")
+
+        if cmd in ("status", "s"):
+            await self._cmd_status()
+        elif cmd in ("positions", "pos", "p"):
+            await self._cmd_positions()
+        elif cmd in ("trades", "t"):
+            await self._cmd_trades()
+        elif cmd in ("stop", "pause"):
+            await self._cmd_stop()
+        elif cmd in ("start", "resume", "go"):
+            await self._cmd_start()
+        elif cmd in ("target", "goals"):
+            await self._cmd_target()
+        elif cmd in ("help", "h", "?"):
+            await self._cmd_help()
+        else:
+            await self._send(
+                "Unknown command. Send 'help' for options."
+            )
+
+    async def _cmd_help(self):
+        await self._send(
+            "Commands:\n\n"
+            "status - balance, P&L, mode\n"
+            "positions - open positions\n"
+            "trades - today's closed trades\n"
+            "target - daily target and floor\n"
+            "stop - pause new entries\n"
+            "start - resume trading\n"
+            "help - this message"
+        )
+
+    async def _cmd_status(self):
+        if not self.wallet:
+            await self._send("Wallet not available")
+            return
+        w = self.wallet.state
+        gain = w.daily_gain_pct * 100
+        realized = w.realized_pnl_today
+        sign = "+" if gain >= 0 else ""
+        rsign = "+" if realized >= 0 else ""
+        mode = "TRADING" if not w.session_locked and not w.entries_halted else "STOPPED"
+        if w.loss_mode != "NORMAL":
+            mode = f"LOSS MODE: {w.loss_mode}"
+        if w.session_locked:
+            mode = "LOCKED (target hit or floor)"
+        await self._send(
+            f"Balance: ${w.live_portfolio_value:.2f}\n"
+            f"Today: {sign}{gain:.1f}%\n"
+            f"Realized P&L: {rsign}${realized:.2f}\n"
+            f"Open positions value: ${w.open_positions_value:.2f}\n"
+            f"Mode: {mode}\n"
+            f"Profit mode: {w.profit_mode}\n"
+            f"Loss mode: {w.loss_mode}"
+        )
+
+    async def _cmd_positions(self):
+        if not self.wallet:
+            await self._send("Wallet not available")
+            return
+        positions = self.wallet._position_values
+        if not positions:
+            await self._send("No open positions.")
+            return
+        lines = ["Open positions:\n"]
+        for slug, val in positions.items():
+            short_slug = slug.replace("aec-", "").replace("-2026", "")
+            lines.append(
+                f"  {short_slug}: "
+                f"${val.get('value', 0):.2f} "
+                f"({val.get('shares', 0)} shares)"
+            )
+        await self._send("\n".join(lines))
+
+    async def _cmd_trades(self):
+        try:
+            from data.database import get_today_closed_trades
+            from datetime import date
+            today = date.today().isoformat()
+            trades = await get_today_closed_trades(today, True)
+            if not trades:
+                await self._send("No closed trades today.")
+                return
+            total_pnl = sum(float(t.get("pnl", 0) or 0) for t in trades)
+            wins = sum(1 for t in trades if float(t.get("pnl", 0) or 0) > 0)
+            losses = len(trades) - wins
+            sign = "+" if total_pnl >= 0 else ""
+            lines = [
+                f"Today: {len(trades)} trades "
+                f"({wins}W / {losses}L)\n"
+                f"P&L: {sign}${total_pnl:.2f}\n"
+            ]
+            for t in trades[-5:]:
+                pnl = float(t.get("pnl", 0) or 0)
+                s = "+" if pnl >= 0 else ""
+                slug = (t.get("market_slug", "?")
+                    .replace("aec-", "").replace("-2026", ""))
+                lines.append(f"  {slug}: {s}${pnl:.2f}")
+            if len(trades) > 5:
+                lines.append(f"  ... and {len(trades) - 5} more")
+            await self._send("\n".join(lines))
+        except Exception as e:
+            await self._send(f"Error loading trades: {e}")
+
+    async def _cmd_target(self):
+        if not self.wallet:
+            await self._send("Wallet not available")
+            return
+        w = self.wallet.state
+        target = w.session_start_value * 1.15
+        floor = w.floor_value
+        remaining = target - w.live_portfolio_value
+        await self._send(
+            f"Session start: ${w.session_start_value:.2f}\n"
+            f"Current: ${w.live_portfolio_value:.2f}\n"
+            f"Daily target (+15%): ${target:.2f}\n"
+            f"To target: ${remaining:.2f}\n"
+            f"Floor (-15%): ${floor:.2f}"
+        )
+
+    async def _cmd_stop(self):
+        if not self.wallet:
+            await self._send("Wallet not available")
+            return
+        self.wallet.state.new_entries_paused = True
+        self.wallet.state.entries_halted = True
+        await self._send(
+            "Trading paused. No new entries.\n"
+            "Open positions will close naturally.\n"
+            "Send 'start' to resume."
+        )
+
+    async def _cmd_start(self):
+        if not self.wallet:
+            await self._send("Wallet not available")
+            return
+        if self.wallet.state.session_locked:
+            await self._send(
+                "Session is locked (target or floor hit).\n"
+                "Resets at midnight ET."
+            )
+            return
+        self.wallet.state.new_entries_paused = False
+        self.wallet.state.entries_halted = False
+        await self._send("Trading resumed.")
+
+    # ─────────────────────────────────────────────
+    # SEND MESSAGE
+    # ─────────────────────────────────────────────
 
     async def _send(self, text: str):
         if not self._enabled:
