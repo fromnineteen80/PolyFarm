@@ -168,6 +168,7 @@ async def main():
         await pipeline.run_startup()
         edge_detector.odds_api = pipeline
         edge_detector.ws_markets = markets_ws
+        order_manager.pipeline = pipeline
         exception_monitor.mapper = pipeline
         fade_monitor.mapper = pipeline
         overnight_monitor.mapper = pipeline

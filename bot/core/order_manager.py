@@ -61,6 +61,7 @@ class OrderManager:
         self.wallet = wallet
         self.alerts = alerts
         self.pm = position_monitor
+        self.pipeline = None  # set by main.py for sharp odds check
 
     # ─────────────────────────────────────────────
     # ENTRY
@@ -465,18 +466,30 @@ class OrderManager:
                 )
                 return
 
-        # ── TRIGGER 4: Stop Loss (exception/fade) ─
+        # ── TRIGGER 4: Smart Stop Loss ───────────
+        # Only exit if BOTH the price dropped AND
+        # the sharp odds no longer support us.
+        # A price dip with strong sharp odds = hold.
+        # A price dip with weak sharp odds = exit.
         stop_loss = self._get_stop_loss(strategy)
         if stop_loss is not None:
             if current_gain <= stop_loss:
-                await self._ioc_exit(
-                    position, current_bid,
-                    f"{strategy}_stop_loss"
-                )
-                await self.alerts.send_stop_loss(
-                    position, current_gain, strategy
-                )
-                return
+                # Check if sharp odds still favor us
+                sharp_still_supports = False
+                if self.pipeline and self.pipeline.is_matched(slug):
+                    sharp_prob = self.pipeline.get_fair_prob(slug, "home")
+                    if sharp_prob and sharp_prob > current_bid + 0.02:
+                        # Sharp says we should be higher — hold
+                        sharp_still_supports = True
+                if not sharp_still_supports:
+                    await self._ioc_exit(
+                        position, current_bid,
+                        f"{strategy}_stop_loss"
+                    )
+                    await self.alerts.send_stop_loss(
+                        position, current_gain, strategy
+                    )
+                    return
 
         # ── TRIGGER 4B: Fade Deficit Closed ──────
         if strategy == "fade" and game_state:
