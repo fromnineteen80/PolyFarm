@@ -60,16 +60,25 @@ async def main():
     logger.info("Polymarket SDK client initialized")
 
     # ── STEP 4: Verify connectivity ───────────────
-    try:
-        result = await client.account.balances()
-        balances = result.get("balances", [])
-        if balances:
-            bp = balances[0].get("buyingPower", 0)
-            logger.info(f"Connected. Buying power: ${bp:.2f}")
-        else:
-            logger.warning("Balance check returned empty")
-    except Exception as e:
-        logger.critical(f"Cannot connect to Polymarket: {e}")
+    for attempt in range(10):
+        try:
+            result = await client.account.balances()
+            balances = result.get("balances", [])
+            if balances:
+                bp = balances[0].get("buyingPower", 0)
+                logger.info(f"Connected. Buying power: ${bp:.2f}")
+            else:
+                logger.warning("Balance check returned empty")
+            break
+        except Exception as e:
+            wait = 30 * (attempt + 1)
+            logger.warning(
+                f"Polymarket unavailable (attempt {attempt + 1}/10): {e}. "
+                f"Retrying in {wait}s..."
+            )
+            await asyncio.sleep(wait)
+    else:
+        logger.critical("Cannot connect to Polymarket after 10 attempts")
         raise SystemExit(1)
 
     # ── STEP 5: Initialize components ─────────────
@@ -165,17 +174,24 @@ async def main():
             await asyncio.sleep(wait)
     else:
         logger.error("Session init failed after 5 attempts. Starting with balance only.")
-        wallet.state.cash_balance = float(
-            (await client.account.balances())
-            .get("balances", [{}])[0]
-            .get("buyingPower", 0) or 0
-        )
-        wallet.state.live_portfolio_value = wallet.state.cash_balance
-        wallet.state.session_start_value = wallet.state.cash_balance
-        wallet.state.floor_value = wallet.state.cash_balance * FLOOR_PCT
+        try:
+            result = await client.account.balances()
+            cash = float(
+                result.get("balances", [{}])[0]
+                .get("buyingPower", 0) or 0
+            )
+        except Exception:
+            cash = 0.0
+        wallet.state.cash_balance = cash
+        wallet.state.live_portfolio_value = cash
+        wallet.state.session_start_value = cash
+        wallet.state.floor_value = cash * FLOOR_PCT
 
     # ── STEP 11: Load markets ─────────────────────
-    await market_loader.load_all_markets()
+    try:
+        await market_loader.load_all_markets()
+    except Exception as e:
+        logger.error(f"Market load error: {e}")
 
     # ── STEP 12: Initialize pipeline ─────────────
     import data.database as db
@@ -183,37 +199,43 @@ async def main():
     pipeline = None
     odds_key = os.environ.get("ODDS_API_KEY")
     if odds_key:
-        pipeline = Pipeline(odds_api_key=odds_key, db=db)
-        pipeline.ws_markets = markets_ws
-        pipeline.market_registry = registry
-        await pipeline.run_startup()
-        edge_detector.odds_api = pipeline
-        edge_detector.ws_markets = markets_ws
-        order_manager.pipeline = pipeline
-        exception_monitor.mapper = pipeline
-        fade_monitor.mapper = pipeline
-        overnight_monitor.mapper = pipeline
-        logger.info("Pipeline active — registry-based team matching")
+        try:
+            pipeline = Pipeline(odds_api_key=odds_key, db=db)
+            pipeline.ws_markets = markets_ws
+            pipeline.market_registry = registry
+            await pipeline.run_startup()
+            edge_detector.odds_api = pipeline
+            edge_detector.ws_markets = markets_ws
+            order_manager.pipeline = pipeline
+            exception_monitor.mapper = pipeline
+            fade_monitor.mapper = pipeline
+            overnight_monitor.mapper = pipeline
+            logger.info("Pipeline active — registry-based team matching")
+        except Exception as e:
+            logger.error(f"Pipeline startup error: {e}. Will retry on first refresh.")
     else:
         logger.warning("ODDS_API_KEY not set — running without sharp odds")
 
     # ── STEP 13: Send session start alert ─────────
-    stats = await get_bot_config("paper_trades_completed")
     try:
-        paper_progress = int(str(stats or 0).strip('"'))
-    except (ValueError, TypeError):
-        paper_progress = 0
-    await alerts.send_session_start(
-        wallet=wallet.state.live_portfolio_value,
-        floor=wallet.state.floor_value,
-        capital=(
-            wallet.state.live_portfolio_value
-            - wallet.state.floor_value
-        ),
-        market_count=await registry.count(),
-        paper_mode=PAPER_MODE,
-        paper_progress=paper_progress,
-    )
+        stats = await get_bot_config("paper_trades_completed")
+        try:
+            paper_progress = int(str(stats or 0).strip('"'))
+        except (ValueError, TypeError):
+            paper_progress = 0
+        await alerts.send_session_start(
+            wallet=wallet.state.live_portfolio_value,
+            floor=wallet.state.floor_value,
+            capital=(
+                wallet.state.live_portfolio_value
+                - wallet.state.floor_value
+            ),
+            market_count=await registry.count(),
+            paper_mode=PAPER_MODE,
+            paper_progress=paper_progress,
+        )
+    except Exception as e:
+        logger.error(f"Session start alert error: {e}")
 
     # ── STEP 13: Start terminal in thread ─────────
     terminal_thread = threading.Thread(
