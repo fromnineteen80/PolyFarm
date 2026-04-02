@@ -105,10 +105,16 @@ class WalletManager:
                 )
 
         total = cash + pos_value
+
+        # In paper mode, use seed balance instead of real balance
+        from config import PAPER_MODE, PAPER_SEED_BALANCE
+        if PAPER_MODE and PAPER_SEED_BALANCE > 0:
+            total = PAPER_SEED_BALANCE
+
         floor = total * FLOOR_PCT
 
-        self.state.cash_balance = cash
-        self.state.open_positions_value = pos_value
+        self.state.cash_balance = total
+        self.state.open_positions_value = 0.0 if PAPER_MODE else pos_value
         self.state.live_portfolio_value = total
         self.state.session_start_value = total
         self.state.floor_value = floor

@@ -167,6 +167,9 @@ PHASE1B_ENABLED = os.environ.get(
 PAPER_MODE = os.environ.get(
     "PAPER_MODE", "true"
 ).lower() == "true"
+PAPER_SEED_BALANCE = float(os.environ.get(
+    "PAPER_SEED_BALANCE", "1200"
+))
 PAPER_TRADES_REQUIRED = 300
 PAPER_WIN_RATE_REQUIRED = 0.70
 PHASE2_ENABLED = os.environ.get(
