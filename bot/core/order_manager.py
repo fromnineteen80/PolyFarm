@@ -467,19 +467,20 @@ class OrderManager:
                 return
 
         # ── TRIGGER 4: Smart Stop Loss ───────────
-        # Only exit if BOTH the price dropped AND
-        # the sharp odds no longer support us.
-        # A price dip with strong sharp odds = hold.
-        # A price dip with weak sharp odds = exit.
+        # Hold as long as sharp odds > our entry price.
+        # We're betting on the outcome, not the journey.
+        # A 73% team down 10 points in Q2 still wins 73%
+        # of the time. Only exit when bookmakers say
+        # the team is less likely to win than what we paid.
         stop_loss = self._get_stop_loss(strategy)
         if stop_loss is not None:
             if current_gain <= stop_loss:
-                # Check if sharp odds still favor us
                 sharp_still_supports = False
                 if self.pipeline and self.pipeline.is_matched(slug):
                     sharp_prob = self.pipeline.get_fair_prob(slug, "home")
-                    if sharp_prob and sharp_prob > current_bid + 0.02:
-                        # Sharp says we should be higher — hold
+                    if sharp_prob and sharp_prob > position.entry_price:
+                        # Bookmakers still say this team wins
+                        # more often than what we paid. Hold.
                         sharp_still_supports = True
                 if not sharp_still_supports:
                     await self._ioc_exit(
