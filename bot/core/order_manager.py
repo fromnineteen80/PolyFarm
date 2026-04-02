@@ -779,7 +779,7 @@ class OrderManager:
         ).total_seconds())
 
         exit_utc = datetime.now(timezone.utc)
-        await update_trade(position.trade_id, {
+        exit_data = {
             "timestamp_exit": exit_utc.isoformat(),
             "timestamp_exit_et": exit_utc.astimezone(ET).isoformat(),
             "trade_bucket": "historical",
@@ -795,7 +795,23 @@ class OrderManager:
             "hold_duration_seconds": duration,
             "maker_rebate_earned": maker_rebate,
             "taker_fee_paid": taker_fee,
-        })
+        }
+
+        # Attach final score from pipeline
+        if self.pipeline:
+            game = self.pipeline.games.get(position.slug)
+            if game:
+                score = game.get("game_score") or ""
+                odds_home = game.get("odds_api_home_score")
+                odds_away = game.get("odds_api_away_score")
+                if odds_home and odds_away:
+                    exit_data["final_score"] = (
+                        f"{odds_home}-{odds_away}"
+                    )
+                elif score:
+                    exit_data["final_score"] = score
+
+        await update_trade(position.trade_id, exit_data)
 
         self.wallet.remove_position(position.slug, net_pnl)
         await self.pm.remove_position(position.slug)

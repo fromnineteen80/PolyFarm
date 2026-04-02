@@ -144,9 +144,14 @@ class WalletManager:
         self.state.cash_balance = total
         self.state.open_positions_value = 0.0 if PAPER_MODE else pos_value
         self.state.live_portfolio_value = total
-        self.state.session_start_value = total
-        self.state.floor_value = floor
-        self.state.daily_peak_gain = 0.0
+        # Only set session_start if not restored from saved state
+        if self.state.session_start_value <= 0:
+            self.state.session_start_value = total
+        self.state.floor_value = (
+            self.state.session_start_value * FLOOR_PCT
+        )
+        if self.state.daily_peak_gain <= 0:
+            self.state.daily_peak_gain = 0.0
 
         logger.info(
             f"Session init: wallet=${total:.2f} "
@@ -490,9 +495,8 @@ class WalletManager:
         a new position right now.
         """
         if self.state.session_locked:
-            # Only exception and fade allowed when locked
-            if strategy not in ("exception", "fade"):
-                return False
+            # When daily target or floor hit, stop ALL entries
+            return False
         if self.state.entries_halted:
             return False
         if self.state.new_entries_paused:
@@ -575,7 +579,7 @@ class WalletManager:
             if prev and abs(start - prev) > 0.50:
                 diff = start - prev
                 sign = "+" if diff > 0 else ""
-                await self._alerts._enqueue(
+                self._alerts._enqueue(
                     f"Good morning. New trading day.\n\n"
                     f"Opening balance: ${start:.2f} "
                     f"({sign}${diff:.2f} since last night)\n"
@@ -584,7 +588,7 @@ class WalletManager:
                     f"Ready to trade."
                 )
             else:
-                await self._alerts._enqueue(
+                self._alerts._enqueue(
                     f"Good morning. New trading day.\n\n"
                     f"Opening balance: ${start:.2f}\n"
                     f"Daily target (+15%): ${target:.2f}\n"

@@ -163,7 +163,8 @@ class AlertManager:
                     "timeout": 30,
                 }
                 async with self._session.get(
-                    url, params=params, timeout=15
+                    url, params=params,
+                    timeout=aiohttp.ClientTimeout(total=35)
                 ) as resp:
                     if resp.status != 200:
                         await asyncio.sleep(10)
@@ -274,9 +275,10 @@ class AlertManager:
     async def _cmd_trades(self):
         try:
             from data.database import get_today_closed_trades
+            from config import PAPER_MODE
             from datetime import date
             today = date.today().isoformat()
-            trades = await get_today_closed_trades(today, True)
+            trades = await get_today_closed_trades(today, PAPER_MODE)
             if not trades:
                 await self._send("No closed trades today.")
                 return

@@ -5,7 +5,7 @@ import signal
 import threading
 from datetime import datetime, timezone, timedelta
 from polymarket_us import AsyncPolymarketUS
-from config import PAPER_MODE, PHASE2_ENABLED, logger
+from config import PAPER_MODE, PHASE2_ENABLED, FLOOR_PCT, logger
 from data.database import (
     init_database, seed_bot_config,
     log_system_event, set_bot_config,
