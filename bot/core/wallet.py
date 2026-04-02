@@ -111,12 +111,28 @@ class WalletManager:
         if PAPER_MODE and PAPER_SEED_BALANCE > 0:
             from data.database import get_bot_config
             try:
+                import json as _json
                 saved = await get_bot_config("paper_balance")
-                saved_pnl = await get_bot_config("paper_realized_pnl_today")
+                saved_state = await get_bot_config("paper_session_state")
                 if saved and float(saved) > 0:
                     total = float(saved)
-                    self.state.realized_pnl_today = float(saved_pnl or 0)
                     logger.info(f"Restored paper balance: ${total:.2f}")
+                    if saved_state:
+                        ss = _json.loads(saved_state)
+                        self.state.realized_pnl_today = float(ss.get("realized_pnl_today", 0))
+                        self.state.daily_gain_pct = float(ss.get("daily_gain_pct", 0))
+                        self.state.daily_peak_gain = float(ss.get("daily_peak_gain", 0))
+                        self.state.profit_mode = ss.get("profit_mode", "NORMAL")
+                        self.state.loss_mode = ss.get("loss_mode", "NORMAL")
+                        self.state.session_locked = ss.get("session_locked", False)
+                        self.state.entries_halted = ss.get("entries_halted", False)
+                        self.state.new_entries_paused = ss.get("new_entries_paused", False)
+                        self.state.exception_trades_today = ss.get("exception_trades_today", 0)
+                        self.state.fade_trades_today = ss.get("fade_trades_today", 0)
+                        start = float(ss.get("session_start_value", total))
+                        if start > 0:
+                            self.state.session_start_value = start
+                        logger.info(f"Restored session: {self.state.profit_mode}/{self.state.loss_mode}")
                 else:
                     total = PAPER_SEED_BALANCE
                     logger.info(f"Starting fresh paper: ${total:.2f}")
@@ -163,17 +179,37 @@ class WalletManager:
                 self.state.open_positions_value = pos_value
                 self.state.live_portfolio_value = total
                 self.state.cash_balance = total - pos_value
-                # Persist to database only when balance changes
-                rounded = round(total, 2)
-                if rounded != getattr(self, '_last_persisted_balance', 0):
-                    self._last_persisted_balance = rounded
+                # Persist to database only when state changes
+                state_key = (
+                    round(total, 2),
+                    round(self.state.realized_pnl_today, 4),
+                    self.state.profit_mode,
+                    self.state.loss_mode,
+                    self.state.session_locked,
+                    self.state.entries_halted,
+                )
+                if state_key != getattr(self, '_last_persisted_state', None):
+                    self._last_persisted_state = state_key
                     try:
+                        import json
                         await set_bot_config(
-                            "paper_balance", str(rounded)
+                            "paper_balance", str(state_key[0])
                         )
                         await set_bot_config(
-                            "paper_realized_pnl_today",
-                            str(round(self.state.realized_pnl_today, 4))
+                            "paper_session_state",
+                            json.dumps({
+                                "realized_pnl_today": state_key[1],
+                                "session_start_value": round(self.state.session_start_value, 2),
+                                "daily_gain_pct": round(self.state.daily_gain_pct, 4),
+                                "daily_peak_gain": round(self.state.daily_peak_gain, 4),
+                                "profit_mode": self.state.profit_mode,
+                                "loss_mode": self.state.loss_mode,
+                                "session_locked": self.state.session_locked,
+                                "entries_halted": self.state.entries_halted,
+                                "new_entries_paused": self.state.new_entries_paused,
+                                "exception_trades_today": self.state.exception_trades_today,
+                                "fade_trades_today": self.state.fade_trades_today,
+                            })
                         )
                     except Exception:
                         pass
