@@ -200,7 +200,10 @@ class PositionMonitor:
                 )
                 current_bid, _ask, _cur = parse_bbo(bbo)
                 if current_bid == 0:
-                    current_bid = position.entry_price
+                    # Use current price or ask as fallback
+                    current_bid = _cur if _cur > 0 else (
+                        _ask if _ask > 0 else position.entry_price
+                    )
                 self.wallet.update_position_value(
                     position.slug,
                     current_bid,
