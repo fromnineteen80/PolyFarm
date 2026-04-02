@@ -103,16 +103,10 @@ class OrderManager:
             mid = (bid + ask) / 2
             fill_price = mid
 
-            trade_data = self._build_trade_record(
-                signal, fill_price, strategy,
-                position_type, fade_team,
-                paper_mode=True
-            )
-            result = await insert_trade(trade_data)
-            trade_id = result.get("id", 0)
-
+            # Register position FIRST — prevents re-entry
+            # even if the Supabase write fails
             position = OpenPosition(
-                trade_id=trade_id,
+                trade_id=0,
                 slug=signal.slug,
                 sport=signal.sport,
                 teams=signal.teams,
@@ -135,16 +129,34 @@ class OrderManager:
                 signal.slug, position
             )
 
+            # Write to Supabase
+            trade_data = self._build_trade_record(
+                signal, fill_price, strategy,
+                position_type, fade_team,
+                paper_mode=True
+            )
+            try:
+                result = await insert_trade(trade_data)
+                trade_id = result.get("id", 0)
+                position.trade_id = trade_id
+            except Exception as db_err:
+                logger.error(
+                    f"Trade DB write failed: {db_err}"
+                )
+
             # Update paper stats
-            stats = await self._get_paper_stats()
-            await set_bot_config(
-                "paper_trades_completed",
-                str(stats["count"])
-            )
-            await set_bot_config(
-                "paper_win_rate",
-                str(stats["win_rate"])
-            )
+            try:
+                stats = await self._get_paper_stats()
+                await set_bot_config(
+                    "paper_trades_completed",
+                    str(stats["count"])
+                )
+                await set_bot_config(
+                    "paper_win_rate",
+                    str(stats["win_rate"])
+                )
+            except Exception:
+                pass
 
             await self.alerts.send_entry(
                 signal, fill_price, strategy,
