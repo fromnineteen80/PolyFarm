@@ -521,20 +521,31 @@ class OrderManager:
                 return
 
         # ── TRIGGER 5: Timeout ───────────────────
+        # Never timeout during a live game — the game
+        # will end and settle. Timeout only applies to
+        # pre-game positions that never went live.
         if not position.hold_to_resolution:
-            timeout_min = self._get_timeout_minutes(
-                strategy
-            )
-            elapsed = (
-                datetime.now(timezone.utc)
-                - position.entry_time
-            ).total_seconds() / 60
+            game_is_live = (
+                market and market.is_live
+            ) if market else False
+            game_is_finished = (
+                market and market.is_finished
+            ) if market else False
 
-            if elapsed >= timeout_min:
-                await self._handle_timeout(
-                    position, current_bid,
-                    game_state
+            if not game_is_live:
+                timeout_min = self._get_timeout_minutes(
+                    strategy
                 )
+                elapsed = (
+                    datetime.now(timezone.utc)
+                    - position.entry_time
+                ).total_seconds() / 60
+
+                if elapsed >= timeout_min:
+                    await self._handle_timeout(
+                        position, current_bid,
+                        game_state
+                    )
                 return
 
         # ── TRIGGER 6: Pre-Resolution ────────────
