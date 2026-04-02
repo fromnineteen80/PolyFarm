@@ -1,0 +1,934 @@
+# **THE VWAP RECOVERY ENGINE - COMPLETE TRADING STRATEGY**
+
+---
+
+## **FOUNDATION: Why This Strategy Exists**
+
+### **The Institutional Behavior We Exploit**
+
+**Large institutions (pension funds, mutual funds, hedge funds) execute orders using VWAP algorithms:**
+
+- When they need to buy 500,000 shares of AAPL, they can't just buy all at once (would move the market)
+- Instead, they use **VWAP algorithms** that try to buy at the average price throughout the day
+- These algorithms have **programmatic buy/sell rules** tied to VWAP:
+  - **When price < VWAP** → Algorithm BUYS (trying to get below-average prices)
+  - **When price > VWAP** → Algorithm SELLS (taking profits above average)
+
+**This creates predictable oscillation patterns:**
+- Price drifts below VWAP → Institutions buy → Price recovers toward VWAP
+- Price overshoots above VWAP → Institutions sell → Price falls back toward VWAP
+- VWAP acts like a **magnet** - price constantly pulled back toward it
+
+**Our Edge:**
+We identify when this institutional buying pressure is about to kick in (the recovery pattern), enter just as it starts, and ride the wave back to VWAP and beyond.
+
+---
+
+## **THE 4-STEP VWAP RECOVERY PATTERN**
+
+This is the **entry signal** - we only trade when we see this exact sequence:
+
+---
+
+### **STEP 1: DECLINE (Initial Deviation)**
+
+**What Happens:**
+- Price drops **~1% from recent high** (configurable: 0.5% to 2%)
+- This creates separation from VWAP (price now trading below average)
+
+**Example:**
+- Recent high: $100.00
+- Price drops to: $99.00 (1% decline)
+- VWAP at this moment: ~$99.50 (price is below VWAP)
+
+**Why This Matters:**
+- Creates the "deviation" that institutional algorithms will want to correct
+- Signals temporary selling pressure or profit-taking
+- Sets up the rebound potential
+
+**What We're Watching:**
+- Magnitude of decline (need at least 1%)
+- Speed of decline (gradual is better than sudden crash)
+- Volume during decline (normal volume preferred, not panic selling)
+
+---
+
+### **STEP 2: 50% RECOVERY (Rebound Begins)**
+
+**What Happens:**
+- Price rebounds by **exactly 50% of that decline**
+- Shows buyers stepping in, but not full reversal yet
+
+**Example:**
+- Started at: $100.00
+- Dropped to: $99.00 (1% decline = $1.00 drop)
+- Rebounds to: $99.50 (50% of $1.00 = $0.50 recovery)
+
+**Why This Matters:**
+- Confirms buyers are interested (not dead cat bounce)
+- Shows institutional algos starting to accumulate
+- 50% recovery is statistically significant threshold (not random noise)
+
+**What We're Watching:**
+- Clean rebound (not choppy or erratic)
+- Volume during rebound (should increase from decline volume)
+- Time to achieve 50% (faster = stronger conviction)
+
+---
+
+### **STEP 3: 50% RETRACEMENT (The "Last Low")**
+
+**What Happens:**
+- Price **pulls back 50% of the recovery**
+- This establishes our critical "last low" reference point
+- Creates a pause/consolidation before final leg up
+
+**Example:**
+- Rebounded to: $99.50
+- Recovery amount: $0.50
+- Retraces 50%: Falls back to $99.25 (50% of $0.50 = $0.25 pullback)
+- **This $99.25 becomes our "last low"**
+
+**Why This Matters:**
+- Healthy patterns retrace before continuing (tests support)
+- Shakes out weak hands (people who bought the initial bounce)
+- Stronger buyers accumulate at this dip
+- Creates a clear reference point for entry confirmation
+
+**What We're Watching:**
+- Retracement magnitude (should be ~50%, not 100% or 10%)
+- Volume during retracement (should be lower than rebound volume)
+- Price holds above a certain level (doesn't break too far down)
+
+---
+
+### **STEP 4: CONFIRMATION (Entry Trigger)**
+
+**What Happens:**
+- Price **climbs 1.5% to 2.0% from the "last low"**
+- This confirms buyers have regained control
+- **ONLY NOW DO WE ENTER**
+
+**Example:**
+- Last low: $99.25
+- Confirmation threshold: 1.5% climb = $99.25 × 1.015 = $100.74
+- **When price hits $100.74 → WE BUY**
+
+**Why This Matters:**
+- Proves the pattern is real (not false signal)
+- Confirms institutional buying is active
+- Reduces false entries (most failed patterns don't confirm)
+- Entry price is above VWAP (riding momentum, not catching falling knife)
+
+**What We're Watching:**
+- Speed of climb (faster = stronger)
+- Volume during confirmation (should be highest of entire pattern)
+- VWAP position (ideally price crosses above VWAP during confirmation)
+- Time elapsed (confirmation should happen within 3-8 minutes)
+
+---
+
+## **ENTRY EXECUTION**
+
+### **When Pattern Confirms:**
+
+**Automated via railyard.py:**
+
+1. **Pattern Detection Complete:**
+   - All 4 steps validated
+   - Confirmation price threshold hit
+   - Time is between 9:31 AM - 3:50 PM ET
+
+2. **Pre-Entry Checks:**
+   - ✅ No existing position in this ticker
+   - ✅ No pending order for this ticker
+   - ✅ Daily loss limit not hit (-1.5%)
+   - ✅ Spread is acceptable (<2.0 bps)
+   - ✅ Liquidity is sufficient (>2000 shares at NBBO)
+   - ✅ No halt detected (ticks flowing normally)
+
+3. **Position Sizing:**
+   - Account balance: $30,000 (example)
+   - Deployment ratio: 80% = $24,000 deployed
+   - Number of stocks: 8
+   - **Position size: $24,000 ÷ 8 = $3,000 per stock**
+
+4. **Order Submission:**
+   - **Market order** sent to IBKR
+   - Executes at current best offer
+   - Target fill within <10ms
+
+5. **Exit Orders Set:**
+   - **Stop Loss:** Entry price × 0.995 (-0.5%)
+   - **Target 1:** Entry price × 1.0075 (+0.75%)
+   - **Target 2:** Entry price × 1.02 (+2.0%)
+
+**Example:**
+- Entry price: $100.74
+- Stop: $100.24
+- Target 1: $101.50
+- Target 2: $102.75
+
+---
+
+## **EXIT STRATEGY: X THEN X+ LOGIC**
+
+This is the **critical innovation** - we have dual profit targets with intelligent fallback.
+
+---
+
+### **SCENARIO A: Hit Target 1 First** (Most Common - ~60% of winning trades)
+
+**What Happens:**
+1. Price rises to Target 1 (+0.75%)
+2. **DO NOT SELL** - Mark as "Target 1 achieved"
+3. **Now monitor for two outcomes:**
+
+**Outcome A1: Continues to Target 2**
+- Price keeps climbing to +2.0%
+- **SELL ALL at Target 2**
+- **Result: +2.0% profit**
+- Example: Entry $100.74 → Exit $102.75 = $55.00 profit on $3,000 position
+
+**Outcome A2: Falls Back to Target 1**
+- Price doesn't reach Target 2
+- Price falls back down to Target 1 level (+0.75%)
+- **SELL ALL at Target 1**
+- **Result: +0.75% profit**
+- Example: Entry $100.74 → Exit $101.50 = $22.50 profit on $3,000 position
+
+**Why This Works:**
+- Gives upside a chance (don't cut winners short)
+- Protects profits if momentum fades (guaranteed +0.75% minimum)
+- Captures the "extension" when institutional buying is strong
+- Average win: ~1.4% (weighted between 0.75% and 2.0%)
+
+---
+
+### **SCENARIO B: Hit Stop Loss** (~35% of trades)
+
+**What Happens:**
+1. Price falls to -0.5% from entry
+2. **SELL IMMEDIATELY** (no waiting)
+3. **Result: -0.5% loss**
+- Example: Entry $100.74 → Exit $100.24 = -$15.00 loss on $3,000 position
+
+**Why We Accept This:**
+- Small, controlled losses are part of the strategy
+- Prevents larger drawdowns
+- Win rate is 65%, so we win more than we lose
+- Average loss is smaller than average win (1.4% vs 0.5%)
+
+---
+
+### **SCENARIO C: Pattern Fails Before Entry** (~25% of detected patterns)
+
+**What Happens:**
+1. Steps 1-3 complete (decline, recovery, retracement)
+2. Price **never climbs the 1.5% confirmation threshold**
+3. Pattern dissipates or reverses
+4. **NO TRADE EXECUTED**
+5. **Result: Zero capital risked**
+
+**Why This Is Important:**
+- Most patterns fail before confirmation
+- We don't enter failed patterns (unlike many strategies)
+- Confirmation filter eliminates ~25% of false signals
+- Only trade high-probability setups
+
+---
+
+## **POSITION MANAGEMENT & RISK CONTROLS**
+
+### **Position-Level Rules:**
+
+**One Position Per Ticker:**
+- Can't open multiple AAPL positions
+- Must close existing before entering new pattern
+- Prevents overconcentration
+
+**Position Size:**
+- **8-stock portfolio:** 10% of account each (80% ÷ 8)
+- **16-stock portfolio:** 5% of account each (80% ÷ 16)
+- Example: $30K account → $3,000 per position (8 stocks)
+
+**Cooldown Period:**
+- After closing position in TSLA → 1-minute cooldown
+- Prevents immediate re-entry (overtrading protection)
+
+**Entry Window:**
+- **First entry:** 9:31 AM (market open)
+- **Last entry:** 3:50 PM (10 min before close)
+- **Flatten all positions:** 3:50 PM sharp
+- **No overnight positions:** 100% cash at 4:00 PM
+
+---
+
+### **Account-Level Risk Controls:**
+
+**Daily Loss Limit (Circuit Breaker):**
+- If account realizes **-1.5% loss in a single day**:
+  - railyard.py **STOPS all new entries**
+  - Open positions still managed (can hit targets or stops)
+  - System logs event to database
+  - Email/SMS alerts to co-founders
+  - **Resets next trading day at 9:31 AM**
+
+**Example:**
+- Start of day: $30,000
+- Loss limit: $30,000 × -1.5% = -$450
+- If account hits $29,550 → circuit breaker trips
+
+**Capital Deployment:**
+- **Months 1-6:** 80% deployed, 20% reserve
+- **Month 7+:** 50% deployed, 50% reserve (taper for protection)
+- Reserve ensures buying power for opportunities
+- Prevents full capital at risk
+
+**Spread & Liquidity Guards:**
+- **Max spread:** 2.0 bps to enter
+- **Min NBBO depth:** 2,000 shares
+- If spread too wide → skip entry
+- If liquidity too thin → skip entry
+
+**Halt Detection:**
+- If no ticks received for 10 seconds → assume halt
+- Pause all new entries
+- Monitor existing positions
+- Resume when ticks flow again
+
+**Latency Guardian:**
+- If order routing latency exceeds 50ms:
+  - Pause new entries until stable
+  - Prevent slippage from slow execution
+  - Resume when latency <50ms consistently
+
+---
+
+## **EXPECTED PERFORMANCE MATHEMATICS**
+
+### **Per-Trade Expected Value:**
+
+```
+E = (Win_Rate × Avg_Win) - (Loss_Rate × Avg_Loss) - Friction
+
+Where:
+Win_Rate = 65% (historical backtest)
+Avg_Win = 1.4% (weighted: 60% hit T1 @ 0.75%, 40% hit T2 @ 2.0%)
+Loss_Rate = 35%
+Avg_Loss = 0.5%
+Friction = 0.04% (spreads + commissions)
+
+Calculation:
+E = (0.65 × 1.4%) - (0.35 × 0.5%) - 0.04%
+E = 0.91% - 0.175% - 0.04%
+E ≈ 0.695% per trade
+```
+
+**Interpretation:**
+- Every confirmed entry has +0.695% expected profit
+- Over 100 trades: ~69.5% cumulative return
+- This is AFTER accounting for losses and costs
+
+---
+
+### **Daily Performance Expectations:**
+
+**Pattern Frequency:**
+- Per stock: 3-5 patterns per day (depending on volatility)
+- Confirmation rate: 30% (only ~30% of patterns confirm entry)
+- **Expected entries per stock:** 3-5 × 30% = 0.9-1.5 entries/day
+- **For 8 stocks:** 7-12 entries per day (can be higher in volatile markets)
+
+**Daily P&L Calculation:**
+```
+Daily P&L = Entries × Expected_Value × Position_Size
+
+Conservative estimate:
+Entries = 8 (1 per stock)
+EV = 0.695%
+Position_Size = $3,000
+
+Daily P&L = 8 × 0.695% × $3,000
+         = 8 × $20.85
+         = $166.80/day
+
+Optimistic estimate:
+Entries = 12 (1.5 per stock)
+Daily P&L = 12 × $20.85 = $250.20/day
+```
+
+**Daily ROI:**
+- On $24,000 deployed capital:
+- Conservative: $166.80 ÷ $24,000 = **0.7% per day**
+- Optimistic: $250.20 ÷ $24,000 = **1.04% per day**
+- **Target range: 0.7% - 1.2% daily ROI**
+
+**Monthly Compounding:**
+- 20 trading days per month
+- Conservative: 0.7% × 20 = **14% monthly** (simple)
+- With compounding: **(1.007)^20 - 1 = 15% monthly**
+
+**Annual Returns (Theoretical):**
+- 252 trading days
+- Conservative daily: 0.7%
+- **(1.007)^252 - 1 = 554% annual**
+- **Note:** This assumes perfect consistency (unrealistic)
+- Real-world: Account for drawdown, loss days, scaling challenges
+
+---
+
+### **Risk Metrics:**
+
+**Sharpe Ratio Target:** >2.0
+- (Mean Return - Risk-Free Rate) / Std Dev of Returns
+- Higher Sharpe = better risk-adjusted returns
+
+**Sortino Ratio Target:** >3.0
+- Like Sharpe but only penalizes downside volatility
+- More relevant for asymmetric strategies
+
+**Maximum Drawdown Target:** <3%
+- Largest peak-to-trough decline
+- Circuit breaker at -1.5% helps prevent deep drawdowns
+
+**Win Rate:** 65% (backtested)
+- 65 out of 100 trades profitable
+- 35 out of 100 hit stop loss
+
+**Profit Factor:** 2.6
+- (Gross Profit / Gross Loss)
+- (65 × 1.4%) / (35 × 0.5%) = 2.6
+- Every $1 lost generates $2.60 in profit
+
+---
+
+## **DEAD ZONE DETECTION & MANAGEMENT**
+
+### **What is a Dead Zone?**
+
+**Definition:**
+A trade that enters a low-volatility, sideways range where:
+- Position is open for 8+ minutes
+- Price range is <0.6% (stuck in tight range)
+- Neither hitting targets nor stop loss
+- "Zombie trade" - capital tied up, no progress
+
+**Example:**
+- Entry: $100.74
+- After 10 minutes: $100.80 (barely moved)
+- P&L: +0.06% (nowhere near +0.75% target)
+- **This is a dead zone**
+
+---
+
+### **Why Dead Zones Matter:**
+
+**Opportunity Cost:**
+- While stuck in TSLA dead zone, NVDA has 2 new patterns
+- Capital is tied up, can't enter better setups
+- Missing profitable opportunities elsewhere
+
+**Psychological Drain:**
+- Watching paint dry
+- Temptation to exit manually (bad discipline)
+- Reduces confidence in strategy
+
+**Performance Drag:**
+- Average trade time should be 5-15 minutes
+- Dead zones extend to 30-60 minutes
+- Reduces daily trade capacity
+
+---
+
+### **Dead Zone Analysis During Morning Report:**
+
+**What We Track (from 20-day historical analysis):**
+
+1. **Dead Zone Frequency:**
+   - How often does this stock produce dead zones?
+   - Example: AAPL = 15% of trades, TSLA = 8%
+
+2. **Dead Zone Duration:**
+   - How long do dead zones last?
+   - Example: AAPL avg = 18 minutes, NVDA avg = 12 minutes
+
+3. **Dead Zone Opportunity Cost:**
+   - Missed patterns × Avg Win × Position Size
+   - Example: 2 missed patterns × 1.4% × $3,000 = $84 lost
+
+4. **Dead Zone Recovery Rate:**
+   - What % of dead zones eventually become profitable?
+   - Example: 40% still hit targets (just took longer)
+
+5. **Time-of-Day Heat Map:**
+   - When do dead zones occur?
+   - Example: AAPL dead zones spike 11:00 AM - 12:00 PM (lunch lull)
+
+**Dead Zone Severity Score (0-100):**
+```
+Severity = (Frequency × 40) + (Avg_Duration/30 × 30) + (Opp_Cost/200 × 30)
+
+Interpretation:
+0-20: Excellent (low dead zone risk)
+21-35: Good
+36-50: Fair
+51-70: Poor (consider excluding stock)
+71-100: Avoid (chronic dead zones)
+```
+
+---
+
+### **Dead Zone Handling in Live Trading:**
+
+**Detection:**
+- If position open >8 minutes
+- AND price range <0.6%
+- AND not approaching targets/stop
+- **Flag as dead zone**
+
+**Action (Current):**
+- Continue holding (targets/stop still active)
+- Log event to database
+- Track opportunity cost
+
+**Future Enhancement:**
+- Time-weighted exits (exit after 15 min if in dead zone)
+- Dead zone-aware position sizing (smaller size for high-risk stocks)
+- Avoid entry during high-risk time windows
+
+---
+
+## **STOCK SELECTION PROCESS (MORNING REPORT)**
+
+### **The 500 → 8 Funnel**
+
+Every morning (7:00 AM - 9:00 AM), we analyze 500 stocks to select 8 for the day.
+
+---
+
+### **STEP 1: Universe Definition (500 Stocks)**
+
+**Criteria:**
+- Large/mid-cap stocks (>$5B market cap)
+- Average daily volume: >5M shares
+- High institutional ownership (active VWAP algos)
+- Tight spreads (<0.1% typical)
+- Liquid options market (indicator of interest)
+- Updated quarterly
+
+**Examples:**
+- Tech: AAPL, MSFT, GOOGL, META, NVDA, AMD, TSLA
+- Consumer: AMZN, COST, HD, NKE, SBUX
+- Finance: JPM, BAC, GS, MS
+- Healthcare: JNJ, UNH, PFE, ABBV
+- ...and 470+ more
+
+---
+
+### **STEP 2: Data Collection (20 Days × 390 Minutes)**
+
+**For each stock:**
+- Fetch 20 trading days of 1-minute OHLCV bars
+- 20 days × 390 minutes = **7,800 data points per stock**
+- Total: 500 stocks × 7,800 = **3.9 million price points**
+
+**Data Sources:**
+- Primary: RapidAPI + yfinance
+- Backup: IBKR Historical Data API
+- Fallback: If stock data fails, exclude from analysis
+
+---
+
+### **STEP 3: Pattern Detection & Analysis**
+
+**For each stock, calculate:**
+
+**A. Pattern Frequency:**
+- Total 3-step VWAP Recovery Patterns found (typically 40-100)
+- Patterns per day: Total ÷ 20
+- **Target: 3-5 patterns/day** (sweet spot for trade frequency)
+
+**B. Confirmation Rate:**
+- How many patterns confirmed entry (climbed 1.5%)?
+- Confirmation Rate = Confirmed / Total
+- **Target: >25%** (at least 1 in 4 patterns confirm)
+
+**C. Win Rate:**
+- Of confirmed entries, how many were profitable?
+- Win Rate = Wins / (Wins + Losses)
+- **Target: >60%** (minimum acceptable)
+
+**D. Expected Value:**
+- EV = (Win_Rate × Avg_Win) - (Loss_Rate × Avg_Loss) - Friction
+- **Target: >0.5% per trade**
+
+**E. Dead Zone Score:**
+- Frequency, duration, opportunity cost
+- **Target: <35** (Good or better)
+
+**F. Liquidity Score:**
+- Volume stability
+- Spread consistency
+- NBBO depth
+- **Target: >70/100**
+
+**G. VWAP Quality:**
+- How clean/stable is VWAP behavior?
+- Mean oscillation rate, deviation magnitude
+- **Target: >75/100** (clean mean reversion)
+
+**H. Risk-Adjusted Returns:**
+- Sharpe Ratio: **Target >2.0**
+- Sortino Ratio: **Target >3.0**
+- Max Drawdown: **Target <3%**
+
+---
+
+### **STEP 4: Composite Quality Scoring**
+
+**Formula:**
+```
+Quality Score = 
+  (Pattern_Frequency × 20%) +
+  (Confirmation_Rate × 15%) +
+  (Win_Rate × 20%) +
+  (Expected_Value × 25%) +
+  (Sharpe_Ratio × 10%) +
+  (Liquidity_Score × 5%) +
+  ((100 - Dead_Zone_Score) × 5%)
+
+Scale: 0-100
+
+Interpretation:
+90-100: Excellent (top tier)
+75-90: Good (core holdings)
+60-75: Acceptable (filler)
+<60: Exclude (below threshold)
+```
+
+---
+
+### **STEP 5: Risk Classification**
+
+**Based on win rate and volatility:**
+
+**Conservative (Target: 2 stocks):**
+- Win rate >70%
+- ATR <2% of price (low volatility)
+- Dead zone score <25
+- Stable, predictable patterns
+
+**Medium Risk (Target: 4 stocks):**
+- Win rate 60-70%
+- ATR 2-4%
+- Dead zone score 25-40
+- Balanced risk/reward
+
+**Aggressive (Target: 2 stocks):**
+- Win rate 50-60%
+- ATR >4%
+- Dead zone score <50
+- Higher pattern frequency (4-6/day vs 3-4)
+- Larger wins compensate for lower win rate
+
+---
+
+### **STEP 6: Final Selection (Top 8)**
+
+**Portfolio Construction:**
+1. Rank all 500 stocks by Quality Score
+2. Filter: Keep only scores >60
+3. **Select:**
+   - 2 highest-scoring Conservative stocks
+   - 4 highest-scoring Medium stocks
+   - 2 highest-scoring Aggressive stocks
+
+**Backup Stocks:**
+- Next 20-30 ranked stocks kept as backups
+- If primary stock halts/crashes → substitute immediately
+- Maintains portfolio balance (2/4/2 ratio)
+
+---
+
+### **STEP 7: Output Generation**
+
+**Morning Forecast Delivered by 9:00 AM:**
+
+**Primary Lineup (8 stocks):**
+```json
+{
+  "stocks": [
+    {
+      "symbol": "NVDA",
+      "risk": "conservative",
+      "score": 92.3,
+      "expected_entries": 1.2,
+      "expected_daily_pl": "$25.20",
+      "win_rate": 0.72,
+      "dead_zone_score": 18
+    },
+    // ... 7 more stocks
+  ],
+  "summary": {
+    "total_expected_entries": 9.6,
+    "total_expected_pl": "$201.60",
+    "expected_roi": 0.84%,
+    "win_rate_weighted": 0.66
+  }
+}
+```
+
+**Backup Stocks (20-30):**
+- Ranked by Quality Score
+- Ready for immediate substitution
+
+**Loaded into railyard.py by 9:25 AM:**
+- 8 tickers actively monitored
+- Position sizes calculated
+- Ready to trade at 9:31 AM
+
+---
+
+## **RAILYARD.PY - THE EXECUTION ENGINE**
+
+### **What It Does:**
+
+**Real-Time Execution (9:31 AM - 3:50 PM):**
+
+1. **Pattern Detection Loop (Every Minute):**
+   - Fetch latest 1-minute bar for each of 8 stocks
+   - Build VWAP from session start
+   - Track recent high/low for pattern geometry
+   - Detect 4-step VWAP Recovery Pattern
+   - Check confirmation threshold (1.5% climb from last low)
+
+2. **Entry Decision:**
+   - If pattern confirms AND all checks pass:
+     - Submit market buy order to IBKR
+     - Set stop loss at -0.5%
+     - Set Target 1 at +0.75%
+     - Set Target 2 at +2.0%
+
+3. **Position Monitoring (Every Second):**
+   - Track all open positions
+   - Check stop loss (highest priority)
+   - Check Target 1 hit
+   - Check Target 2 hit
+   - Implement X-then-X+ logic
+
+4. **Exit Execution:**
+   - Stop loss: Immediate market sell
+   - Target 1: Mark achieved, wait for T2 or fallback
+   - Target 2: Market sell all
+   - Target 1 fallback: Market sell all
+
+5. **Risk Controls:**
+   - Daily loss limit monitoring
+   - Spread checks before entry
+   - Liquidity checks before entry
+   - Halt detection
+   - Latency monitoring
+   - Connection health checks
+
+6. **Data Logging:**
+   - Every fill logged to database
+   - System events logged
+   - Performance metrics tracked
+   - Feeds live monitor and EOD report
+
+---
+
+### **Architecture:**
+
+**Core Components:**
+
+1. **Pattern Detector Module:**
+   - VWAP calculation (session + 60s rolling)
+   - 4-step pattern recognition
+   - Confirmation threshold monitoring
+
+2. **Order Manager Module:**
+   - IBKR Client Portal Gateway integration
+   - Market order submission
+   - Position tracking
+   - Exit rule enforcement
+
+3. **Risk Manager Module:**
+   - Position sizing
+   - Daily loss limit enforcer
+   - Spread/liquidity guards
+   - Connection health monitor
+
+4. **Data Pipeline Module:**
+   - Real-time price feeds
+   - VWAP updates
+   - Account balance sync
+   - Database logging
+
+---
+
+## **END-OF-DAY PROCESS**
+
+### **What Happens at 4:00 PM:**
+
+**1. Final Position Reconciliation:**
+- All positions should be closed by 3:50 PM
+- Verify no open positions remain
+- Check all fills received from IBKR
+- Calculate final P&L
+
+**2. Performance Analysis:**
+- Compare forecast vs actual:
+  - Expected entries: 9.6 → Actual: 11
+  - Expected P&L: $201.60 → Actual: $243.80
+  - Expected ROI: 0.84% → Actual: 1.02%
+  - Win rate: 66% → Actual: 64%
+
+**3. Trade Attribution:**
+- Per-stock breakdown:
+  - NVDA: 2 entries, +$48.60
+  - TSLA: 1 entry, +$31.20
+  - AAPL: 2 entries, -$18.00 (1 win, 1 loss)
+  - ...
+
+**4. Dead Zone Analysis:**
+- How many dead zones occurred?
+- Which stocks had them?
+- Opportunity cost calculated
+- Update dead zone statistics
+
+**5. Pattern Quality Review:**
+- How many patterns detected?
+- How many confirmed?
+- How many won vs lost?
+- Update win rate statistics
+
+**6. Risk Metrics Update:**
+- Sharpe ratio recalculated
+- Max drawdown updated
+- Volatility measurements
+- Correlation analysis
+
+**7. Database Storage:**
+- Daily summary record created
+- All trades archived
+- Performance metrics saved
+- Ready for trend analysis
+
+**8. Report Generation:**
+- EOD report HTML generated
+- Email/SMS summary to co-founders
+- Dashboard updated for next morning
+
+---
+
+## **KEY STRATEGY ADVANTAGES**
+
+### **1. Positive Expected Value**
+- Every trade has +0.695% expected profit
+- Math-backed, not guesswork
+- Consistent over large sample sizes
+
+### **2. Controlled Risk**
+- Maximum loss per trade: -0.5%
+- Daily circuit breaker: -1.5%
+- No overnight risk (100% cash at close)
+
+### **3. Exploits Institutional Behavior**
+- VWAP algorithms are predictable
+- Large order flow creates patterns
+- We ride institutional momentum
+
+### **4. Confirmation Filter**
+- Only trade confirmed patterns (30% of detected)
+- Eliminates 70% of false signals
+- Reduces losing trades
+
+### **5. Dual Profit Targets**
+- Captures extensions (2.0% when strong)
+- Protects profits (0.75% minimum)
+- Weighted average win: 1.4%
+
+### **6. Dead Zone Intelligence**
+- Identifies problematic stocks
+- Measures opportunity cost
+- Time-of-day awareness
+- Continuous improvement
+
+### **7. Scalable & Systematic**
+- Fully automated via railyard.py
+- No human emotion/bias
+- Can scale from 8 to 16+ stocks
+- Consistent execution
+
+### **8. Data-Driven Selection**
+- 500 stocks analyzed daily
+- 80+ metrics per stock
+- Quality scoring system
+- Best setups every day
+
+---
+
+## **WHAT MAKES THIS STRATEGY WORK**
+
+### **Statistical Edge:**
+- 65% win rate
+- Average win (1.4%) > Average loss (0.5%)
+- Profit factor: 2.6
+- **Law of large numbers** - over hundreds of trades, math wins
+
+### **Institutional Alpha:**
+- Exploiting predictable algo behavior
+- VWAP is programmatic (not discretionary)
+- Institutions must execute (not optional)
+- Provides liquidity for our exits
+
+### **Risk Management:**
+- Small controlled losses
+- Circuit breakers prevent disasters
+- No overnight gap risk
+- Capital preservation built-in
+
+### **Execution Speed:**
+- Sub-10ms order routing
+- Captures tight windows
+- Minimal slippage
+- Professional-grade infrastructure
+
+### **Continuous Improvement:**
+- Daily feedback loop (EOD analysis)
+- Dead zone tracking
+- Pattern quality monitoring
+- Data-driven refinement
+
+---
+
+## **SUMMARY**
+
+**In One Sentence:**
+We identify when institutional VWAP algorithms are about to push price back toward average (the 4-step recovery pattern), enter on confirmation, ride the wave to dual profit targets, and cut losses quickly if wrong.
+
+**The Full Loop:**
+1. **Morning (7:00-9:00 AM):** Analyze 500 stocks → Select best 8
+2. **Trading Day (9:31-3:50 PM):** Detect patterns → Enter confirmed setups → Manage exits
+3. **Evening (4:00-7:00 PM):** Analyze performance → Update statistics → Generate reports
+4. **Repeat:** Next trading day at 7:00 AM
+
+**Expected Results:**
+- 7-12 trades per day (across 8 stocks)
+- 65% win rate
+- 0.7%-1.2% daily ROI on deployed capital
+- 15%+ monthly returns (with compounding)
+- <3% maximum drawdown
+
+**The Edge:**
+- Exploiting institutional behavior
+- Confirmation filter eliminates false signals
+- Dual targets capture extensions
+- Dead zone intelligence avoids problem stocks
+- Professional execution infrastructure
+
+---
+
+**Does this complete description match your understanding of the strategy?**
