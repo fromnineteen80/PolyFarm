@@ -88,6 +88,7 @@ async def main():
     registry = MarketRegistry()
     wallet = WalletManager(client, PAPER_MODE)
     alerts.wallet = wallet
+    alerts._position_monitor = position_monitor
 
     position_monitor = PositionMonitor(
         client, wallet, None, registry

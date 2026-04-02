@@ -262,13 +262,37 @@ class AlertManager:
         if not positions:
             await self._send("No open positions.")
             return
-        lines = ["Open positions:\n"]
+
+        # Get team names from position monitor
+        pm_positions = {}
+        if hasattr(self, '_position_monitor') and self._position_monitor:
+            pm_positions = self._position_monitor.get_all_positions()
+
+        lines = [f"Open positions ({len(positions)}):\n"]
         for slug, val in positions.items():
-            short_slug = slug.replace("aec-", "").replace("-2026", "")
+            teams = ""
+            entry = 0
+            band = "?"
+            pos = pm_positions.get(slug)
+            if pos:
+                teams = getattr(pos, 'teams', '') or ''
+                entry = getattr(pos, 'entry_price', 0) or 0
+                band = getattr(pos, 'band', '?') or '?'
+
+            if not teams:
+                teams = slug.replace("aec-", "").replace("-2026", "")
+
+            current_bid = val.get('current_bid', 0)
+            shares = val.get('shares', 0)
+            value = val.get('value', 0)
+            gain = ((current_bid - entry) / entry * 100) if entry > 0 else 0
+            gsign = "+" if gain >= 0 else ""
+
             lines.append(
-                f"  {short_slug}: "
-                f"${val.get('value', 0):.2f} "
-                f"({val.get('shares', 0)} shares)"
+                f"\n  {teams}\n"
+                f"    Entry: {entry:.2f} | Now: {current_bid:.2f} "
+                f"({gsign}{gain:.1f}%)\n"
+                f"    ${value:.2f} | {shares} shares | Band {band}"
             )
         await self._send("\n".join(lines))
 
