@@ -151,8 +151,28 @@ async def main():
         logger.error(f"Order reconciliation error: {e}")
 
     # ── STEP 10: Session initialization ───────────
-    await wallet.session_init()
-    await position_monitor.load_existing_positions()
+    for attempt in range(5):
+        try:
+            await wallet.session_init()
+            await position_monitor.load_existing_positions()
+            break
+        except Exception as e:
+            wait = 30 * (attempt + 1)
+            logger.warning(
+                f"Session init failed (attempt {attempt + 1}/5): {e}. "
+                f"Retrying in {wait}s..."
+            )
+            await asyncio.sleep(wait)
+    else:
+        logger.error("Session init failed after 5 attempts. Starting with balance only.")
+        wallet.state.cash_balance = float(
+            (await client.account.balances())
+            .get("balances", [{}])[0]
+            .get("buyingPower", 0) or 0
+        )
+        wallet.state.live_portfolio_value = wallet.state.cash_balance
+        wallet.state.session_start_value = wallet.state.cash_balance
+        wallet.state.floor_value = wallet.state.cash_balance * FLOOR_PCT
 
     # ── STEP 11: Load markets ─────────────────────
     await market_loader.load_all_markets()
