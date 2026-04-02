@@ -199,6 +199,8 @@ class AlertManager:
             await self._cmd_start()
         elif cmd in ("target", "goals"):
             await self._cmd_target()
+        elif cmd in ("investors", "inv", "split"):
+            await self._cmd_investors()
         elif cmd in ("help", "h", "?"):
             await self._cmd_help()
         else:
@@ -210,6 +212,7 @@ class AlertManager:
         await self._send(
             "Commands:\n\n"
             "status - balance, P&L, mode\n"
+            "investors - capital split and growth\n"
             "positions - open positions\n"
             "trades - today's closed trades\n"
             "target - daily target and floor\n"
@@ -227,19 +230,27 @@ class AlertManager:
         realized = w.realized_pnl_today
         sign = "+" if gain >= 0 else ""
         rsign = "+" if realized >= 0 else ""
-        mode = "TRADING" if not w.session_locked and not w.entries_halted else "STOPPED"
+        mode = "Trading" if not w.session_locked and not w.entries_halted else "Stopped"
         if w.loss_mode != "NORMAL":
-            mode = f"LOSS MODE: {w.loss_mode}"
+            mode = f"Reduced ({w.loss_mode.lower()})"
         if w.session_locked:
-            mode = "LOCKED (target hit or floor)"
+            mode = "Done for the day"
+
+        # Investor split (50/50)
+        total = w.live_portfolio_value
+        per_investor = total / 2
+        start_per = w.session_start_value / 2
+        investor_gain = per_investor - start_per
+        inv_sign = "+" if investor_gain >= 0 else ""
+
         await self._send(
-            f"Balance: ${w.live_portfolio_value:.2f}\n"
+            f"Portfolio: ${total:.2f}\n"
             f"Today: {sign}{gain:.1f}%\n"
             f"Realized P&L: {rsign}${realized:.2f}\n"
-            f"Open positions value: ${w.open_positions_value:.2f}\n"
-            f"Mode: {mode}\n"
-            f"Profit mode: {w.profit_mode}\n"
-            f"Loss mode: {w.loss_mode}"
+            f"Status: {mode}\n"
+            f"\nInvestor split (50/50):\n"
+            f"  Each: ${per_investor:.2f} "
+            f"({inv_sign}${investor_gain:.2f} today)"
         )
 
     async def _cmd_positions(self):
@@ -305,6 +316,57 @@ class AlertManager:
             f"To target: ${remaining:.2f}\n"
             f"Floor (-15%): ${floor:.2f}"
         )
+
+    async def _cmd_investors(self):
+        if not self.wallet:
+            await self._send("Wallet not available")
+            return
+        try:
+            from data.database import db_execute, _supabase
+            result = await db_execute(
+                lambda: _supabase.table("investor_profiles")
+                    .select("first_name,last_name,initial_capital,is_active")
+                    .eq("is_active", True)
+                    .execute()
+            )
+            investors = result.data or []
+            if not investors:
+                await self._send("No investor profiles found.")
+                return
+
+            total_initial = sum(
+                float(i.get("initial_capital", 0) or 0)
+                for i in investors
+            )
+            current_total = self.wallet.state.live_portfolio_value
+            total_growth = current_total - total_initial
+            growth_pct = (
+                (total_growth / total_initial * 100)
+                if total_initial > 0 else 0
+            )
+            gsign = "+" if total_growth >= 0 else ""
+
+            lines = [
+                f"Fund: ${current_total:.2f} "
+                f"({gsign}${total_growth:.2f}, "
+                f"{gsign}{growth_pct:.1f}%)\n"
+            ]
+            for inv in investors:
+                name = f"{inv['first_name']} {inv['last_name']}"
+                initial = float(inv.get("initial_capital", 0) or 0)
+                share = initial / total_initial if total_initial > 0 else 0
+                current = current_total * share
+                personal_growth = current - initial
+                psign = "+" if personal_growth >= 0 else ""
+                lines.append(
+                    f"  {name}\n"
+                    f"    Invested: ${initial:.2f}\n"
+                    f"    Current: ${current:.2f} "
+                    f"({psign}${personal_growth:.2f})"
+                )
+            await self._send("\n".join(lines))
+        except Exception as e:
+            await self._send(f"Error loading investors: {e}")
 
     async def _cmd_stop(self):
         if not self.wallet:
