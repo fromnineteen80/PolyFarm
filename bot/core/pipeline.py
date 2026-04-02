@@ -740,30 +740,23 @@ class Pipeline:
                 }
                 matched += 1
             else:
-                # Odds exist for this league but we couldn't match this game.
-                # Check if the game time is beyond what the Odds API covers
-                # (bookmakers typically only post odds 1-2 days out)
-                has_nearby_odds = False
+                # No match found. Check if odds exist for these
+                # specific teams — only then is it truly broken.
+                teams_have_odds = False
                 for eid, odds_event in sport_events:
-                    odds_start = odds_event.get("commence_time", "")
-                    if poly_start and odds_start:
-                        try:
-                            pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00"))
-                            ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00"))
-                            pt_et = pt.astimezone(ET)
-                            ot_et = ot.astimezone(ET)
-                            if pt_et.date() == ot_et.date() or abs((pt - ot).total_seconds()) <= 43200:
-                                has_nearby_odds = True
-                                break
-                        except Exception:
-                            pass
+                    odds_home = normalize_team(odds_event["home_team"])
+                    odds_away = normalize_team(odds_event["away_team"])
+                    if (bridge_home in (odds_home, odds_away) or
+                        bridge_away in (odds_home, odds_away)):
+                        teams_have_odds = True
+                        break
 
-                if has_nearby_odds:
-                    # Odds API has events around this time but we couldn't match — broken
+                if teams_have_odds:
+                    # Odds exist for these teams but time/match failed
                     unmatched.append(
                         f"{game['home_team']} vs {game['away_team']} ({poly_league}, {slug})")
                 else:
-                    # No odds near this game time — just not posted yet
+                    # Bookmakers haven't posted odds for this game yet
                     waiting_for_odds += 1
 
         if unmatched:
