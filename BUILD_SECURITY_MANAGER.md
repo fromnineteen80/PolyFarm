@@ -8,6 +8,21 @@ This protocol governs all development on OracleFarming. It has authority over al
 
 This file must be read at the start of every session. Every agent working on this project must acknowledge it before writing any code. Context from this file carries across sessions — if a previous session identified issues, they remain issues until explicitly resolved and marked verified.
 
+## USER COMMUNICATION RULE
+
+The user cannot read code. Before EVERY file edit, the agent MUST:
+
+1. Explain in plain English what it is about to change
+2. Explain WHY it needs to change (which problem from the repair list or strategy requirement)
+3. Explain what the RISK is if done wrong
+4. Explain how it will be VERIFIED after the change
+
+Example: "I'm about to update the game state parser so it correctly reads that a college basketball game in H1 with 3:26 elapsed means there are 36 minutes left, not 0. Right now the bot thinks the game is over and dumps the trade after 24 seconds. After this change, I'll test it against a real live CBB game to confirm it returns the right minutes remaining."
+
+The user then approves. If the agent cannot explain the change in plain English, it should not make the change.
+
+After commit, if the BSM hook catches any problems, those are also reported in plain English with the problem, why it matters, and the recommended solution.
+
 ## CONNECTION MANAGEMENT
 
 Large file writes crash the connection. Rules:
