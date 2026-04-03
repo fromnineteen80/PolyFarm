@@ -1,8 +1,13 @@
 # STAGING REPAIR PLAN
 
-## READ THIS FIRST
+## READ THESE FILES IN ORDER
 
-This branch exists to fix the OracleFarming trading bot. Read STRATEGY_V2.md FIRST — that is the single source of truth for the trading strategy, infrastructure, and build rules. This file documents what is broken and needs fixing.
+1. **BUILD_SECURITY_MANAGER.md** — governs all development. Read first. Has authority over all agents.
+2. **STRATEGY_V2.md** — the trading strategy, infrastructure, and what to build.
+3. **This file (STAGING_REPAIR.md)** — what is broken and needs fixing.
+4. **CLAUDE.md** — implementation details (SDK methods, past bugs, soccer handling).
+
+This branch exists to fix the OracleFarming trading bot. This file documents what is broken and needs fixing.
 
 Do NOT deploy to production (main branch) until every issue is verified fixed on staging. Follow the Build Security Manager protocol in STRATEGY_V2.md.
 

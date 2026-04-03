@@ -1,6 +1,8 @@
-**TASK: Complete OracleFarming Bot — Registry, Pipeline, Main Integration**
+**READ BUILD_SECURITY_MANAGER.md FIRST. It governs all development.**
 
-**Branch:** `main` (commit and push everything to main)
+**Strategy: STRATEGY_V2.md. Broken things: STAGING_REPAIR.md.**
+
+**This file contains implementation details (SDK methods, past bugs, soccer handling) referenced by the above. The strategy sections below are SUPERSEDED by STRATEGY_V2.md.**
 
 ---
 

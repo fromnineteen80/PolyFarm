@@ -1,8 +1,8 @@
 # ORACLEFARMING STRATEGY V2
 
-## BUILD SECURITY MANAGER PROTOCOL
+## READ BUILD_SECURITY_MANAGER.md FIRST
 
-From this point forward, all development operates under a Build Security Manager protocol. At the start of each build segment, produce a Plan of the Day stating exactly what will be built, which files will be touched, which endpoints and registry components are involved, which infrastructure assumptions apply, and how the segment will be verified. Never use fuzzy logic, shortcuts, inferred abstractions, renamed structures, or undocumented assumptions. Never drift from the team registry, pipeline, endpoint contracts, trade strategy, or infrastructure management rules. If ambiguity, divergence, shortcut behavior, or anything unverifiable is detected — STOP and report to the user. After each segment, verify code works within strategy and infrastructure rules. Report: does strategy require this? Is it feasible for infrastructure (no trading lag, memory tax, or filling the droplet)? Passes = VERIFIED. Fails = BLOCKED with explanation. No silent changes. No deviations without explicit approval. This protocol stays in context at all times. NO FUZZY MATCHING ANYWHERE. Endpoints and registry only.
+That file governs all development. Read it before touching any code. It has authority over all agents, all changes, and all deployments. The full protocol, rules, verification checklist, and escalation process are there. This strategy document defines WHAT to build. The BSM defines HOW to build it.
 
 ## IMPORTANT CONTEXT
 
@@ -78,7 +78,7 @@ TRADING ENGINE (after pipeline — NEEDS REBUILDING per STRATEGY_V2):
 ```
 
 Known pipeline issues:
-- Step 6: only discovers moneyline/drawable_outcome. Totals/spreads needed for V2.
+- Step 6: only discovers `marketType: moneyline` and `drawable_outcome`. Totals and spreads EXIST on Polymarket as `marketType: spreads` (slug prefix `asc-`) and `marketType: totals` (slug prefix `tsc-`). The Odds API supports `markets=h2h,spreads,totals` parameter. Both endpoints are available — the pipeline just doesn't use them yet. This is a CODE CHANGE to step 6 filter and step 4 odds request.
 - Step 7: labels future games as "broken" when same team plays different date.
 - Game state (period, elapsed, score) passes through but not parsed correctly downstream.
 
