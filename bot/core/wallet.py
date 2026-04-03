@@ -74,6 +74,60 @@ class WalletManager:
         Called once at startup. Establishes floor.
         Floor is fixed for the entire session.
         """
+        from config import PAPER_MODE, PAPER_SEED_BALANCE
+
+        if PAPER_MODE and PAPER_SEED_BALANCE > 0:
+            # Paper mode: restore from Supabase or start fresh
+            # No Polymarket API calls needed
+            from data.database import get_bot_config
+            try:
+                import json as _json
+                saved = await get_bot_config("paper_balance")
+                saved_state = await get_bot_config("paper_session_state")
+                if saved and float(saved) > 0:
+                    total = float(saved)
+                    logger.info(f"Restored paper balance: ${total:.2f}")
+                    if saved_state:
+                        ss = _json.loads(saved_state)
+                        self.state.realized_pnl_today = float(ss.get("realized_pnl_today", 0))
+                        self.state.daily_gain_pct = float(ss.get("daily_gain_pct", 0))
+                        self.state.daily_peak_gain = float(ss.get("daily_peak_gain", 0))
+                        self.state.profit_mode = ss.get("profit_mode", "NORMAL")
+                        self.state.loss_mode = ss.get("loss_mode", "NORMAL")
+                        self.state.session_locked = ss.get("session_locked", False)
+                        self.state.entries_halted = ss.get("entries_halted", False)
+                        self.state.new_entries_paused = ss.get("new_entries_paused", False)
+                        self.state.exception_trades_today = ss.get("exception_trades_today", 0)
+                        self.state.fade_trades_today = ss.get("fade_trades_today", 0)
+                        start = float(ss.get("session_start_value", total))
+                        if start > 0:
+                            self.state.session_start_value = start
+                        logger.info(f"Restored session: {self.state.profit_mode}/{self.state.loss_mode}")
+                else:
+                    total = PAPER_SEED_BALANCE
+                    logger.info(f"Starting fresh paper: ${total:.2f}")
+            except Exception:
+                total = PAPER_SEED_BALANCE
+
+            self.state.cash_balance = total
+            self.state.open_positions_value = 0.0
+            self.state.live_portfolio_value = total
+            if self.state.session_start_value <= 0:
+                self.state.session_start_value = total
+            self.state.floor_value = (
+                self.state.session_start_value * FLOOR_PCT
+            )
+            if self.state.daily_peak_gain <= 0:
+                self.state.daily_peak_gain = 0.0
+
+            logger.info(
+                f"Session init: wallet=${total:.2f} "
+                f"floor=${self.state.floor_value:.2f} "
+                f"working=${total - self.state.floor_value:.2f}"
+            )
+            return
+
+        # Live mode: read real balance from Polymarket
         from core.market_loader import parse_bbo
 
         result = await self.client.account.balances()
@@ -105,53 +159,14 @@ class WalletManager:
                 )
 
         total = cash + pos_value
-
-        # In paper mode, restore persisted balance or use seed
-        from config import PAPER_MODE, PAPER_SEED_BALANCE
-        if PAPER_MODE and PAPER_SEED_BALANCE > 0:
-            from data.database import get_bot_config
-            try:
-                import json as _json
-                saved = await get_bot_config("paper_balance")
-                saved_state = await get_bot_config("paper_session_state")
-                if saved and float(saved) > 0:
-                    total = float(saved)
-                    logger.info(f"Restored paper balance: ${total:.2f}")
-                    if saved_state:
-                        ss = _json.loads(saved_state)
-                        self.state.realized_pnl_today = float(ss.get("realized_pnl_today", 0))
-                        self.state.daily_gain_pct = float(ss.get("daily_gain_pct", 0))
-                        self.state.daily_peak_gain = float(ss.get("daily_peak_gain", 0))
-                        self.state.profit_mode = ss.get("profit_mode", "NORMAL")
-                        self.state.loss_mode = ss.get("loss_mode", "NORMAL")
-                        self.state.session_locked = ss.get("session_locked", False)
-                        self.state.entries_halted = ss.get("entries_halted", False)
-                        self.state.new_entries_paused = ss.get("new_entries_paused", False)
-                        self.state.exception_trades_today = ss.get("exception_trades_today", 0)
-                        self.state.fade_trades_today = ss.get("fade_trades_today", 0)
-                        start = float(ss.get("session_start_value", total))
-                        if start > 0:
-                            self.state.session_start_value = start
-                        logger.info(f"Restored session: {self.state.profit_mode}/{self.state.loss_mode}")
-                else:
-                    total = PAPER_SEED_BALANCE
-                    logger.info(f"Starting fresh paper: ${total:.2f}")
-            except Exception:
-                total = PAPER_SEED_BALANCE
-
         floor = total * FLOOR_PCT
 
-        self.state.cash_balance = total
-        self.state.open_positions_value = 0.0 if PAPER_MODE else pos_value
+        self.state.cash_balance = cash
+        self.state.open_positions_value = pos_value
         self.state.live_portfolio_value = total
-        # Only set session_start if not restored from saved state
-        if self.state.session_start_value <= 0:
-            self.state.session_start_value = total
-        self.state.floor_value = (
-            self.state.session_start_value * FLOOR_PCT
-        )
-        if self.state.daily_peak_gain <= 0:
-            self.state.daily_peak_gain = 0.0
+        self.state.session_start_value = total
+        self.state.floor_value = floor
+        self.state.daily_peak_gain = 0.0
 
         logger.info(
             f"Session init: wallet=${total:.2f} "
