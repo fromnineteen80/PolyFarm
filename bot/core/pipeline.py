@@ -725,13 +725,39 @@ class Pipeline:
                     best_reversed = True
                     break
 
-                # Partial — one team matches
-                if bridge_home == odds_home or bridge_home == odds_away:
-                    best_event_id = eid
-                    best_reversed = bridge_home == odds_away
-                elif bridge_away == odds_home or bridge_away == odds_away:
-                    best_event_id = eid
-                    best_reversed = bridge_away == odds_home
+                # Partial — one team matches.
+                # Only accept if same calendar day (ET)
+                # to avoid cross-day false matches.
+                same_day = False
+                if poly_start and odds_start:
+                    try:
+                        pt2 = datetime.fromisoformat(
+                            str(poly_start).replace(
+                                "Z", "+00:00"
+                            )
+                        ).astimezone(ET)
+                        ot2 = datetime.fromisoformat(
+                            odds_start.replace(
+                                "Z", "+00:00"
+                            )
+                        ).astimezone(ET)
+                        same_day = pt2.date() == ot2.date()
+                    except Exception:
+                        pass
+
+                if same_day:
+                    if bridge_home == odds_home or \
+                       bridge_home == odds_away:
+                        best_event_id = eid
+                        best_reversed = (
+                            bridge_home == odds_away
+                        )
+                    elif bridge_away == odds_home or \
+                         bridge_away == odds_away:
+                        best_event_id = eid
+                        best_reversed = (
+                            bridge_away == odds_home
+                        )
 
             if best_event_id:
                 self.matched_games[slug] = {

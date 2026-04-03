@@ -277,11 +277,18 @@ class FadeMonitor:
             # volume not available from v2 — skip volume gate
 
             try:
-                from core.market_loader import parse_bbo
-                bbo = await self.client.markets.bbo(
-                    market.slug
-                )
-                bid, ask, _cur = parse_bbo(bbo)
+                from config import PAPER_MODE
+                if PAPER_MODE:
+                    bid = poly_price
+                    ask = poly_price
+                else:
+                    from core.market_loader import (
+                        parse_bbo
+                    )
+                    bbo = await self.client.markets.bbo(
+                        market.slug
+                    )
+                    bid, ask, _cur = parse_bbo(bbo)
                 spread = ask - bid
                 if spread > FADE_MAX_BID_ASK_SPREAD:
                     continue

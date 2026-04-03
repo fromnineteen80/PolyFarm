@@ -209,6 +209,8 @@ async def main():
             edge_detector.odds_api = pipeline
             edge_detector.ws_markets = markets_ws
             order_manager.pipeline = pipeline
+            alerts._pipeline = pipeline
+            alerts._registry = registry
             exception_monitor.mapper = pipeline
             fade_monitor.mapper = pipeline
             overnight_monitor.mapper = pipeline

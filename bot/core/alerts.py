@@ -281,7 +281,7 @@ class AlertManager:
                 band = getattr(pos, 'band', '?') or '?'
 
             if not teams:
-                teams = slug.replace("aec-", "").replace("-2026", "")
+                teams = await self._resolve_teams(slug)
 
             current_bid = val.get('current_bid', 0)
             shares = val.get('shares', 0)
@@ -322,8 +322,9 @@ class AlertManager:
                 s = "+" if pnl >= 0 else ""
                 teams = t.get("teams", "")
                 if not teams:
-                    teams = (t.get("market_slug", "?")
-                        .replace("aec-", "").replace("-2026", ""))
+                    teams = await self._resolve_teams(
+                        t.get("market_slug", "?")
+                    )
                 exit_type = _exit_label(
                     t.get("exit_type", "?")
                 )
@@ -499,6 +500,37 @@ class AlertManager:
             self._urgent_queue.put_nowait(text)
         except asyncio.QueueFull:
             logger.debug("Alert queue full")
+
+    async def _resolve_teams(self, slug: str) -> str:
+        """Resolve team names from pipeline or
+        market registry. Never show raw slugs."""
+        # Try pipeline game data first
+        if hasattr(self, '_pipeline') and self._pipeline:
+            game = self._pipeline.games.get(slug)
+            if game:
+                home = game.get("home_team", "")
+                away = game.get("away_team", "")
+                if home and away:
+                    return f"{home} vs {away}"
+        # Try market registry
+        if hasattr(self, '_registry') and self._registry:
+            try:
+                market = await self._registry.get(slug)
+                if market:
+                    h = getattr(market, "home_team", "")
+                    a = getattr(market, "away_team", "")
+                    if h and a:
+                        return f"{h} vs {a}"
+            except Exception:
+                pass
+        # Last resort: clean up slug
+        clean = slug
+        for prefix in ("aec-", "asc-", "tsc-"):
+            clean = clean.replace(prefix, "")
+        clean = clean.replace("-2026", "").replace(
+            "-2025", ""
+        )
+        return clean.replace("-", " ").title()
 
     def _fmt_duration(self, seconds: int) -> str:
         if seconds < 60:
@@ -907,23 +939,6 @@ class AlertManager:
                     f"  {sport}: {trades} trades | "
                     f"{s_sign}${s_pnl:.2f}"
                 )
-            lines.append("")
-
-        # Fee summary
-        fees = stats.get("total_fees", 0)
-        rebates = stats.get("total_rebates", 0)
-        if fees or rebates:
-            net_cost = fees - rebates
-            lines.append("FEES:")
-            lines.append(
-                f"  Taker fees: ${fees:.4f}"
-            )
-            lines.append(
-                f"  Maker rebates: ${rebates:.4f}"
-            )
-            lines.append(
-                f"  Net cost: ${net_cost:.4f}"
-            )
             lines.append("")
 
         # All-time summary
