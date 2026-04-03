@@ -132,9 +132,9 @@ ucl → soccer_uefa_champs_league
 - Sports list: `GET /v4/sports/?apiKey={KEY}`
 - Returns: events with home_team, away_team (strings matched through registry), bookmakers array with American odds
 
-## IMPORTANT: THIS LIST MAY BE INCOMPLETE
+## CRITICAL WARNING
 
-The 20 issues below are only the ones identified so far. The new session MUST look for additional broken things as it builds. If something doesn't match STRATEGY_V2.md or doesn't work against real API data, it is a new issue. Add it to the list and report it.
+NOT ALL PROBLEMS IDENTIFIED HERE ARE THE FULL SET OF PROBLEMS AFFLICTING THIS BOT OR OUR INFRASTRUCTURE. YOU MUST BE VIGILANT FOR OTHER PROBLEMS THAT WERE MISSED OR NEW PROBLEMS THAT ARISE DURING DEVELOPMENT. The 20 issues below are only the ones identified so far. If something doesn't match STRATEGY_V2.md, doesn't work against real API data, or breaks in ways not listed here — it is a new issue. STOP, report it to the user in plain English, add it to this file, and get approval before proceeding.
 
 ## 20 THINGS THAT ARE BROKEN
 

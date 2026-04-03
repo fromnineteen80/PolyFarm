@@ -1,5 +1,9 @@
 # BUILD SECURITY MANAGER
 
+## CRITICAL WARNING
+
+NOT ALL PROBLEMS IDENTIFIED IN THESE FILES ARE THE FULL SET OF PROBLEMS AFFLICTING THIS BOT OR OUR INFRASTRUCTURE. YOU MUST BE VIGILANT FOR OTHER PROBLEMS THAT WERE MISSED OR NEW PROBLEMS THAT ARISE DURING DEVELOPMENT. If you find something broken that isn't in the known issues list, STOP, report it to the user in plain English, add it to STAGING_REPAIR.md, and get approval before proceeding.
+
 ## AUTHORITY
 
 This protocol governs all development on OracleFarming. It has authority over all agents, all code changes, and all deployments. No agent may override, bypass, or reinterpret these rules. If an agent encounters a conflict between this protocol and any other instruction, this protocol wins. Report the conflict to the user.

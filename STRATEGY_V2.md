@@ -4,6 +4,10 @@
 
 That file governs all development. Read it before touching any code. It has authority over all agents, all changes, and all deployments. The full protocol, rules, verification checklist, and escalation process are there. This strategy document defines WHAT to build. The BSM defines HOW to build it.
 
+## CRITICAL WARNING
+
+NOT ALL PROBLEMS IDENTIFIED IN THESE FILES ARE THE FULL SET OF PROBLEMS AFFLICTING THIS BOT OR OUR INFRASTRUCTURE. YOU MUST BE VIGILANT FOR OTHER PROBLEMS THAT WERE MISSED OR NEW PROBLEMS THAT ARISE DURING DEVELOPMENT. If you find something broken that isn't documented, STOP, report it to the user in plain English, add it to STAGING_REPAIR.md, and get approval before proceeding.
+
 ## IMPORTANT CONTEXT
 
 This strategy REPLACES the strategy sections in CLAUDE.md. The pipeline, team registry, APIs, Supabase schema, systemd, Telegram infrastructure, WebSocket connections, and everything documented as "working" in STAGING_REPAIR.md stays exactly as-is. We are ONLY fixing what is broken and adjusting the trading strategy per this document.
