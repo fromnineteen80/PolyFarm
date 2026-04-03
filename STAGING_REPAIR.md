@@ -2,18 +2,55 @@
 
 ## READ THIS FIRST
 
-This branch exists to fix the OracleFarming trading bot. The bot's pipeline (team matching, odds loading, game discovery) works. Everything after that — trading, monitoring, exiting, reporting — is broken. Do NOT deploy to production (main branch) until every issue is verified fixed on staging.
+This branch exists to fix the OracleFarming trading bot. Read STRATEGY_V2.md FIRST — that is the single source of truth for the trading strategy, infrastructure, and build rules. This file documents what is broken and needs fixing.
+
+Do NOT deploy to production (main branch) until every issue is verified fixed on staging. Follow the Build Security Manager protocol in STRATEGY_V2.md.
+
+## THE PIPELINE — WHAT WORKS AND WHAT IS BROKEN
+
+```
+PIPELINE (Steps 1-8) ── ALL WORKING ── verified against real APIs
+
+  Step 1: Discover Leagues ── Polymarket v2/sports ──── 11 leagues         ✓ WORKS
+  Step 2: Load Teams ──────── Polymarket v2/events ──── ~210 active teams  ✓ WORKS
+  Step 3: Map Odds Keys ───── Odds API /v4/sports ───── 10 mapped          ✓ WORKS
+  Step 4: Load Odds ───────── Odds API /v4/odds ─────── bookmaker consensus ✓ WORKS
+  Step 5: Match Teams ─────── Team Registry (929) ───── polymarket_id lookup ✓ WORKS
+  Step 6: Load Games ──────── Polymarket v2 events ──── ET times, buckets   ✓ WORKS (moneyline only)
+  Step 7: Match Games ─────── Team bridge ────────────── matched/waiting     ✓ WORKS (labeling bug)
+  Step 8: Load Scores ─────── Odds API /v4/scores ───── live + final        ✓ WORKS
+
+  Step 9: Write Supabase ──── markets table ──────────── change detection   ✓ WORKS
+
+TEAM REGISTRY ── 929 teams, 12 leagues, zero fuzzy matching              ✓ WORKS
+WEBSOCKET ────── Markets + Private connect on droplet                     ✓ WORKS
+SUPABASE ─────── Schema exists, reads/writes work                        ✓ WORKS
+TELEGRAM ─────── Can send/receive (but has bugs — see below)             ⚠ PARTIAL
+
+TRADING ENGINE (everything after the pipeline) ── BROKEN
+
+  Edge Detection ──── finds misprices but no persistence check           ✗ BROKEN
+  Game State Parser ── does not correctly parse period/elapsed/score      ✗ BROKEN
+  Entry Logic ──────── enters games almost over, no game progress check  ✗ BROKEN
+  Position Tracking ── registers after DB write, allows re-entry         ✗ BROKEN
+  Exit Logic ───────── pre_resolution fires incorrectly, no four-state   ✗ NOT BUILT
+  Paper Mode ───────── calls real Polymarket API, overwrites balance     ✗ BROKEN
+  Daily Cycle ──────── midnight reset has bugs, morning message crashes  ✗ BROKEN
+  Telegram Display ─── shows slugs, internal jargon, wrong balance      ✗ BROKEN
+```
+
+The pipeline (Steps 1-8) and team registry are solid. The trading engine — everything that takes a detected edge and turns it into a profitable trade — needs to be rebuilt per STRATEGY_V2.md.
 
 ## WHAT THIS PROJECT IS
 
-An automated sports prediction market trading bot on Polymarket US. It:
-1. Compares real-time Polymarket CLOB prices against US bookmaker consensus (The Odds API)
-2. Finds misprices and enters trades
-3. Monitors positions using game state, sharp odds, team analysis
-4. Exits when the edge is captured or the game situation changes
-5. Tracks paper balance at $2,400 ($1,200 x 2 investors)
-6. Reports via Telegram every 30 minutes
-7. Runs 24/7 on a DigitalOcean droplet via systemd
+An automated probability execution system on Polymarket US. Full description in STRATEGY_V2.md. Key points:
+- Compares Polymarket CLOB prices against bookmaker consensus (The Odds API)
+- Trades when mispricing is measurable, persistent, and executable
+- Four-state trade lifecycle: Entry → Advancement → Protection → Exit
+- Floors and ceilings anchored to probability, not price
+- Paper mode at $2,400 ($1,200 x 2 investors)
+- Reports via Telegram every 30 minutes
+- Runs 24/7 on DigitalOcean via systemd
 
 ## CREDENTIALS (for .env on droplet — not in repo)
 
@@ -32,16 +69,67 @@ PAPER_MODE=true
 PAPER_SEED_BALANCE=2400
 ```
 
+## TEAM REGISTRY — THE FOUNDATION
+
+File: `bot/core/team_registry.py` — 17,826 lines. THIS WORKS. DO NOT TOUCH.
+
+929 teams across 12 leagues: NBA (30), NHL (32), MLB (30), NFL (32), MLS (30), EPL (20), La Liga (20), Bundesliga (18), Serie A (20), UCL (60), CBB (365), CFB (272).
+
+Every team has:
+- `canonical`: "Boston Celtics" — the ONE correct name used everywhere
+- `polymarket_id`: 17 — unique, primary lookup key
+- `odds_api_name`: "Boston Celtics" — exact spelling from The Odds API
+- `league`: "nba"
+- `sport`: "basketball_nba"
+- `color`: "#009941"
+- `polymarket_names`: ["Celtics", "Boston Celtics", "Boston", "BOS"]
+
+Lookup functions:
+- `lookup_by_polymarket_id(poly_id)` — PRIMARY. Used by pipeline step 5.
+- `lookup_by_polymarket_name(name, league)` — fallback, league-scoped
+- `lookup_by_odds_api_name(name, league)` — for Odds API side
+
+**RULE: Every component that displays or writes a team name MUST resolve it through the registry to the canonical name. No slugs. No abbreviations. No raw API names. Telegram messages, trade records, position displays, Supabase writes — all use canonical names from the registry.**
+
+The registry is the normalization layer that prevents false trades. Different APIs label teams differently. The registry creates one canonical ID so signals are never triggered off mismatched events. NO FUZZY MATCHING ANYWHERE.
+
 ## WHAT WORKS
 
-- **Team registry** (bot/core/team_registry.py): 929 teams across 12 leagues. Exact matches. Verified.
-- **Pipeline steps 1-8** (bot/core/pipeline.py): Discovers leagues, loads teams, matches to Odds API, loads odds, loads scores. All against real APIs.
-- **Polymarket SDK**: Authenticated. Balance reads, BBO reads, order placement all work.
-- **WebSocket connections**: Both Markets and Private connect on the droplet.
-- **Supabase**: Schema exists, reads/writes work.
-- **Telegram**: Can send and receive messages.
-- **Systemd**: Bot runs as oraclefarming.service.
-- **Health API** (bot/core/health.py): REST endpoints on port 8080 for diagnostics. Committed but not tested in production.
+See pipeline visual above. Summary: Steps 1-8 verified. Team registry verified. WebSocket connects. Supabase reads/writes. Polymarket SDK authenticated. Systemd service running. Health API committed but untested.
+
+### League Slug to Sport Key Mapping (verified)
+```
+Polymarket slug → Odds API key
+nba → basketball_nba
+nhl → icehockey_nhl
+mlb → baseball_mlb
+cbb → basketball_ncaab
+cfb → americanfootball_ncaaf
+nfl → americanfootball_nfl
+epl → soccer_epl
+mls → soccer_usa_mls
+lal → soccer_spain_la_liga
+bun → soccer_germany_bundesliga
+sea → soccer_italy_serie_a
+ucl → soccer_uefa_champs_league
+```
+
+### Polymarket API (verified, used at runtime)
+- v2 league events: `GET /v2/leagues/{slug}/events?limit=100`
+- v2 sports: `GET /v2/sports`
+- v2 returns: events with teams array (id, name, safeName, abbreviation, colorPrimary), markets array (slug, marketType, marketSides with prices), live scores, game state (period, elapsed, score, live, ended)
+- v1 was used ONLY to build team_registry.py. NOT referenced at runtime.
+- team.id is stable and identical across v1 and v2 — this is the polymarket_id in the registry.
+
+### Odds API (verified)
+- Odds: `GET /v4/sports/{key}/odds/?apiKey={KEY}&regions=us&markets=h2h&oddsFormat=american`
+- Scores: `GET /v4/sports/{key}/scores/?apiKey={KEY}&daysFrom=3`
+- Sports list: `GET /v4/sports/?apiKey={KEY}`
+- Returns: events with home_team, away_team (strings matched through registry), bookmakers array with American odds
+
+## IMPORTANT: THIS LIST MAY BE INCOMPLETE
+
+The 20 issues below are only the ones identified so far. The new session MUST look for additional broken things as it builds. If something doesn't match STRATEGY_V2.md or doesn't work against real API data, it is a new issue. Add it to the list and report it.
 
 ## 20 THINGS THAT ARE BROKEN
 
@@ -93,15 +181,18 @@ PAPER_SEED_BALANCE=2400
 
 ## THE STRATEGY
 
-Read CLAUDE.md in the repo root for the full architecture. Key points:
+Read STRATEGY_V2.md — that is the complete strategy. Do NOT use the old strategy in CLAUDE.md. Key points:
 
-- **Entry**: Find misprice between Polymarket CLOB price and bookmaker consensus. Enter when edge > threshold (Band A: 2c at 50c+, Band B: 1.5c at 30-50c, Band C: 1c at 15-30c).
-- **Hold**: As long as sharp odds > entry price, hold. A 73% team down 10 in Q2 still wins 73% of the time.
-- **Exit**: When sharp odds drop below entry price, OR game ends, OR profit target hit.
-- **Late game**: Winning late = hold to settlement ($1.00). Losing late = no buyers anyway.
-- **Daily target**: +15% = stop trading for the day. Let winners settle.
-- **Daily loss**: -5% reduce size, -10% pause (resume at -5%), -15% done for the day. Uses REALIZED P&L only.
-- **Never re-enter** a game we already traded.
+- Four-state trade model: Entry → Advancement → Protection → Exit
+- Floors and ceilings anchored to PROBABILITY, not price
+- Edge must persist across 2+ pipeline refreshes before entry
+- All four entry conditions must be met (edge, persistence, liquidity, market behavior)
+- Sport-specific game timing parsed from real API data (period, elapsed, score)
+- When time can't be determined, HOLD — never assume game is ending
+- Primary markets: totals and spreads (requires pipeline step 6 update). Secondary: moneylines.
+- Daily target +15%, loss tiers at -5%/-10%/-15% using REALIZED P&L only
+- Never re-enter a game already traded
+- Build Security Manager protocol enforced at all times
 
 ## INVESTOR DETAILS
 
