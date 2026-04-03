@@ -60,6 +60,26 @@ if git diff --cached -- '*.py' | grep -E "\[.*\]\.append\(|dict\(\)" | grep -v "
     echo "BSM NOTE: New data structure detected. Verify it has a cleanup/pruning mechanism."
 fi
 
+# Rule: Check for tight polling loops that cause lag
+if git diff --cached -- '*.py' | grep -E "sleep\((0\.|1\b|2\b|3\b)" | grep -v "test_\|#" > /dev/null 2>&1; then
+    echo "BSM WARNING: Short sleep interval detected (<4s). May cause CPU/memory stress on 4GB droplet."
+fi
+
+# Rule: Check for writing every cycle (storage/memory stress)
+if git diff --cached -- '*.py' | grep -E "while True.*await.*write\|while True.*await.*insert\|while True.*await.*upsert" > /dev/null 2>&1; then
+    echo "BSM WARNING: Write inside loop detected. Verify change detection prevents writing every cycle."
+fi
+
+# Rule: Check for large file reads/writes that could block the event loop
+if git diff --cached -- '*.py' | grep -E "open\(.*\.log\|\.read\(\)" | grep -v "test_" > /dev/null 2>&1; then
+    echo "BSM NOTE: File I/O detected. Verify it doesn't block the async event loop."
+fi
+
+# Rule: Check for aiohttp sessions that may not be closed
+if git diff --cached -- '*.py' | grep "aiohttp.ClientSession()" | grep -v "async with\|close\|cleanup" > /dev/null 2>&1; then
+    echo "BSM WARNING: aiohttp session created. Verify it gets closed on shutdown to prevent memory leaks."
+fi
+
 if [ $ERRORS -gt 0 ]; then
     echo ""
     echo "Commit blocked by Build Security Manager. Fix violations above."
