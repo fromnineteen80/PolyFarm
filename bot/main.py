@@ -24,6 +24,7 @@ from core.overnight_monitor import OvernightMonitor
 from core.alerts import AlertManager
 from core.ws_markets import MarketsWebSocket
 from core.ws_private import PrivateWebSocket
+from core.health import HealthServer
 from dashboard.terminal import TerminalDashboard
 
 
@@ -251,7 +252,17 @@ async def main():
     )
     terminal_thread.start()
 
-    # ── STEP 14: Run all async tasks ──────────────
+    # ── STEP 14: Start health API ────────────────
+    health = HealthServer(port=8080)
+    health.wallet = wallet
+    health.pipeline = pipeline
+    health.position_monitor = position_monitor
+    health.edge_detector = edge_detector
+    health.markets_ws = markets_ws
+    health.private_ws = private_ws
+    await health.start()
+
+    # ── STEP 15: Run all async tasks ──────────────
     tasks = [
         asyncio.create_task(private_ws.start(), name="ws_private"),
         asyncio.create_task(markets_ws.start(), name="ws_markets"),
