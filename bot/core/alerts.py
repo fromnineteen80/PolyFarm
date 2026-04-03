@@ -150,8 +150,9 @@ class AlertManager:
     # ─────────────────────────────────────────────
 
     async def _command_listener(self):
-        """Poll Telegram for incoming commands every 5 seconds."""
+        """Poll Telegram for incoming commands."""
         await asyncio.sleep(10)  # let bot start first
+        cmd_session = aiohttp.ClientSession()
         while True:
             try:
                 url = (
@@ -162,7 +163,7 @@ class AlertManager:
                     "offset": self._last_update_id + 1,
                     "timeout": 30,
                 }
-                async with self._session.get(
+                async with cmd_session.get(
                     url, params=params,
                     timeout=aiohttp.ClientTimeout(total=35)
                 ) as resp:
