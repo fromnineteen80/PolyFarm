@@ -34,21 +34,56 @@ The live engine that connects to Polymarket and odds sources, processes WebSocke
 
 ### Team Registry — Normalization Layer
 
-929 teams across 12 leagues. Every team has a canonical name, Polymarket ID, Odds API name, league, sport, color, abbreviation. Different APIs label teams differently — the registry creates one canonical internal ID so signals are never triggered off mismatched events. Lookup by `polymarket_id` first (unique, never ambiguous). This is not cosmetic. It is a core control layer that prevents false trades.
+File: `bot/core/team_registry.py` (17,826 lines). STATUS: COMPLETE AND VERIFIED.
+
+929 teams across 12 leagues: NBA (30), NHL (32), MLB (30), NFL (32), MLS (30), EPL (20), La Liga (20), Bundesliga (18), Serie A (20), UCL (60), CBB (365), CFB (272). Each entry: canonical name, polymarket_id, polymarket_names (list), odds_api_name, league, sport, color, abbreviation. All verified against live APIs.
+
+Lookup functions: `lookup_by_polymarket_id(poly_id)` PRIMARY. `lookup_by_polymarket_name(name, league)` fallback. `lookup_by_odds_api_name(name, league)` for Odds API side. `get_teams_by_league(league)` list all.
+
+RULE: Every component that displays or writes a team name MUST use registry canonical names. No slugs, no abbreviations, no raw API names. Many fixes needed — see STAGING_REPAIR.md issues.
 
 ### Pipeline — Data Flow Engine
 
-Steps 1-8 run every 60 seconds:
-1. Discover leagues from Polymarket v2
-2. Load teams from v2 events
-3. Map to Odds API sport keys
-4. Load odds (bookmaker consensus)
-5. Match teams via registry (polymarket_id lookup)
-6. Load games with ET times and buckets
-7. Match games to Odds API events
-8. Load scores from Odds API
+File: `bot/core/pipeline.py`. STATUS: Steps 1-8 WORKING. Trading engine BROKEN.
 
-Step 9 writes to Supabase for the dashboard. The pipeline also syncs MarketRegistry for the position monitor and subscribes matched slugs to the Markets WebSocket.
+```
+STARTUP (once):
+  Step 1: Discover Leagues ── Polymarket v2/sports ──── 11 leagues           [WORKS]
+  Step 2: Load Teams ──────── Polymarket v2/events ──── ~210 active teams    [WORKS]
+  Step 3: Map Odds Keys ───── Odds API /v4/sports ───── 10 mapped            [WORKS]
+  Step 5: Match Teams ─────── Registry (929) ────────── polymarket_id lookup [WORKS]
+
+REFRESH (every 60s):
+  Step 4: Load Odds ──── Odds API odds endpoint ──── bookmaker consensus     [WORKS]
+  Step 6: Load Games ─── Polymarket v2 events ────── ET times, buckets       [WORKS - moneyline only]
+  Step 7: Match Games ── Team bridge from Step 5 ── matched/waiting          [WORKS - labeling bug]
+  Step 8: Load Scores ── Odds API scores endpoint ─ live + final             [WORKS]
+  Step 9: Write Supabase ── markets table ───────── change detection         [WORKS]
+  Sync MarketRegistry ───── for position monitor                             [WORKS]
+  Subscribe Slugs ─────────── to Markets WebSocket                           [WORKS]
+
+WEBSOCKETS:
+  Markets WS ── real-time prices → price_queue → edge_detector               [CONNECTS]
+  Private WS ── order fills, positions, balance                              [CONNECTS]
+
+TRADING ENGINE (after pipeline — NEEDS REBUILDING per STRATEGY_V2):
+  Edge Detection ──── no persistence check, no game progress filter          [BROKEN]
+  Game State Parser ── doesn't parse period/elapsed/score correctly          [BROKEN]
+  Trade State Model ── four-state Entry/Advancement/Protection/Exit          [NOT BUILT]
+  Position Tracking ── registers after DB write, allows re-entry             [BROKEN]
+  Exit Logic ────────── not probability-anchored, fires incorrectly          [BROKEN]
+  Paper Simulation ─── calls real Polymarket API for balance                 [BROKEN]
+  Daily Cycle ───────── midnight reset bugs, morning message crashes         [BROKEN]
+  Telegram Display ─── slugs instead of names, internal jargon              [BROKEN]
+```
+
+Known pipeline issues:
+- Step 6: only discovers moneyline/drawable_outcome. Totals/spreads needed for V2.
+- Step 7: labels future games as "broken" when same team plays different date.
+- Game state (period, elapsed, score) passes through but not parsed correctly downstream.
+
+Pipeline compatibility methods (used by edge_detector and monitors):
+- `is_matched(slug)`, `get_fair_prob(slug, side)`, `get_edge_signal(...)`, `get_consensus_data(slug)`
 
 ### Supabase — Data Store
 
