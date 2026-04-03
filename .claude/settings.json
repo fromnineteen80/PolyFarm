@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "echo 'BSM: Verify this change aligns with STRATEGY_V2.md and uses registry canonical names.'"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "command": "echo 'BSM: Check output for fuzzy matching, API misuse, or strategy drift.'"
+      }
+    ]
+  }
+}
