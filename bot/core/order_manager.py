@@ -636,7 +636,7 @@ class OrderManager:
         """
         sport = position.sport
         time_rem = game_state.get(
-            "time_remaining_seconds", 9999
+            "time_remaining_seconds"
         )
         inning = game_state.get("inning", 0)
         period = game_state.get("period", 0)
@@ -644,6 +644,10 @@ class OrderManager:
         is_overtime = game_state.get(
             "is_overtime", False
         )
+
+        # If we can't determine game progress, hold — don't guess
+        if time_rem is None:
+            return
 
         should_hold = False
 
