@@ -748,8 +748,17 @@ class Pipeline:
                     odds_away = normalize_team(odds_event["away_team"])
                     if (bridge_home in (odds_home, odds_away) or
                         bridge_away in (odds_home, odds_away)):
-                        teams_have_odds = True
-                        break
+                        # Only count as broken if same day
+                        odds_start = odds_event.get("commence_time", "")
+                        if poly_start and odds_start:
+                            try:
+                                pt = datetime.fromisoformat(str(poly_start).replace("Z", "+00:00")).astimezone(ET)
+                                ot = datetime.fromisoformat(odds_start.replace("Z", "+00:00")).astimezone(ET)
+                                if pt.date() == ot.date():
+                                    teams_have_odds = True
+                                    break
+                            except Exception:
+                                pass
 
                 if teams_have_odds:
                     # Odds exist for these teams but time/match failed

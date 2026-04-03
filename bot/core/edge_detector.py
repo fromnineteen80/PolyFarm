@@ -131,6 +131,48 @@ class EdgeDetector:
         if not market:
             return None
 
+        # Don't enter games that are almost over
+        if market.is_live:
+            period = market.current_period or ""
+            elapsed = market.time_elapsed or ""
+            sport = market.sport or ""
+            period_str = str(period).upper()
+
+            # NBA/CBB: don't enter in Q4/H2 final minutes
+            if "basketball" in sport.lower():
+                if "Q4" in period_str or "OT" in period_str:
+                    return None
+                if "H2" in period_str:
+                    return None
+
+            # NHL: don't enter in P3
+            if "hockey" in sport.lower():
+                if "P3" in period_str or "OT" in period_str:
+                    return None
+
+            # MLB: don't enter in 8th inning or later
+            if "baseball" in sport.lower():
+                try:
+                    inn = int(''.join(c for c in period_str if c.isdigit()) or '0')
+                    if inn >= 8:
+                        return None
+                except Exception:
+                    pass
+
+            # NFL/CFB: don't enter in Q4
+            if "football" in sport.lower():
+                if "Q4" in period_str or "OT" in period_str:
+                    return None
+
+            # Soccer: don't enter after 75th minute
+            if "soccer" in sport.lower():
+                try:
+                    mins = int(''.join(c for c in str(elapsed) if c.isdigit()) or '0')
+                    if mins >= 75:
+                        return None
+                except Exception:
+                    pass
+
         # Band classification (thresholds preserved exactly)
         is_live = market.is_live
         live_adj = LIVE_GAME_EDGE_REDUCTION if is_live else 0.0
