@@ -91,17 +91,9 @@ class OrderManager:
     async def _paper_entry(self, signal, strategy,
                             position_type, fade_team):
         try:
-            from core.market_loader import parse_bbo
-            bbo = await self.client.markets.bbo(
-                signal.slug
-            )
-            bid, ask, cur = parse_bbo(bbo)
-            if bid == 0:
-                bid = signal.poly_price
-            if ask == 0:
-                ask = signal.poly_price
-            mid = (bid + ask) / 2
-            fill_price = mid
+            # Paper mode: use signal price directly.
+            # No real Polymarket API calls in paper mode.
+            fill_price = signal.poly_price
 
             # Register position FIRST — prevents re-entry
             # even if the Supabase write fails
@@ -250,16 +242,10 @@ class OrderManager:
             })
             sell_order_id = sell.get("id")
 
-            trade_data = self._build_trade_record(
-                signal, fill_price, strategy,
-                position_type, fade_team,
-                paper_mode=False
-            )
-            result = await insert_trade(trade_data)
-            trade_id = result.get("id", 0)
-
+            # Register position FIRST — prevents re-entry
+            # even if the Supabase write fails
             position = OpenPosition(
-                trade_id=trade_id,
+                trade_id=0,
                 slug=signal.slug,
                 sport=signal.sport,
                 teams=signal.teams,
@@ -281,6 +267,21 @@ class OrderManager:
             await self.pm.add_position(
                 signal.slug, position
             )
+
+            # Write to Supabase after position is locked
+            trade_data = self._build_trade_record(
+                signal, fill_price, strategy,
+                position_type, fade_team,
+                paper_mode=False
+            )
+            try:
+                result = await insert_trade(trade_data)
+                trade_id = result.get("id", 0)
+                position.trade_id = trade_id
+            except Exception as db_err:
+                logger.error(
+                    f"Trade DB write failed: {db_err}"
+                )
 
             # Log incentive rewards
             await log_incentive({
@@ -580,16 +581,21 @@ class OrderManager:
         Otherwise: IOC exit.
         """
         # Attempt edge recalculation
-        # Simplified: check if still above 2% of original
         try:
-            from core.market_loader import parse_bbo
-            bbo = await self.client.markets.bbo(
-                position.slug
-            )
-            bid_v, current_ask, cur_v = parse_bbo(bbo)
-            if current_ask == 0:
+            if PAPER_MODE:
+                # Paper: use current_bid passed in
                 current_ask = current_bid
-            # Rough current edge estimate
+            else:
+                from core.market_loader import parse_bbo
+                bbo = await self.client.markets.bbo(
+                    position.slug
+                )
+                _bid_v, current_ask, _cur_v = (
+                    parse_bbo(bbo)
+                )
+                if current_ask == 0:
+                    current_ask = current_bid
+
             current_edge = (
                 current_ask - position.entry_price
             )
@@ -597,7 +603,6 @@ class OrderManager:
 
             if current_edge > original_edge * 0.02 and \
                position.sell_order_id:
-                # Still has some edge — modify target
                 new_target = current_ask + (
                     current_edge * self._get_reprice_pct(
                         position.strategy
@@ -607,7 +612,6 @@ class OrderManager:
                     position.sell_order_id,
                     round(new_target, 4)
                 )
-                # Reset timeout by updating entry_time
                 position.entry_time = (
                     datetime.now(timezone.utc)
                 )
@@ -632,67 +636,68 @@ class OrderManager:
     ):
         """
         Apply sport-specific hold logic near game end.
-        If hold conditions not met: IOC exit.
+        Only fires when game is near completion.
+        If winning late: hold to settlement.
+        If losing late: IOC exit.
+        If not near end: do nothing (return).
         """
         sport = position.sport
         time_rem = game_state.get(
             "time_remaining_seconds"
         )
-        inning = game_state.get("inning", 0)
-        period = game_state.get("period", 0)
-        minute = game_state.get("game_minute", 0)
+        inning = game_state.get("inning")
+        minute = game_state.get("game_minute")
         is_overtime = game_state.get(
             "is_overtime", False
         )
 
-        # If we can't determine game progress, hold — don't guess
-        if time_rem is None:
+        # If we can't determine game progress,
+        # hold — don't guess
+        if time_rem is None and inning is None \
+           and minute is None:
             return
 
-        should_hold = False
+        # Determine if we're in late game first.
+        # If not late game, return — no action needed.
+        is_late_game = False
 
-        # Hold if we're on the winning side late in the game.
-        # current_bid > 0.55 means our team is favored to win.
-        # Only exit if current_bid < 0.40 (we're clearly losing).
+        if is_overtime:
+            is_late_game = True
 
-        if sport in ("basketball_nba",
-                     "basketball_ncaab"):
-            # 4th quarter, last 2 minutes
-            if time_rem <= 120 and \
-               current_bid > 0.55:
-                should_hold = True
+        elif sport in ("basketball_nba",
+                       "basketball_ncaab"):
+            # Late = last 5 minutes of game
+            if time_rem is not None and time_rem <= 300:
+                is_late_game = True
 
         elif sport in ("americanfootball_nfl",
                        "americanfootball_ncaaf"):
-            # 4th quarter, last 4 minutes
-            if time_rem <= 240 and \
-               current_bid > 0.55:
-                should_hold = True
+            # Late = last 5 minutes of game
+            if time_rem is not None and time_rem <= 300:
+                is_late_game = True
 
         elif sport == "baseball_mlb":
-            # 8th inning or later
-            if inning >= 8 and current_bid > 0.55:
-                should_hold = True
+            # Late = 8th inning or later
+            if inning is not None and inning >= 8:
+                is_late_game = True
 
         elif sport == "icehockey_nhl":
-            # 3rd period, last 5 minutes
-            if time_rem <= 300 and \
-               not is_overtime and \
-               current_bid > 0.55:
-                should_hold = True
+            # Late = last 5 minutes of P3
+            if time_rem is not None and time_rem <= 300:
+                is_late_game = True
 
-        elif sport in ("soccer_epl", "soccer_usa_mls",
-                       "soccer_mls",
-                       "soccer_uefa_champs_league",
-                       "soccer_spain_la_liga",
-                       "soccer_germany_bundesliga",
-                       "soccer_italy_serie_a"):
-            # 80th minute or later
-            if minute >= 80 and current_bid > 0.55:
-                should_hold = True
+        elif "soccer" in sport:
+            # Late = 80th minute or later
+            if minute is not None and minute >= 80:
+                is_late_game = True
 
-        if should_hold:
-            # We're winning late in the game — hold to settlement
+        if not is_late_game:
+            return  # Not near end — no action
+
+        # We're in late game. Decide: hold or exit.
+        # Winning (bid > 0.55) = hold to settlement.
+        # Losing (bid <= 0.55) = exit.
+        if current_bid > 0.55:
             position.hold_to_resolution = True
             if position.sell_order_id:
                 await self._cancel_order(
@@ -704,7 +709,7 @@ class OrderManager:
             )
             return
 
-        # We're losing late in the game — exit
+        # Losing late in the game — exit
         await self._ioc_exit(
             position, current_bid, "pre_resolution"
         )
@@ -902,8 +907,9 @@ class OrderManager:
     async def drain_all_positions(self, reason: str):
         """
         LOCK AND DRAIN — called when session locks.
-        Places limit sell at bid+0.01 for each position.
-        Falls back to IOC after 3 minutes.
+        Paper: simulate exit at entry price.
+        Live: places limit sell at bid+0.01,
+        falls back to IOC after 3 minutes.
         """
         positions = list(
             self.pm.get_all_positions().values()
@@ -912,6 +918,34 @@ class OrderManager:
             f"Drain all positions: {reason} "
             f"({len(positions)} positions)"
         )
+
+        if PAPER_MODE:
+            # Paper: exit all at current bid or entry
+            for position in positions:
+                try:
+                    market = await (
+                        self.pm.registry.get(
+                            position.slug
+                        )
+                    )
+                    bid = (
+                        market.yes_price
+                        if market
+                        and market.yes_price > 0
+                        else position.entry_price
+                    )
+                    await self._paper_exit(
+                        position, bid,
+                        f"drain_{reason}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Drain error "
+                        f"{position.slug}: {e}"
+                    )
+            return
+
+        # Live mode: gradual drain
         for position in positions:
             try:
                 from core.market_loader import parse_bbo
@@ -929,22 +963,21 @@ class OrderManager:
                         drain_price
                     )
                 else:
-                    if not PAPER_MODE:
-                        await self.client.orders.create({
-                            "marketSlug": position.slug,
-                            "intent":
-                                "ORDER_INTENT_SELL_LONG",
-                            "type": "ORDER_TYPE_LIMIT",
-                            "price": {
-                                "value": str(
-                                    drain_price
-                                ),
-                                "currency": "USD"
-                            },
-                            "quantity": position.shares,
-                            "tif":
-                                "TIME_IN_FORCE_GOOD_TILL_CANCEL"
-                        })
+                    await self.client.orders.create({
+                        "marketSlug": position.slug,
+                        "intent":
+                            "ORDER_INTENT_SELL_LONG",
+                        "type": "ORDER_TYPE_LIMIT",
+                        "price": {
+                            "value": str(
+                                drain_price
+                            ),
+                            "currency": "USD"
+                        },
+                        "quantity": position.shares,
+                        "tif":
+                            "TIME_IN_FORCE_GOOD_TILL_CANCEL"
+                    })
             except Exception as e:
                 logger.error(
                     f"Drain error {position.slug}: {e}"
@@ -1199,12 +1232,12 @@ class OrderManager:
 
         # 4. Game state — sport-specific evaluation
         if game_state:
-            period = game_state.get("period", 0)
+            period = game_state.get("period")
             time_rem = game_state.get(
-                "time_remaining_seconds", 9999
+                "time_remaining_seconds"
             )
-            inning = game_state.get("inning", 0)
-            minute = game_state.get("game_minute", 0)
+            inning = game_state.get("inning")
+            minute = game_state.get("game_minute")
             score = game_state.get("score", "")
             sport = position.sport or ""
 
@@ -1230,7 +1263,7 @@ class OrderManager:
             lead = our_score - their_score
 
             if "basketball" in sport:
-                # NBA/CBB: 48 min game, high scoring
+                # NBA/CBB: high scoring
                 if has_score:
                     if lead >= 15:
                         reasons_to_hold.append(
@@ -1241,17 +1274,19 @@ class OrderManager:
                     elif deficit >= 15:
                         reasons_to_exit.append(
                             f"down {deficit} (hard to recover)")
-                    elif deficit > 0 and period >= 4 and time_rem < 120:
+                    elif deficit > 0 and period is not None \
+                         and period >= 4 \
+                         and time_rem is not None \
+                         and time_rem < 120:
                         reasons_to_exit.append(
                             f"down {deficit} late in Q4")
-                    elif deficit > 0 and period <= 2:
+                    elif deficit > 0 and period is not None \
+                         and period <= 2:
                         reasons_to_hold.append(
                             f"only down {deficit} in early game")
                 # Game progress
-                if period <= 2:
+                if period is not None and period <= 2:
                     reasons_to_hold.append("first half")
-                elif period >= 4 and time_rem < 120:
-                    pass  # late game — let score decide
 
             elif "baseball" in sport:
                 # MLB: 9 innings, low scoring
@@ -1265,20 +1300,20 @@ class OrderManager:
                     elif deficit >= 4:
                         reasons_to_exit.append(
                             f"down {deficit} runs")
-                    elif deficit >= 2 and inning >= 8:
+                    elif deficit >= 2 and inning is not None \
+                         and inning >= 8:
                         reasons_to_exit.append(
                             f"down {deficit} runs in "
                             f"inning {inning}")
-                    elif deficit > 0 and inning <= 5:
+                    elif deficit > 0 and inning is not None \
+                         and inning <= 5:
                         reasons_to_hold.append(
                             f"only down {deficit} runs, "
                             f"inning {inning}")
                 # Game progress
-                if inning <= 5:
+                if inning is not None and inning <= 5:
                     reasons_to_hold.append(
                         f"early game (inning {inning})")
-                elif inning >= 8:
-                    pass  # late game — let score decide
 
             elif "hockey" in sport:
                 # NHL: 3 periods, low scoring
@@ -1292,16 +1327,21 @@ class OrderManager:
                     elif deficit >= 3:
                         reasons_to_exit.append(
                             f"down {deficit} goals")
-                    elif deficit >= 2 and period >= 3 \
+                    elif deficit >= 2 \
+                         and period is not None \
+                         and period >= 3 \
+                         and time_rem is not None \
                          and time_rem < 300:
                         reasons_to_exit.append(
                             f"down {deficit} goals "
                             f"late in P3")
-                    elif deficit > 0 and period <= 1:
+                    elif deficit > 0 \
+                         and period is not None \
+                         and period <= 1:
                         reasons_to_hold.append(
                             f"only down {deficit} in P1")
                 # Game progress
-                if period <= 1:
+                if period is not None and period <= 1:
                     reasons_to_hold.append("first period")
 
             elif "football" in sport:
@@ -1316,15 +1356,20 @@ class OrderManager:
                     elif deficit >= 17:
                         reasons_to_exit.append(
                             f"down {deficit} (3+ scores)")
-                    elif deficit > 0 and period >= 4 \
+                    elif deficit > 0 \
+                         and period is not None \
+                         and period >= 4 \
+                         and time_rem is not None \
                          and time_rem < 240:
                         reasons_to_exit.append(
                             f"down {deficit} late in Q4")
-                    elif deficit > 0 and period <= 2:
+                    elif deficit > 0 \
+                         and period is not None \
+                         and period <= 2:
                         reasons_to_hold.append(
                             f"only down {deficit} in "
                             f"first half")
-                if period <= 2:
+                if period is not None and period <= 2:
                     reasons_to_hold.append("first half")
 
             elif "soccer" in sport:
@@ -1339,17 +1384,21 @@ class OrderManager:
                     elif deficit >= 2:
                         reasons_to_exit.append(
                             f"down {deficit} goals")
-                    elif deficit == 1 and minute >= 80:
+                    elif deficit == 1 \
+                         and minute is not None \
+                         and minute >= 80:
                         reasons_to_exit.append(
                             f"down a goal after 80'")
-                    elif deficit > 0 and minute <= 60:
+                    elif deficit > 0 \
+                         and minute is not None \
+                         and minute <= 60:
                         reasons_to_hold.append(
                             f"only down {deficit} with "
                             f"{90 - minute} min left")
-                if minute <= 60:
+                if minute is not None and minute <= 60:
                     reasons_to_hold.append(
                         f"plenty of time ({minute}')")
-                elif minute >= 80:
+                elif minute is not None and minute >= 80:
                     pass  # late game — let score decide
 
         # 5. Current price still shows we're favored

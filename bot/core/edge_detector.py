@@ -138,12 +138,22 @@ class EdgeDetector:
             sport = market.sport or ""
             period_str = str(period).upper()
 
-            # NBA/CBB: don't enter in Q4/H2 final minutes
+            # NBA: don't enter in Q4 or OT
+            # CBB: don't enter in H2 last 10 min
             if "basketball" in sport.lower():
                 if "Q4" in period_str or "OT" in period_str:
                     return None
                 if "H2" in period_str:
-                    return None
+                    # CBB: H2 is 20 min. 75% of 40 = 30 min.
+                    # Allow entry in first 10 min of H2.
+                    try:
+                        e_parts = elapsed.split(":")
+                        e_min = int(e_parts[0]) if e_parts else 0
+                        if e_min >= 10:
+                            return None
+                    except (ValueError, IndexError):
+                        # Can't parse elapsed — block conservatively
+                        return None
 
             # NHL: don't enter in P3
             if "hockey" in sport.lower():
