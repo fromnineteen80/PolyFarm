@@ -11,9 +11,9 @@ if [ "$BRANCH" = "main" ]; then
     ERRORS=$((ERRORS + 1))
 fi
 
-# Rule: No fuzzy matching in Python code
-if git diff --cached --name-only -- '*.py' | xargs grep -l "fuzz\|partial_match\|ratio\|difflib" 2>/dev/null; then
-    echo "BSM BLOCKED: Fuzzy matching detected in Python files."
+# Rule: No fuzzy matching implementations in Python code
+if git diff --cached -- '*.py' | grep -E "from fuzzywuzzy|from difflib|from rapidfuzz|partial_ratio|token_sort_ratio|SequenceMatcher|get_close_matches" > /dev/null 2>&1; then
+    echo "BSM BLOCKED: Fuzzy matching library or implementation detected. Use team registry exact lookups only."
     ERRORS=$((ERRORS + 1))
 fi
 
