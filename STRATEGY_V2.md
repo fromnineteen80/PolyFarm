@@ -8,210 +8,340 @@ The architecture diagram in CLAUDE.md remains accurate for the pipeline and data
 
 ---
 
-## What OracleFarming Does
+## INFRASTRUCTURE
 
-OracleFarming is an automated probability execution system operating on Polymarket US. The system identifies, filters, and executes trades based on measurable mispricing between Polymarket's order book and normalized, vig-removed consensus probabilities from regulated sportsbooks. The system does not predict outcomes. It selectively participates only when a statistically valid and executable edge exists, and capital is deployed with strict discipline to preserve that edge through execution.
+Behind the scenes, OracleFarming runs on a cloud-hosted production stack built for continuous market monitoring, execution, and oversight.
 
-The system prioritizes consistency over volume. Trades are taken only when signal quality, persistence, and liquidity align. No trade is a valid outcome when conditions are not met.
+### DigitalOcean — Production Runtime
 
-## The Market Opportunity
+The cloud infrastructure layer where the live bot operates continuously on a Droplet (virtual machine). 4GB RAM, 25GB disk, Ubuntu 24.04. The bot runs as a systemd service (`oraclefarming.service`) that starts on boot, restarts on crash, and runs 24/7. DigitalOcean's API allows programmatic management and its monitoring provides real-time resource metrics. This is the machine and operating environment, not the strategy engine.
 
-Polymarket operates as a discrete order book driven by participant behavior. Prices move only when orders are placed. Sportsbooks operate as continuously updated probability engines informed by sharp money and models.
+### Python Bot — Execution Core
 
-The opportunity is not simply that prices differ. The opportunity exists when a difference is both measurable and stable long enough to be executed without losing edge to slippage, spread, or latency.
+The live engine that connects to Polymarket and odds sources, processes WebSocket and REST data, runs the registry and signal logic, applies risk rules, and places and manages trades. It owns real-time market state, trade lifecycle management, session rules, and all floor/ceiling logic. This is the actual trading system. Located at `bot/` in the repo.
 
-The system therefore does not react to raw gaps. It trades only when a gap meets three criteria. It must exceed a minimum threshold after vig removal. It must persist over a defined time window. It must be executable at size given current liquidity.
+### Three APIs — By Function
 
-Markets are normalized through the registry to ensure all comparisons are exact and no mismatches occur.
+**Polymarket (market data + execution surface):** Gateway API (`gateway.polymarket.us`) for v2 event discovery, game state, scores. SDK (`api.polymarket.us`) for BBO pricing, order placement, balance, positions. WebSocket (`wss://api.polymarket.us/v1/ws/markets` and `/ws/private`) for real-time price ticks and order fills. One feeds market structure and execution.
 
-## Market Selection Framework
+**The Odds API (external sharp reference line):** Provides vig-removed consensus probabilities from DraftKings, FanDuel, BetMGM, Caesars, BetRivers, and others. Odds endpoint for live h2h/spreads/totals. Scores endpoint for final results. Participants endpoint for team name verification. One feeds external truth.
 
-The system prioritizes totals and spreads as primary trading markets. Winner markets are secondary and used only under stricter conditions.
+**DigitalOcean API (infrastructure control):** Supports deployment actions, operational visibility, and resource management. Manages the machine that runs the system.
 
-Totals and spreads are preferred because they are continuous pricing instruments shaped by sharper inputs. They exhibit tighter alignment across sportsbooks and more stable price movement. This stability allows the system to identify persistent, executable mispricing rather than transient noise.
+### Team Registry — Normalization Layer
 
-Winner markets are more volatile and narrative-driven. Apparent edges are larger but less stable and degrade more frequently during execution. They are therefore treated as opportunistic rather than foundational.
+929 teams across 12 leagues. Every team has a canonical name, Polymarket ID, Odds API name, league, sport, color, abbreviation. Different APIs label teams differently — the registry creates one canonical internal ID so signals are never triggered off mismatched events. Lookup by `polymarket_id` first (unique, never ambiguous). This is not cosmetic. It is a core control layer that prevents false trades.
 
-## Capital Allocation Across Markets
+### Pipeline — Data Flow Engine
 
-Capital is allocated dynamically based on signal quality rather than evenly across opportunities.
+Steps 1-8 run every 60 seconds:
+1. Discover leagues from Polymarket v2
+2. Load teams from v2 events
+3. Map to Odds API sport keys
+4. Load odds (bookmaker consensus)
+5. Match teams via registry (polymarket_id lookup)
+6. Load games with ET times and buckets
+7. Match games to Odds API events
+8. Load scores from Odds API
 
-Totals receive primary allocation due to signal stability.
-Spreads receive secondary allocation with tighter persistence requirements.
-Winner markets receive limited allocation only when edge strength and stability exceed higher thresholds.
+Step 9 writes to Supabase for the dashboard. The pipeline also syncs MarketRegistry for the position monitor and subscribes matched slugs to the Markets WebSocket.
 
-No single sport may exceed 40% of exposure. This constraint remains unchanged.
+### Supabase — Data Store
 
-## Strategy 1: Probability Arbitrage Engine
+Tables: `trades` (every entry/exit with P&L), `markets` (live game data for dashboard), `sharp_odds` (bookmaker consensus), `daily_snapshots` (end-of-day summaries), `investor_profiles` (capital and ownership), `bot_config` (session state, paper balance), `system_events` (logs).
 
-The primary engine operates across totals and spreads, with limited participation in winner markets.
+### Next.js Dashboard — Operator Interface (10% complete)
 
-A trade is eligible only when four conditions are satisfied.
+Located at `dashboard/`. Deployed on Vercel. Current state: navbar skeleton works, Google OAuth login works, initial profile edit works (but can't access profile page after or edit it), loose attempt at home page tables with column uniformity. Team registry, scores, and actual API endpoints are NOT integrated. About 2% functionally complete. The dashboard should not trade. It should display system health, live positions, session P&L, qualifying signals, trade logs, and risk state, with limited operator controls (pause, resume, safe restart). That is the target state, not the current state.
 
-1. A true edge exists after vig removal.
-2. The edge persists for a defined interval.
-3. Sufficient liquidity exists at the intended entry.
-4. Market behavior supports the signal, either through stability or confirmation.
+### Telegram — Alert and Remote Command Layer
 
-Edges are classified into tiers, but thresholds are adjusted upward to prioritize quality over volume.
+Sends batched 30-minute trade summaries. Receives commands (`status`, `positions`, `trades`, `target`, `stop`, `start`, `investors`, `help`). Uses Telegram Bot API with long-polling (`getUpdates`). Serves as lightweight operator channel for real-time alerts (ceiling hit, floor breach, bot paused, feed mismatch) and session oversight.
 
-- High-confidence tier requires stronger edge and persistence.
-- Mid-tier requires moderate edge with strong liquidity.
-- Low-tier is largely eliminated or minimally sized.
+### Health API — Diagnostic Surface
 
-Real-time adjustments still exist but are constrained. Price direction and flow modify sizing slightly, not threshold integrity. A falling price with widening gap can increase size modestly. Rising prices reduce size or cancel entry.
+REST endpoints on port 8080 (`bot/core/health.py`): `/health`, `/status`, `/positions`, `/decisions`, `/errors`, `/games`, `/pipeline`. Enables remote monitoring without SSH. Committed but not yet verified in production.
 
-Execution is limit-order driven. Orders are placed at prices that preserve edge. If not filled within a defined window or if edge deteriorates, orders are canceled and reassessed.
+---
 
-Exit logic captures partial correction rather than full reversion. However, exits are conditional on maintained edge rather than fixed percentages alone.
+## WHAT ORACLEFARMING DOES
 
-Position sizing is tiered. Larger, stable edges receive more capital. Smaller edges receive minimal allocation or are ignored. This replaces uniform deployment.
+An automated probability execution system on Polymarket US. Identifies, filters, and executes trades based on measurable mispricing between Polymarket's order book and normalized, vig-removed consensus probabilities from regulated sportsbooks. Does not predict outcomes. Selectively participates only when a statistically valid and executable edge exists. Capital deployed with strict discipline to preserve edge through execution.
 
-## Strategy 2: Dominant Team Repricing
+Prioritizes consistency over volume. Trades taken only when signal quality, persistence, and liquidity align. No trade is a valid outcome when conditions are not met.
 
-This strategy remains but is tightened.
+---
 
-It activates only when multiple conditions confirm that the market has overreacted to a temporary deficit.
+## MARKET SELECTION
 
-The key correction is that entry requires persistence and stability, not just instantaneous gap.
+**Primary: Totals and Spreads.** Continuous pricing instruments shaped by sharper inputs. Tighter alignment across sportsbooks. More stable price movement. Smaller edges but higher execution reliability and realized win rate.
 
-Dominant teams must meet stricter probability thresholds and liquidity requirements. Position size remains controlled and does not scale aggressively.
+**Secondary: Moneyline/Winners.** More volatile, narrative-driven. Larger apparent edges but less stable. Used only when edge strength, persistence, and liquidity all exceed higher thresholds.
 
-This strategy is treated as a separate module with independent risk limits.
+Totals are particularly stable because they depend on game dynamics rather than team narrative. This reduces noise and improves signal clarity.
 
-## Strategy 3: Fade Strategy
+---
 
-Fade logic is retained but refined.
+## ENTRY CONDITIONS (ALL FOUR REQUIRED)
 
-Trades occur only when weak teams are priced above their true probability and the edge is both measurable and stable.
+1. **True edge exists** after vig removal from bookmaker consensus
+2. **Edge persists** — observed across at least 2 consecutive pipeline refreshes (2+ minutes)
+3. **Sufficient liquidity** at intended entry price (bid/ask depth >= 3)
+4. **Market behavior supports** the signal — stability or confirmation from price direction
 
-The critical correction is stricter entry filtering. Gap alone is insufficient. The edge must persist and be executable.
+If any condition fails, no trade. Sitting out is a valid outcome.
 
-Immediate exit on thesis break remains valid and unchanged.
+### Entry Filters
 
-Position sizing is reduced relative to primary strategies due to higher variance.
+- Game must not exceed 75% completion (sport-specific — see Sport Timing below)
+- Edge must be executable via limit order at a price that preserves the edge
+- No re-entry on any game already traded this session
+- Sport concentration cannot exceed 40% of open exposure
+- Odds must be fresh (< 5 minutes since last Odds API update)
 
-## Strategy 4: Pre-Market Positioning
+### Position Sizing (Tiered by Signal Quality)
 
-Overnight positioning remains but is reframed as controlled early pricing capture.
+- **High-confidence**: Strong persistent edge + deep liquidity → 4% of fund
+- **Mid-tier**: Moderate edge + adequate liquidity → 2.5% of fund
+- **Low-tier**: Marginal edge → 1.5% of fund or skip entirely
 
-Entries require large, stable gaps and confirmed liquidity. Positions are re-evaluated before market activity increases. Any compression below threshold triggers exit.
+Falling price with widening gap → modest size increase (up to 1.15x). Rising price → reduce size (0.85x) or cancel entry.
 
-Exposure remains capped.
+---
 
-## Execution Layer
-
-Execution is the primary determinant of success.
-
-- All trades use limit orders.
-- Fill quality is tracked continuously.
-- Orders are canceled if not filled within defined time or if edge deteriorates.
-- Slippage is measured and incorporated into future thresholds.
-
-The system prioritizes realized edge over theoretical edge.
-
-## Risk Engine
-
-Risk control overrides all strategies.
-
-- Daily profit lock halts new entries once +15% target is reached.
-- Drawdown triggers progressive reduction: -5% reduce size, -10% pause (resume at -5%), -15% done for the day.
-- Market cooldown prevents repeated entries in the same market.
-- System health triggers pause under instability conditions.
-
-Risk is based on realized outcomes, not temporary price movement.
-
-## Position Management
-
-Positions are evaluated continuously based on updated probabilities, not price movement alone.
-
-If sharp consensus still supports the position, it is held through volatility.
-If probability deteriorates, exit decisions are triggered based on structured thresholds.
-
-Late-game liquidity realities are acknowledged and incorporated.
-
-## Trade State Model
-
-Every trade moves through four states: Entry → Advancement → Protection → Exit.
-
-At entry, the system records three values: entry price, expected fair probability from normalized feed, initial edge. From this, it computes a target zone and a protection band.
-
-### Ceiling Construction
-
-No single fixed take-profit. Stepped ceiling:
-
-**Step 1**: First realized gain threshold. When position reaches a defined percentage gain relative to entry, that becomes the first checkpoint. No exit occurs. Protection floor is raised to lock in part of that gain.
-
-**Step 2**: Higher gain threshold. If reached, floor is raised again. System continues to allow the trade to run.
-
-**Step 3**: Maximum expected correction zone. If reached, system exits fully. No further upside pursued because remaining edge is minimal relative to execution risk.
-
-If price never reaches Step 2 or Step 3, system exits on raised floor from Step 1 once momentum stalls or reverses.
-
-### Floor Construction
-
-Downside is symmetrical but stricter.
-
-**Initial floor**: Set based on acceptable loss relative to edge. NOT a fixed percentage. Tied to whether the underlying probability still supports the position.
-
-- Price moves against but fair probability unchanged → hold (this is noise)
-- Price moves against and probability deteriorates slightly → warning state, no exit
-- Price continues to deteriorate AND crosses second floor threshold AND weakening probability → exit immediately
-
-### Recovery Logic
-
-If trade dips but does not breach second floor, and probability stabilizes or improves, system resets to advancement state and again pursues ceiling path.
-
-If trade never achieves meaningful upward movement after entry and drifts sideways or weakly downward, exits at first floor threshold after defined time window.
-
-### Time Constraint
-
-Every trade has a time-based reevaluation. If expected correction has not materialized within a defined period, and edge has compressed, system exits regardless of price position.
-
-### Critical Rule
-
-Floors and ceilings must be anchored to PROBABILITY, not just price. If sportsbook-derived probability still supports the position, price movement alone is not a valid reason to exit. If probability breaks, holding is no longer justified.
-
-## Exit Triggers (Refined)
-
-Exit conditions are multi-factor, prioritizing probability integrity:
-
-1. **Target capture**: Sufficient correction realized (stepped ceiling).
-2. **Trailing protection**: Activates after meaningful gains (raised floors).
-3. **Loss exit**: Requires BOTH price deterioration AND probability breakdown.
-4. **Time exit**: Reassesses edge validity after defined period.
-5. **End-of-game**: Holds winning positions to settlement.
-
-## Daily Cycle
-
-- **Midnight ET**: Reset all modes, re-anchor floor, clear exited games, fresh start
-- **Morning**: Games post on Polymarket, pipeline matches, trading begins when edges found
-- **During day**: Selective trading when quality signals appear
-- **Hit +15%**: Stop new trades, let winners settle
-- **Hit -15% realized**: Done for the day
-- **30-minute Telegram**: Batched summary to investors
-
-## Investor Details
+## SPORT TIMING — REAL API DATA
+
+The Polymarket v2 API returns these fields on every event:
+- `period`: current game period (e.g. `H1`, `Q4`, `P2`, `T5`)
+- `elapsed`: time elapsed in current period (e.g. `03:26`, `17:58`)
+- `score`: current score (e.g. `23-31`, `2-0`)
+- `live`: boolean
+- `ended`: boolean
+
+The bot MUST parse these correctly for every sport:
+
+### NBA
+- 4 quarters × 12 minutes = 48 minutes total
+- Periods: `Q1`, `Q2`, `Q3`, `Q4`, `OT`
+- `elapsed` counts up within the quarter
+- Minutes remaining = (12 - elapsed_minutes) + (remaining_quarters × 12)
+- Early game: Q1-Q2 (first 24 minutes). Dips are noise.
+- Late game: Q4 last 5 minutes. Decisions matter.
+- Entry cutoff: don't enter in Q4 or OT
+
+### College Basketball (CBB)
+- 2 halves × 20 minutes = 40 minutes total
+- Periods: `H1`, `H2`, `End H1`, `End H2`
+- `elapsed` counts up within the half
+- Minutes remaining = (20 - elapsed_minutes) + (remaining_halves × 20)
+- Early game: H1 (first 20 minutes). Dips are noise.
+- Late game: H2 last 5 minutes.
+- Entry cutoff: don't enter in H2 last 5 minutes or OT
+- IMPORTANT: A score of 22-23 in H1 is NORMAL for college basketball. Do not treat as game-ending.
+
+### NHL
+- 3 periods × 20 minutes = 60 minutes total
+- Periods: `P1`, `P2`, `P3`, `OT`
+- `elapsed` counts up within the period
+- Minutes remaining = (20 - elapsed_minutes) + (remaining_periods × 20)
+- Early game: P1 (first 20 minutes). Dips are noise.
+- Late game: P3 last 5 minutes.
+- Entry cutoff: don't enter in P3 last 5 minutes or OT
+
+### MLB
+- 9 innings, no game clock
+- Periods: `T1`/`B1` through `T9`/`B9` (Top/Bottom of inning)
+- No `elapsed` field — progress measured by inning
+- Game progress: inning / 9 (approximate)
+- Early game: Innings 1-5. Dips are noise.
+- Late game: Innings 8-9.
+- Entry cutoff: don't enter in inning 8+
+- A team down 1 run in inning 3 has plenty of game left
+
+### NFL / College Football (CFB)
+- 4 quarters × 15 minutes = 60 minutes total
+- Periods: `Q1`, `Q2`, `Q3`, `Q4`, `OT`
+- `elapsed` counts up within the quarter
+- Minutes remaining = (15 - elapsed_minutes) + (remaining_quarters × 15)
+- Early game: Q1-Q2 (first 30 minutes). Dips are noise.
+- Late game: Q4 last 5 minutes.
+- Entry cutoff: don't enter in Q4 or OT
+
+### Soccer (EPL, MLS, La Liga, Bundesliga, Serie A, UCL)
+- 2 halves × 45 minutes = 90 minutes total
+- Periods: `1H`, `2H`, `ET` (extra time)
+- `elapsed` is total match minutes (not per-half)
+- Minutes remaining = 90 - elapsed_minutes
+- Early game: first 60 minutes. Dips are noise.
+- Late game: 80+ minutes.
+- Entry cutoff: don't enter after 75 minutes
+- A team down 1 goal at minute 30 has a full hour to equalize
+
+### When Time Cannot Be Determined
+
+If `period` or `elapsed` is None or unparseable, the bot MUST NOT trigger any time-based exit (pre_resolution, timeout). Default to HOLDING. Never assume the game is ending when you can't confirm it.
+
+---
+
+## TRADE STATE MODEL — FOUR STATES
+
+Every trade moves through: **Entry → Advancement → Protection → Exit**
+
+### State 1: Entry
+
+Record at entry:
+- `entry_price`: what we paid
+- `fair_probability`: sharp consensus at time of entry
+- `initial_edge`: fair_probability - entry_price
+- `entry_time`: UTC timestamp
+- `game_state`: period, elapsed, score at entry
+
+Compute:
+- `step_1_ceiling`: entry_price × 1.03 (3% gain)
+- `step_2_ceiling`: entry_price × 1.06 (6% gain)
+- `step_3_ceiling`: entry_price × 1.10 (10% gain — full exit)
+- `soft_floor`: entry_price × 0.95 (5% loss — warning)
+- `hard_floor`: entry_price × 0.85 (15% loss — exit if probability also broke)
+
+### State 2: Advancement
+
+Triggered when price reaches Step 1 ceiling (3% gain).
+
+Actions:
+- Raise floor to entry_price × 1.01 (lock in 1% gain minimum)
+- Continue holding toward Step 2
+- If price falls back to raised floor AND momentum stalls → exit with locked gain
+
+If Step 2 ceiling reached (6% gain):
+- Raise floor to entry_price × 1.03 (lock in 3% gain minimum)
+- Continue holding toward Step 3
+
+If Step 3 ceiling reached (10% gain):
+- Exit fully. Remaining edge is minimal vs execution risk.
+
+### State 3: Protection
+
+Triggered when price drops toward floors.
+
+**Soft floor hit (5% loss from entry):**
+- Check sharp probability. If probability > entry_price → HOLD. This is noise.
+- If probability dropped but still within 2% of entry → WARNING state. Monitor closely.
+- If probability dropped below entry_price - 3% → escalate to hard floor check.
+
+**Hard floor hit (15% loss from entry):**
+- Check sharp probability.
+- If probability STILL above entry_price → HOLD. Extreme noise but thesis intact.
+- If probability broke below entry_price → EXIT IMMEDIATELY. Thesis is dead.
+
+**Recovery from protection:**
+- If price was at soft floor but probability stabilized, and price recovers above entry → reset to Advancement state. Pursue ceiling again.
+
+### State 4: Exit
+
+Triggers (first one wins):
+1. **Step 3 ceiling hit**: Full exit at 10% gain.
+2. **Raised floor hit after advancement**: Exit with locked gains (1% or 3% depending on how far we advanced).
+3. **Hard floor + probability breakdown**: Exit at loss.
+4. **Time expiry**: Edge hasn't materialized within the time window (see below). Edge compressed. Exit.
+5. **Game over**: If winning → settle at $1.00. If losing → accept $0.00.
+
+### Time Windows (Sport-Specific)
+
+- **Pre-game entry**: Hold until game goes live. No timeout while waiting for kickoff.
+- **NBA/CBB live**: Reevaluate after 20 minutes of hold time. If still in Entry state (no advancement), check if edge compressed. If edge gone, exit.
+- **NHL live**: Reevaluate after 20 minutes.
+- **MLB live**: Reevaluate after 3 innings of hold time.
+- **NFL/CFB live**: Reevaluate after 15 minutes.
+- **Soccer live**: Reevaluate after 20 minutes.
+
+Reevaluation does NOT mean automatic exit. It means: check sharp probability. If edge still exists, keep holding. If edge compressed to < 0.5%, exit.
+
+---
+
+## GAME CONTEXT INTELLIGENCE
+
+Every hold/exit decision uses REAL API data:
+
+1. **Sharp odds vs entry price** — bookmakers still support us? This is the PRIMARY signal.
+2. **Team record** — parse `record` field (e.g. "58-18"). Win rate > 65% = strong team, hold through dips. Win rate < 35% = weak, exit faster.
+3. **Dominant team status** — from config.py DOMINANT_TEAMS dict. Comeback win rate, market overreaction tendency. OKC at 36% comeback rate = hold. Celtics at 35% = hold.
+4. **Fade opponent** — from config.py FADE_TEAMS dict. If opponent is White Sox (101-223 combined record), they can't hold leads. Hold.
+5. **Score in context of sport:**
+   - NBA/CBB: down 15+ = hard to recover. Down 5 in Q1 = noise.
+   - MLB: down 4+ runs = exit. Down 1 in inning 3 = hold.
+   - NHL: down 3+ goals = exit. Down 1 in P1 = hold.
+   - NFL/CFB: down 17+ (3 scores) = exit. Down 7 in Q1 = hold.
+   - Soccer: down 2+ goals = exit. Down 1 before 60' = hold.
+6. **Game progress** — early game dips are always noise. Late game dips are real.
+7. **Late game reality** — winning late = hold to settlement ($1.00). No point selling at 92c with 2 minutes left. Losing late = no buyers anyway, accept settlement at $0.00.
+
+Decision method: count hold reasons vs exit reasons. More reasons to hold = hold. BUT probability breakdown overrides everything — if sharp odds dropped below entry price, exit regardless of other signals.
+
+---
+
+## RISK ENGINE
+
+Overrides all strategies:
+
+- **+15% daily realized** → stop new trades. Let winners settle to $1.00. Reset midnight ET.
+- **-5% realized** → reduce position sizes 50%
+- **-10% realized** → pause entries. Resume if recovers to -5%.
+- **-15% realized** → done for the day. Reset midnight ET.
+- Loss tiers use **REALIZED P&L only** — unrealized mid-game dips are noise, not losses.
+- **One entry per game per session** — no re-entry after any exit, win or lose.
+- **Floor at 85% of session start** — absolute backstop. Stop for day, reset midnight.
+- **Sport concentration cap** — no single sport > 40% of open exposure.
+
+---
+
+## DAILY CYCLE
+
+- **Midnight ET**: `reset_daily()` — unlock session, reset all modes, re-anchor floor to current balance, clear exited games list, reset realized P&L to zero. Fresh start.
+- **Morning Telegram**: "Good morning. New trading day. Opening balance: $X. Daily target (+15%): $Y. Floor (-15%): $Z. Ready to trade." Shows change from last night if balance shifted.
+- **During day**: Selective trading when quality signals align across all sports and market types.
+- **30-minute Telegram**: Batched summary — trades opened/closed, W/L record, P&L, balance, daily growth %, investor split.
+- **Hit +15%**: "Daily target hit! No new trades. Open positions will close naturally."
+- **Hit floor or -15%**: "Daily loss limit reached. No new trades until tomorrow. Resets at midnight ET."
+- **Urgent alerts only**: Daily target hit, daily loss limit, floor breach. Sent immediately, not batched.
+
+---
+
+## TELEGRAM COMMANDS
+
+| Command | Response |
+|---------|----------|
+| `status` | Balance, P&L, mode, investor split |
+| `investors` | Each investor's capital, current value, growth |
+| `positions` | Open positions with team names, entry, current price, game state |
+| `trades` | Today's closed trades with team names, P&L, exit reason, hold time, score |
+| `target` | Session start, current, daily target, floor |
+| `stop` | Pause new entries. Open positions close naturally. |
+| `start` | Resume trading (unless session locked). |
+| `help` | Command list |
+
+All messages use team registry canonical names. No slugs. No abbreviations. Human-readable exit reasons: "target hit", "locked in gains", "game ending", "held too long", "cut losses".
+
+---
+
+## FUND DETAILS
 
 - Colin Maynard: $1,200 initial capital
 - Hugo Sanchez: $1,200 initial capital
 - Total fund: $2,400
 - Paper mode: 0/300 trades toward live unlock (need 70%+ win rate)
+- Paper balance tracked in Supabase `bot_config`, independent of real Polymarket wallet
+- 50/50 split. Each investor's current value = total fund value / 2.
 
-## Why the Shift to Spreads and Totals
+---
 
-Spreads and totals behave as structured probability markets. They reflect aggregated information and adjust continuously across sportsbooks. This creates tighter alignment and more stable mispricing opportunities.
+## DEPLOY WORKFLOW
 
-Winner markets are influenced by public perception and exhibit larger but less reliable deviations. These deviations often collapse before execution or reverse under volatility.
+```
+staging branch → staging verification → PR to main → production deploy
+```
 
-Spreads and totals produce smaller edges but higher execution reliability. For a system focused on consistency, this produces a higher realized win rate over time.
+No direct pushes to main. No "pull and restart." Code goes through staging first. Verified against live games before merge.
 
-Totals are particularly stable because they are less dependent on team narrative and more on game dynamics. This reduces noise and improves signal clarity.
+Production deploy script: `git pull origin main && systemctl restart oraclefarming`
 
-The shift is not about increasing theoretical returns per trade. It is about increasing the probability that each trade behaves as expected.
-
-## Final Position
-
-The corrected system trades less, filters harder, sizes intelligently, and executes with discipline. It prioritizes stability, persistence, and liquidity over raw opportunity count.
-
-This is what converts a high-activity strategy into a consistent one.
+Droplet: 137.184.159.0, root, systemd service `oraclefarming`, log at `/tmp/oraclefarming.log`
