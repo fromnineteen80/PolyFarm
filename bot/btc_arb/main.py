@@ -47,7 +47,9 @@ class BTCArbitrageBot:
         self.client = client
         self.feeds = PriceFeedManager()
         self.scanner = MarketScanner()
-        self.contract_ws = ContractWebSocket(scanner=self.scanner)
+        self.contract_ws = ContractWebSocket(
+            scanner=self.scanner, client=client
+        )
         self.risk = RiskManager(balance=PAPER_SEED_BALANCE)
         self.detector = LagDetector(
             feeds=self.feeds, scanner=self.scanner
