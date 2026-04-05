@@ -64,6 +64,37 @@ ORDER_TIMEOUT_S = 5
 RECHECK_LAG_BEFORE_EXEC = True
 
 # ─────────────────────────────────────────────────────
+# FEE OPTIMIZATION — MAKER vs TAKER ROUTING
+# ─────────────────────────────────────────────────────
+# If lag detected > this threshold, we have time to post
+# a maker limit order and earn the rebate instead of paying taker fee.
+# Below this, we take liquidity immediately (speed > savings).
+MAKER_LAG_THRESHOLD = 0.005  # 0.5%+ lag = use maker order
+# How long to wait for a maker fill before converting to taker (ms)
+MAKER_FILL_TIMEOUT_MS = 3000  # 3 seconds
+# Maker limit price offset — post slightly inside the spread
+# e.g., if fair=0.65, post at 0.645 (0.005 below fair)
+MAKER_PRICE_OFFSET = 0.005
+
+# ─────────────────────────────────────────────────────
+# BRACKET STACKING
+# ─────────────────────────────────────────────────────
+# When a BTC move misprices multiple brackets, trade them all.
+# Max simultaneous bracket entries per BTC move event.
+MAX_STACK_SIZE = 4
+# Minimum seconds between stacked entries (avoid self-competition)
+STACK_SPACING_MS = 200
+# Scale down position size for stacked trades (2nd, 3rd, 4th)
+STACK_SIZE_DECAY = [1.0, 0.8, 0.6, 0.4]
+
+# ─────────────────────────────────────────────────────
+# POLYMARKET WEBSOCKET — real-time contract prices
+# ─────────────────────────────────────────────────────
+WS_MARKETS_URL = "wss://api.polymarket.us/v1/ws/markets"
+# Subscription batch size (same as sports bot)
+WS_BATCH_SIZE = 10
+
+# ─────────────────────────────────────────────────────
 # EXIT STRATEGY
 # ─────────────────────────────────────────────────────
 # Take profit when contract catches up to fair value
